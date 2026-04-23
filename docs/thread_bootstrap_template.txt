@@ -1,0 +1,79 @@
+﻿[Template A] New Task Management Thread
+
+这个 thread 只用于单个任务的管理和执行同步。
+先阅读以下基线文档，并以它们为准：
+- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_execution_plan_zh.md
+- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\worktree_registry_zh.md
+- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\thread_collaboration_guide_zh.md
+
+当前任务信息：
+- Task ID: <TASK_ID>
+- Workspace: <WORKSPACE_PATH>
+- Branch: <BRANCH_NAME>
+- Thread Role: task management
+
+执行规则：
+1. 这个 thread 只处理 <TASK_ID> 的任务分解、进度同步、风险同步、session id 管理、以及子功能 thread 协调。
+2. 如果发现当前 workspace 不是 <WORKSPACE_PATH>，先停下并报告。
+3. 如果发现当前分支不是 <BRANCH_NAME>，先停下并报告，不要改文件。
+4. 这个 thread 可以做任务级文档更新，也可以协调子功能 thread，但要保持任务边界清晰。
+5. 如果后续要拆多个子功能 thread，默认共用当前 task worktree；只有在需要并行写文件时才新建 branch/worktree。
+6. 当前任务的管理 thread session id 应回填到中央 worktree 台账。
+
+请先确认你已阅读基线，并复述：
+- 当前任务边界
+- 当前 workspace
+- 当前 branch
+- 当前 thread 的职责
+然后再开始工作。
+
+==================================================
+
+[Template B] New Subtask Thread Under Existing Task Worktree
+
+这个 thread 只处理单个子功能，不做跨任务管理。
+先阅读以下基线文档，并以它们为准：
+- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_execution_plan_zh.md
+- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\thread_collaboration_guide_zh.md
+
+当前上下文：
+- Parent Task ID: <TASK_ID>
+- Subtask Name: <SUBTASK_NAME>
+- Workspace: <WORKSPACE_PATH>
+- Branch: <BRANCH_NAME>
+- Parent Task Management Thread Session ID: <TASK_THREAD_SESSION_ID>
+
+执行规则：
+1. 这个 thread 只处理 <SUBTASK_NAME>，不要扩展到其它子功能。
+2. 如果发现当前 workspace 不是 <WORKSPACE_PATH>，先停下并报告。
+3. 如果发现当前分支不是 <BRANCH_NAME>，先停下并报告，不要改文件。
+4. 在共享 task worktree 中动手前，先重新读取目标文件并检查 git status。
+5. 同一时刻只允许一个 writer thread 改文件或提交；如果发现还有别的 thread 正在写，先停下并回到任务管理 thread 同步。
+6. 如果判断这个子功能需要真正并行写文件，先回任务管理 thread 申请新的 branch/worktree，不要直接在当前 worktree 强行并行。
+7. 当前子功能进度默认同步回该任务的管理 thread，不直接写中央 worktree 台账。
+
+请先确认你已阅读基线，并复述：
+- 当前子功能边界
+- 当前 workspace
+- 当前 branch
+- 是否允许立即开始写文件
+然后再开始工作。
+
+==================================================
+
+[Template C] New Top-Level Task Branch / Worktree Setup Request
+
+我要创建一个新的顶层任务执行环境，请按以下规则操作：
+
+任务信息：
+- Task ID: <TASK_ID>
+- Planned Branch: codex/<task-id-lower>
+- Planned Worktree: E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees\<TASK-ID>
+- Intended Role: task management
+
+要求：
+1. 在主工作区基础上创建新的 branch/worktree。
+2. 必要时补 safe.directory。
+3. 更新执行计划和 worktree 台账。
+4. 告诉我后续应该在哪个 workspace 下开新的 thread。
+5. 如果这次创建属于需要我确认的提交边界，先给出显眼提醒并说明原因，再提交。
