@@ -37,6 +37,7 @@
 | `PM-02` | `codex/pm-02` | `WORKTREE_ROOT/PM-02` | `019d62cd-a740-79c3-b420-88f6f37d2128` | `DONE` | `2026-04-21` | All technical design documents produced: PM-02 core runtime, ENG-02 stage format, ENG-03 input layer, ENG-04 movement feel, ENG-05 HUD state flow, debug panel spec. |
 | `ENG-01` | `codex/eng-01` | `WORKTREE_ROOT/ENG-01` | `TBD` | `DONE` | `2026-04-23` | Task-management thread has taken ownership and completed the project skeleton: `index.html`, `src/main.js`, `src/GameLoop.js`, and `src/GameState.js`. Stable session ID is not available in this session, so `TBD` is retained. |
 | `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `DONE` | `2026-04-23` | Runtime foundation completed in commit `b1b69b4`: `TileType`, `GridMap`, `StageLoader`, `Renderer + Camera`, and `story_001` JSON are wired, with Node smoke, HTTP access, and `1080x1920` device-emulation checks passed. |
+| `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `TODO` | `2026-04-23` | Dedicated branch and sibling worktree for the input-foundation task are created; code writing has not started yet, and the stable session ID remains `TBD`. |
 
 ## Update Log
 
@@ -52,6 +53,7 @@
 | `2026-04-23` | `STATUS` | `ENG-01` completed the project skeleton and passed local HTTP plus Node smoke verification. | `WORKTREE_ROOT/ENG-01` can enter commit/merge closure, and later foundation tasks can continue from this skeleton. |
 | `2026-04-23` | `WORKTREE` | Registered the existing `ENG-02` task branch `codex/eng-02` and sibling worktree `WORKTREE_ROOT/ENG-02` in the central registry. | The runtime-foundation task now has an isolated execution environment and can start in its own task-management thread. |
 | `2026-04-23` | `STATUS` | `ENG-02` completed the runtime foundation and committed `b1b69b4`. | `WORKTREE_ROOT/ENG-02` can enter merge/archive closure; the remaining `v0.1.0` coding item is ENG-03 input foundation. |
+| `2026-04-23` | `WORKTREE` | Created the `ENG-03` task branch `codex/eng-03` and sibling worktree `WORKTREE_ROOT/ENG-03`, then registered them in the central registry. | The input-foundation task now has an isolated execution environment and can start in its own task-management thread. |
 
 
 
