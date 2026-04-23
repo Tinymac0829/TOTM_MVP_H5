@@ -1,5 +1,6 @@
 import GameLoop from "./GameLoop.js";
 import GameState from "./GameState.js";
+import InputManager from "./InputManager.js";
 import Renderer from "./Renderer.js";
 import StageLoader from "./StageLoader.js";
 
@@ -16,6 +17,7 @@ if (!context) {
 }
 
 const gameState = new GameState();
+const inputManager = new InputManager({ canvas });
 const renderer = new Renderer({
   canvas,
   context,
@@ -51,6 +53,7 @@ window.addEventListener("resize", resizeCanvas);
 window.addEventListener("orientationchange", resizeCanvas);
 
 gameState.onChange(({ previousState, nextState }) => {
+  inputManager.setEnabled(nextState === "playing");
   console.log(`[GameState] ${previousState} -> ${nextState}`);
 });
 
@@ -58,6 +61,18 @@ const gameLoop = new GameLoop({
   fixedUpdate: () => {
     if (!gameState.isPlaying()) {
       return;
+    }
+  },
+  update: () => {
+    inputManager.update();
+
+    if (!gameState.isPlaying()) {
+      return;
+    }
+
+    const direction = inputManager.consumeDirection();
+    if (direction) {
+      console.log(`[Input] direction=${direction}`);
     }
   },
   render,
