@@ -138,6 +138,8 @@
 | `2026-04-06` | `THREAD_MODEL` | Added the project-progress / task-management / subtask-thread collaboration model. | Future task threads can scale without introducing unnecessary branches or worktrees. |
 | `2026-04-21` | `TECH_DECISION` | Added ES Modules multi-file code organization to project snapshot; updated ENG-01/ENG-02 Done When to align with PM-02 2.8.2 implementation phases. | Code organization decision synced from PM-02 to execution plan; task acceptance criteria are now more specific. |
 | `2026-04-21` | `STATUS` | PM-02 marked DONE (all technical design documents produced); schedule re-baselined from 4/21, v0.1.0 split into design phase (complete) and coding phase (4/22-4/25), overall target close 5/9. | Project transitions from design phase to coding phase; schedule aligned with actual progress. |
+| `2026-04-23` | `WORKTREE` | Created the `ENG-01` task branch `codex/eng-01` and its sibling worktree, then synced the result to the central registry. | The next coding task now has an isolated execution environment and can start in its dedicated task-management thread. |
+| `2026-04-23` | `DOC_RULE` | Migrated workspace-path references in the baseline docs from machine-specific absolute paths to the `REPO_ROOT` / `WORKTREE_ROOT` anchor convention, and synced the related mirrors and templates. | Cross-device sync no longer depends on fixed drive letters, reducing path-maintenance overhead in versioned docs. |
 
 
 
