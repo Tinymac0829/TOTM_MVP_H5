@@ -5,6 +5,7 @@
 - E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_execution_plan_zh.md
 - E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\worktree_registry_zh.md
 - E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\thread_collaboration_guide_zh.md
+- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_function_documentation_rules_zh.md
 
 当前任务信息：
 - Task ID: <TASK_ID>
@@ -35,6 +36,7 @@
 先阅读以下基线文档，并以它们为准：
 - E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_execution_plan_zh.md
 - E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\thread_collaboration_guide_zh.md
+- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_function_documentation_rules_zh.md
 
 当前上下文：
 - Parent Task ID: <TASK_ID>
