@@ -35,7 +35,7 @@
 | Task ID | Branch | Worktree Path | Session ID | Status | Last Update | Notes |
 |---|---|---|---|---|---|---|
 | `PM-02` | `codex/pm-02` | `WORKTREE_ROOT/PM-02` | `019d62cd-a740-79c3-b420-88f6f37d2128` | `DONE` | `2026-04-21` | 技术设计文档任务已全部完成，产出文档：PM-02 核心运行时、ENG-02 关卡格式、ENG-03 输入层、ENG-04 移动手感、ENG-05 HUD 状态流、调试面板方案。 |
-| `ENG-01` | `codex/eng-01` | `WORKTREE_ROOT/ENG-01` | `TBD` | `READY` | `2026-04-23` | 已创建任务分支与 sibling worktree，等待 `ENG-01` 任务管理 thread 接管并回填 session id。 |
+| `ENG-01` | `codex/eng-01` | `WORKTREE_ROOT/ENG-01` | `TBD` | `DONE` | `2026-04-23` | 任务管理 thread 已接管并完成项目骨架：`index.html`、`src/main.js`、`src/GameLoop.js`、`src/GameState.js`。当前会话无法读取稳定 session id，暂保留 `TBD`。 |
 
 ## 更新日志
 
@@ -48,6 +48,7 @@
 | `2026-04-06` | `THREAD_MODEL` | 明确了中央台账只记录任务管理 thread，而不是每个子功能 thread。 | 子功能 thread 现在可以在任务层内部管理，不会把跨任务台账刷乱。 |
 | `2026-04-21` | `STATUS` | PM-02 标记为 DONE，全部技术设计文档已产出。 | PM-02 worktree 可归档或复用。 |
 | `2026-04-23` | `WORKTREE` | 已创建 `ENG-01` 的任务分支 `codex/eng-01` 与 sibling worktree `WORKTREE_ROOT/ENG-01`，并登记到中央台账。 | 下一个任务现在有独立执行环境，后续可在该 worktree 下启动任务管理 thread。 |
+| `2026-04-23` | `STATUS` | `ENG-01` 已完成项目骨架并通过本地 HTTP 与 Node smoke 验证。 | `WORKTREE_ROOT/ENG-01` 可进入提交/合并收口流程，后续基础层任务可基于该骨架继续。 |
 
 
 
