@@ -1,5 +1,7 @@
 import GameLoop from "./GameLoop.js";
 import GameState from "./GameState.js";
+import Renderer from "./Renderer.js";
+import StageLoader from "./StageLoader.js";
 
 const canvas = document.querySelector("#game-canvas");
 
@@ -14,6 +16,16 @@ if (!context) {
 }
 
 const gameState = new GameState();
+const renderer = new Renderer({
+  canvas,
+  context,
+});
+const stageLoader = new StageLoader({
+  gameState,
+  onStageReady: ({ gridMap }) => {
+    renderer.setGridMap(gridMap);
+  },
+});
 
 function resizeCanvas() {
   const pixelRatio = Math.max(1, window.devicePixelRatio || 1);
@@ -28,17 +40,11 @@ function resizeCanvas() {
   }
 
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  renderer.snapCameraToFocus();
 }
 
 function render(deltaTime) {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-
-  void deltaTime;
-
-  context.clearRect(0, 0, width, height);
-  context.fillStyle = "#18232d";
-  context.fillRect(0, 0, width, height);
+  renderer.render(deltaTime);
 }
 
 window.addEventListener("resize", resizeCanvas);
@@ -47,9 +53,6 @@ window.addEventListener("orientationchange", resizeCanvas);
 gameState.onChange(({ previousState, nextState }) => {
   console.log(`[GameState] ${previousState} -> ${nextState}`);
 });
-
-resizeCanvas();
-gameState.setState("menu");
 
 const gameLoop = new GameLoop({
   fixedUpdate: () => {
@@ -60,4 +63,18 @@ const gameLoop = new GameLoop({
   render,
 });
 
-gameLoop.start();
+async function bootstrap() {
+  resizeCanvas();
+  gameState.setState("menu");
+  gameLoop.start();
+
+  gameState.setState("loading");
+  const result = await stageLoader.loadAndStart("story_001");
+
+  if (!result.success) {
+    gameState.setState("menu");
+    throw new Error(`[Main] Failed to bootstrap story_001: ${result.error}`);
+  }
+}
+
+void bootstrap();

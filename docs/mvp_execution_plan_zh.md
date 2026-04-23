@@ -74,7 +74,7 @@
 | PM-01 | DONE | `R-021` | 完成初始 Git 基线提交 | 当前规则与脚本已经作为仓库基线提交 |
 | PM-02 | DONE | `R-001,R-002,R-003,R-005,R-006,R-007,R-008,R-009,R-010,R-011,R-012,R-013,R-014,R-015,R-020` | 产出首版技术设计文档 | 运行时循环、网格格式、状态流、输入、碰撞子集、关卡格式、HUD、调试方案与部署路径均有文档说明 |
 | ENG-01 | DONE | `R-002,R-003,R-004` | 创建可运行的项目骨架 | `index.html` + `src/` ES Modules 目录结构就位，Canvas 初始化、GameLoop、GameState 可运行，空白 Canvas 以 60fps 刷新 |
-| ENG-02 | TODO | `R-005,R-010,R-015` | 搭建运行时基础层 | TileType、GridMap、StageLoader、Renderer + Camera 已接通，能加载 JSON 关卡并渲染瓦片画面 |
+| ENG-02 | DONE | `R-005,R-010,R-015` | 搭建运行时基础层 | TileType、GridMap、StageLoader、Renderer + Camera 已接通，能加载 JSON 关卡并渲染瓦片画面 |
 | ENG-03 | TODO | `R-006,R-008` | 实现输入基础层 | 触屏滑动与键盘输入统一走同一输入层 |
 | ENG-04 | TODO | `R-007,R-008,R-009,R-011` | 实现核心移动手感 | 滑到受阻才停、撞墙停下、当前支持瓦片碰撞与输入缓冲手感正确 |
 | ENG-05 | TODO | `R-012,R-013,R-015` | 实现最小玩法 UI | 开始、失败、通关、重开、重复游玩流程可见且可用 |
@@ -99,7 +99,7 @@
 | Version | Status | Task IDs | Goal | Exit Criteria |
 |---|---|---|---|---|
 | `v0.0.1` | DONE | `PM-01` | 仓库基线 | Git 已初始化，规则与脚本已提交 |
-| `v0.1.0` | IN_PROGRESS | `PM-02, ENG-01, ENG-02, ENG-03` | 设计 + 基础层 | 技术设计文档存在，关卡数据路径已定义，可运行框架已存在。PM-02、ENG-01 已完成，ENG-02/ENG-03 待编码实现 |
+| `v0.1.0` | IN_PROGRESS | `PM-02, ENG-01, ENG-02, ENG-03` | 设计 + 基础层 | 技术设计文档存在，关卡数据路径已定义，可运行框架已存在。PM-02、ENG-01、ENG-02 已完成，ENG-03 待编码实现 |
 | `v0.1.1` | TODO | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | 核心手感 + `Story 1` + URL 访问 | `Story 1` 可玩，手感基线通过，并且构建已可通过 URL 访问 |
 | `v0.2.0` | TODO | `LVL-02, QA-02` | `Story 2` | `Story 1-2` 均可游玩并完成回归检查 |
 | `v0.3.0` | TODO | `LVL-03, QA-03` | `Story 3` | `Story 1-3` 全部可游玩且可重复体验 |
@@ -141,6 +141,7 @@
 | `2026-04-23` | `WORKTREE` | 已创建 `ENG-01` 的任务分支 `codex/eng-01` 与 sibling worktree，并同步到中央台账。 | 下一个编码任务现在已有独立执行环境，可在专属 worktree 中启动任务管理 thread。 |
 | `2026-04-23` | `DOC_RULE` | 基线文档中的工作区路径已从机器绝对路径切换为 `REPO_ROOT` / `WORKTREE_ROOT` 锚点规范，并同步更新相关镜像与模板文档。 | 跨设备同步时不再依赖固定盘符，路径文档维护成本降低。 |
 | `2026-04-23` | `CODE` | `ENG-01` 项目骨架已完成：新增 `index.html`、`src/main.js`、`src/GameLoop.js`、`src/GameState.js`，并通过本地 HTTP 与 Node smoke 验证。 | `v0.1.0` 的可运行框架已存在，后续可继续接入 ENG-02 运行时基础层与 ENG-03 输入层。 |
+| `2026-04-23` | `CODE` | `ENG-02` 运行时基础层已完成并提交 `b1b69b4`：新增 `TileType`、`GridMap`、`StageLoader`、`Renderer` 与 `stages/story_001.json`，入口已加载并渲染 `story_001`。 | `v0.1.0` 已具备 JSON 关卡加载与瓦片渲染链路，后续可继续接入 ENG-03 输入层。 |
 
 
 

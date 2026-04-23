@@ -36,7 +36,7 @@
 |---|---|---|---|---|---|---|
 | `PM-02` | `codex/pm-02` | `WORKTREE_ROOT/PM-02` | `019d62cd-a740-79c3-b420-88f6f37d2128` | `DONE` | `2026-04-21` | 技术设计文档任务已全部完成，产出文档：PM-02 核心运行时、ENG-02 关卡格式、ENG-03 输入层、ENG-04 移动手感、ENG-05 HUD 状态流、调试面板方案。 |
 | `ENG-01` | `codex/eng-01` | `WORKTREE_ROOT/ENG-01` | `TBD` | `DONE` | `2026-04-23` | 任务管理 thread 已接管并完成项目骨架：`index.html`、`src/main.js`、`src/GameLoop.js`、`src/GameState.js`。当前会话无法读取稳定 session id，暂保留 `TBD`。 |
-| `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `READY` | `2026-04-23` | 已创建任务分支与 sibling worktree。当前会话只做主工作区同步登记，等待 `ENG-02` 任务管理 thread 接管并回填 session id。 |
+| `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `DONE` | `2026-04-23` | 运行时基础层已完成并提交 `b1b69b4`：`TileType`、`GridMap`、`StageLoader`、`Renderer + Camera` 与 `story_001` JSON 已接通，并通过 Node smoke、HTTP 访问和 `1080x1920` 设备模拟验证。 |
 
 ## 更新日志
 
@@ -51,6 +51,7 @@
 | `2026-04-23` | `WORKTREE` | 已创建 `ENG-01` 的任务分支 `codex/eng-01` 与 sibling worktree `WORKTREE_ROOT/ENG-01`，并登记到中央台账。 | 下一个任务现在有独立执行环境，后续可在该 worktree 下启动任务管理 thread。 |
 | `2026-04-23` | `STATUS` | `ENG-01` 已完成项目骨架并通过本地 HTTP 与 Node smoke 验证。 | `WORKTREE_ROOT/ENG-01` 可进入提交/合并收口流程，后续基础层任务可基于该骨架继续。 |
 | `2026-04-23` | `WORKTREE` | 已创建 `ENG-02` 的任务分支 `codex/eng-02` 与 sibling worktree `WORKTREE_ROOT/ENG-02`，并登记到中央台账。 | 运行时基础层任务现在已有独立执行环境，后续可在该 worktree 下启动任务管理 thread。 |
+| `2026-04-23` | `STATUS` | `ENG-02` 已完成运行时基础层并提交 `b1b69b4`。 | `WORKTREE_ROOT/ENG-02` 可进入合并/归档收口流程，`v0.1.0` 剩余编码项为 ENG-03 输入层。 |
 
 
 
