@@ -36,10 +36,12 @@
 
 ## Parallel Worktree Rules
 
-- `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev` is the master workspace for macro planning, version management, and central status sync.
+- Paths in this document are resolved from `REPO_ROOT` by default.
+- `REPO_ROOT` is the master workspace for macro planning, version management, and central status sync.
 - Only introduce dedicated branches/worktrees when multiple development threads need to write code in parallel.
-- Parallel task execution should use sibling Git worktrees under `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees`.
-- Default mapping: task ID -> branch `codex/<task-id-lower>` -> worktree path `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees\<TASK-ID>`.
+- Parallel task execution should use sibling Git worktrees under `WORKTREE_ROOT`.
+- Path anchor convention: `WORKTREE_ROOT = ../TOTM_MVP_Dev_worktrees`.
+- Default mapping: task ID -> branch `codex/<task-id-lower>` -> worktree path `WORKTREE_ROOT/<TASK-ID>`.
 - Do not manually duplicate the repository into multiple independent workspace copies; use Git branches/worktrees for isolation instead.
 - Do not run parallel feature development directly in the master workspace when a dedicated task worktree exists.
 - Every task thread must sync its `session id`, branch, worktree path, and status in `docs/worktree_registry.md`.

@@ -4,19 +4,21 @@
 
 - 本文档定义项目级 thread、任务级 thread、子功能 thread 之间的协作关系。
 - 它用于统一进度同步、任务拆解与工作区纪律，避免 thread 数量增加后管理失控。
+- 本文档中的路径默认以 `REPO_ROOT` 为解析基准。
+- 路径锚点约定：`WORKTREE_ROOT = ../TOTM_MVP_Dev_worktrees`。
 
 ## Thread 分层
 
 ### 项目进度管理 Thread
 
-- Workspace: `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev`
+- Workspace: `REPO_ROOT`
 - Branch: `master`
 - 用途：项目范围、版本计划、进度同步、session id 回填、风险与阻塞同步、跨任务协调。
 - 这个 thread 不承担具体功能实现细节。
 
 ### 任务管理 Thread
 
-- Workspace: `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees\<TASK-ID>`
+- Workspace: `WORKTREE_ROOT/<TASK-ID>`
 - Branch: `codex/<task-id-lower>`
 - 用途：管理单个任务，维护该任务的子功能拆解、收集子 thread 进度，并作为该任务的主同步面。
 - 中央 worktree 台账里的 `Session ID` 默认记录的就是这个任务管理 thread 的 session id。
@@ -66,7 +68,7 @@
 
 ## PM-02 示例
 
-- 项目进度管理 thread：停留在 `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev` 的 `master`。
-- PM-02 管理 thread：停留在 `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees\PM-02` 的 `codex/pm-02`。
-- PM-02 子功能 thread：如果不并发写文件，也继续停留在 `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees\PM-02` 的 `codex/pm-02`。
+- 项目进度管理 thread：停留在 `REPO_ROOT` 的 `master`。
+- PM-02 管理 thread：停留在 `WORKTREE_ROOT/PM-02` 的 `codex/pm-02`。
+- PM-02 子功能 thread：如果不并发写文件，也继续停留在 `WORKTREE_ROOT/PM-02` 的 `codex/pm-02`。
 - 如果 PM-02 将来需要真正并行写文件，再额外创建新的 branch/worktree 隔离。

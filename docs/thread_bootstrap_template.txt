@@ -1,11 +1,20 @@
-﻿[Template A] New Task Management Thread
+[Path Anchor Conventions]
+
+- `REPO_ROOT` = current repository root.
+- `WORKTREE_ROOT` = `../TOTM_MVP_Dev_worktrees`, resolved relative to `REPO_ROOT`.
+- Paths stored in this template stay in anchor/relative form for cross-device reuse.
+- When actually sending a prompt to a new thread or running commands, expand these anchors to the current machine's absolute paths.
+
+==================================================
+
+[Template A] New Task Management Thread
 
 这个 thread 只用于单个任务的管理和执行同步。
 先阅读以下基线文档，并以它们为准：
-- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_execution_plan_zh.md
-- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\worktree_registry_zh.md
-- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\thread_collaboration_guide_zh.md
-- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_function_documentation_rules_zh.md
+- REPO_ROOT/docs/mvp_execution_plan_zh.md
+- REPO_ROOT/docs/worktree_registry_zh.md
+- REPO_ROOT/docs/thread_collaboration_guide_zh.md
+- REPO_ROOT/docs/mvp_function_documentation_rules_zh.md
 
 当前任务信息：
 - Task ID: <TASK_ID>
@@ -34,9 +43,9 @@
 
 这个 thread 只处理单个子功能，不做跨任务管理。
 先阅读以下基线文档，并以它们为准：
-- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_execution_plan_zh.md
-- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\thread_collaboration_guide_zh.md
-- E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev\docs\mvp_function_documentation_rules_zh.md
+- REPO_ROOT/docs/mvp_execution_plan_zh.md
+- REPO_ROOT/docs/thread_collaboration_guide_zh.md
+- REPO_ROOT/docs/mvp_function_documentation_rules_zh.md
 
 当前上下文：
 - Parent Task ID: <TASK_ID>
@@ -70,7 +79,7 @@
 任务信息：
 - Task ID: <TASK_ID>
 - Planned Branch: codex/<task-id-lower>
-- Planned Worktree: E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees\<TASK-ID>
+- Planned Worktree: WORKTREE_ROOT/<TASK-ID>
 - Intended Role: task management
 
 要求：

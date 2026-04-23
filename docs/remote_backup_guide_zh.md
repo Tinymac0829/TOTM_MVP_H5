@@ -6,6 +6,12 @@
 
 本文档用于记录 TOTM MVP H5 仓库当前的远程备份仓库信息，以及最小可重复的推送流程。
 
+## 路径锚点约定
+
+- 本文档中的版本化路径默认以 `REPO_ROOT` 为解析基准。
+- `WORKTREE_ROOT = ../TOTM_MVP_Dev_worktrees`。
+- 实际执行 Git 命令时，应先把 `REPO_ROOT` / `WORKTREE_ROOT` 解析为当前机器上的绝对路径，再传给 `git -C`。
+
 ## 当前远程仓库
 
 - Remote 名称：`origin`
@@ -26,25 +32,29 @@
 ### 推送主分支
 
 ```powershell
-git -C E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev push
+$repoRoot = (Resolve-Path -LiteralPath .).Path
+git -C $repoRoot push
 ```
 
 ### 首次推送新的任务分支
 
 ```powershell
-git -C E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev push -u origin <branch-name>
+$taskWorktree = (Resolve-Path -LiteralPath WORKTREE_ROOT/<TASK-ID>).Path
+git -C $taskWorktree push -u origin <branch-name>
 ```
 
 ### 查看远程配置
 
 ```powershell
-git -C E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev remote -v
+$repoRoot = (Resolve-Path -LiteralPath .).Path
+git -C $repoRoot remote -v
 ```
 
 ### 查看本地分支跟踪关系
 
 ```powershell
-git -C E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev branch -vv
+$repoRoot = (Resolve-Path -LiteralPath .).Path
+git -C $repoRoot branch -vv
 ```
 
 ## 建议规则
@@ -56,5 +66,5 @@ git -C E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev branch -vv
 
 ## 当前仓库路径
 
-- 主仓库：`E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev`
-- 当前任务 worktree：`E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees\PM-02`
+- 主仓库：`REPO_ROOT`
+- 当前任务 worktree（示例）：`WORKTREE_ROOT/PM-02`
