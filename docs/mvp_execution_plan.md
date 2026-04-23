@@ -73,7 +73,7 @@
 |---|---|---|---|---|
 | PM-01 | DONE | `R-021` | Create the initial Git baseline commit | Current rules and scripts are committed as repository baseline |
 | PM-02 | DONE | `R-001,R-002,R-003,R-005,R-006,R-007,R-008,R-009,R-010,R-011,R-012,R-013,R-014,R-015,R-020` | Write the first technical design document | Runtime loop, grid format, state flow, input, collision subset, level format, HUD, debug plan, and deployment path are documented |
-| ENG-01 | TODO | `R-002,R-003,R-004` | Create the runnable project skeleton | `index.html` + `src/` ES Modules directory structure in place, Canvas init, GameLoop, GameState running, blank Canvas refreshing at 60fps |
+| ENG-01 | DONE | `R-002,R-003,R-004` | Create the runnable project skeleton | `index.html` + `src/` ES Modules directory structure in place, Canvas init, GameLoop, GameState running, blank Canvas refreshing at 60fps |
 | ENG-02 | TODO | `R-005,R-010,R-015` | Implement the runtime foundation | TileType, GridMap, StageLoader, Renderer + Camera wired, can load JSON stage and render tile visuals |
 | ENG-03 | TODO | `R-006,R-008` | Implement input foundation | Touch swipe and keyboard input both work through one input layer |
 | ENG-04 | TODO | `R-007,R-008,R-009,R-011` | Implement core movement feel | Slide-until-blocked, wall stop, supported tile collisions, and input buffer feel correct |
@@ -99,7 +99,7 @@
 | Version | Status | Task IDs | Goal | Exit Criteria |
 |---|---|---|---|---|
 | `v0.0.1` | DONE | `PM-01` | Repository baseline | Git initialized, rules/scripts committed |
-| `v0.1.0` | IN_PROGRESS | `PM-02, ENG-01, ENG-02, ENG-03` | Design + foundation | Technical design doc exists, stage-data path is defined, and runnable framework exists. PM-02 is done; ENG-01/ENG-02/ENG-03 pending code implementation |
+| `v0.1.0` | IN_PROGRESS | `PM-02, ENG-01, ENG-02, ENG-03` | Design + foundation | Technical design doc exists, stage-data path is defined, and runnable framework exists. PM-02 and ENG-01 are done; ENG-02/ENG-03 pending code implementation |
 | `v0.1.1` | TODO | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | Core feel + `Story 1` + URL access | `Story 1` is playable, feel baseline is validated, and build is reachable by URL |
 | `v0.2.0` | TODO | `LVL-02, QA-02` | `Story 2` | `Story 1-2` both playable and regression checked |
 | `v0.3.0` | TODO | `LVL-03, QA-03` | `Story 3` | `Story 1-3` all playable and replayable |
@@ -140,6 +140,7 @@
 | `2026-04-21` | `STATUS` | PM-02 marked DONE (all technical design documents produced); schedule re-baselined from 4/21, v0.1.0 split into design phase (complete) and coding phase (4/22-4/25), overall target close 5/9. | Project transitions from design phase to coding phase; schedule aligned with actual progress. |
 | `2026-04-23` | `WORKTREE` | Created the `ENG-01` task branch `codex/eng-01` and its sibling worktree, then synced the result to the central registry. | The next coding task now has an isolated execution environment and can start in its dedicated task-management thread. |
 | `2026-04-23` | `DOC_RULE` | Migrated workspace-path references in the baseline docs from machine-specific absolute paths to the `REPO_ROOT` / `WORKTREE_ROOT` anchor convention, and synced the related mirrors and templates. | Cross-device sync no longer depends on fixed drive letters, reducing path-maintenance overhead in versioned docs. |
+| `2026-04-23` | `CODE` | Completed the `ENG-01` project skeleton: added `index.html`, `src/main.js`, `src/GameLoop.js`, and `src/GameState.js`, then passed local HTTP and Node smoke verification. | The runnable framework for `v0.1.0` now exists; ENG-02 runtime foundation and ENG-03 input foundation can be connected next. |
 
 
 
