@@ -75,9 +75,9 @@
 | PM-02 | DONE | `R-001,R-002,R-003,R-005,R-006,R-007,R-008,R-009,R-010,R-011,R-012,R-013,R-014,R-015,R-020` | Write the first technical design document | Runtime loop, grid format, state flow, input, collision subset, level format, HUD, debug plan, and deployment path are documented |
 | ENG-01 | DONE | `R-002,R-003,R-004` | Create the runnable project skeleton | `index.html` + `src/` ES Modules directory structure in place, Canvas init, GameLoop, GameState running, blank Canvas refreshing at 60fps |
 | ENG-02 | DONE | `R-005,R-010,R-015` | Implement the runtime foundation | TileType, GridMap, StageLoader, Renderer + Camera wired, can load JSON stage and render tile visuals |
-| ENG-03 | TODO | `R-006,R-008` | Implement input foundation | Touch swipe and keyboard input both work through one input layer |
-| ENG-04 | TODO | `R-007,R-008,R-009,R-011` | Implement core movement feel | Slide-until-blocked, wall stop, supported tile collisions, and input buffer feel correct |
-| ENG-05 | TODO | `R-012,R-013,R-015` | Implement minimal gameplay UI | Start, fail, clear, restart, and replay flows are visible and usable |
+| ENG-03 | DONE | `R-006,R-008` | Implement input foundation | Touch swipe and keyboard input both work through one input layer, emitting standardized direction commands in the `playing` state |
+| ENG-04 | IN_PROGRESS | `R-007,R-008,R-009,R-011` | Implement core movement feel | Slide-until-blocked, wall stop, supported tile collisions, and input buffer feel are correct, and browser feel validation is completed before the task can be marked `DONE` |
+| ENG-05 | TODO | `R-012,R-013,R-015` | Implement minimal gameplay UI | Start, fail, clear, restart, and replay flows are visible and usable; in principle this task must not be marked `DONE` before `ENG-04` is validated and marked `DONE` |
 | LVL-01 | TODO | `R-010,R-011,R-012,R-017` | Integrate `Story 1` | Stage is fully playable and reaches fail/clear |
 | QA-01 | TODO | `R-006,R-007,R-008,R-009,R-017` | Finish `Story 1` feel validation | Input-to-response latency is under `50ms` on baseline device, four-direction recognition is accurate in test cases, and buffered input works inside the `20ms` window |
 | OPS-01 | TODO | `R-020` | Set up GitHub Pages deployment | Current playable build can be opened by URL on multiple devices |
@@ -99,8 +99,8 @@
 | Version | Status | Task IDs | Goal | Exit Criteria |
 |---|---|---|---|---|
 | `v0.0.1` | DONE | `PM-01` | Repository baseline | Git initialized, rules/scripts committed |
-| `v0.1.0` | IN_PROGRESS | `PM-02, ENG-01, ENG-02, ENG-03` | Design + foundation | Technical design doc exists, stage-data path is defined, and runnable framework exists. PM-02, ENG-01, and ENG-02 are done; ENG-03 pending code implementation |
-| `v0.1.1` | TODO | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | Core feel + `Story 1` + URL access | `Story 1` is playable, feel baseline is validated, and build is reachable by URL |
+| `v0.1.0` | DONE | `PM-02, ENG-01, ENG-02, ENG-03` | Design + foundation | Technical design doc exists, stage-data path is defined, and runnable framework exists. PM-02, ENG-01, ENG-02, and ENG-03 are complete |
+| `v0.1.1` | IN_PROGRESS | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | Core feel + `Story 1` + URL access | `Story 1` is playable, feel baseline is validated, and build is reachable by URL |
 | `v0.2.0` | TODO | `LVL-02, QA-02` | `Story 2` | `Story 1-2` both playable and regression checked |
 | `v0.3.0` | TODO | `LVL-03, QA-03` | `Story 3` | `Story 1-3` all playable and replayable |
 | `v0.3.1` | TODO | `PERF-01, REL-01` | Stabilization | Fixes only, no new feature scope |
@@ -142,6 +142,9 @@
 | `2026-04-23` | `DOC_RULE` | Migrated workspace-path references in the baseline docs from machine-specific absolute paths to the `REPO_ROOT` / `WORKTREE_ROOT` anchor convention, and synced the related mirrors and templates. | Cross-device sync no longer depends on fixed drive letters, reducing path-maintenance overhead in versioned docs. |
 | `2026-04-23` | `CODE` | Completed the `ENG-01` project skeleton: added `index.html`, `src/main.js`, `src/GameLoop.js`, and `src/GameState.js`, then passed local HTTP and Node smoke verification. | The runnable framework for `v0.1.0` now exists; ENG-02 runtime foundation and ENG-03 input foundation can be connected next. |
 | `2026-04-23` | `CODE` | Completed the `ENG-02` runtime foundation in commit `b1b69b4`: added `TileType`, `GridMap`, `StageLoader`, `Renderer`, and `stages/story_001.json`, then wired startup loading and rendering for `story_001`. | `v0.1.0` now has the JSON stage-loading and tile-rendering chain; ENG-03 input foundation remains next. |
+| `2026-04-23` | `CODE` | Completed the `ENG-03` input foundation: added `TouchInput`, `KeyboardInput`, and `InputManager`, then wired `main.js` to start and stop them by `playing` state while emitting direction commands to the console; Node smoke verification passed. | The `v0.1.0` foundation layer is now closed, and core movement feel work can proceed in ENG-04. |
+| `2026-04-24` | `STATUS` | `ENG-04` completed the core movement chain and the minimal `ENG-05` HUD/state-flow bridge in code and passed Node smoke, but browser feel validation is still pending so the task remains `IN_PROGRESS` instead of `DONE`. | `v0.1.1` is now active; `ENG-05` currently has a startup boundary only and must not be marked `DONE` before `ENG-04` is validated and closed. |
+| `2026-04-24` | `RISK` | If later browser feel validation requires changes to `ENG-04` timing, movement feel, or state boundaries, `ENG-05` may require integration follow-up. | UI/state-flow work should stay aligned to the final `ENG-04` validation outcome instead of freezing its interaction boundary too early. |
 
 
 
