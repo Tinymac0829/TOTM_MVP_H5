@@ -5,7 +5,7 @@ import HUD from "./HUD.js";
 import InputManager from "./InputManager.js";
 import PlayerController from "./PlayerController.js";
 import Renderer from "./Renderer.js";
-import StageLoader from "./StageLoader.js";
+import StageLoader, { STAGE_ORDER } from "./StageLoader.js";
 
 const canvas = document.querySelector("#game-canvas");
 
@@ -52,8 +52,29 @@ const stageLoader = new StageLoader({
     renderer.setFocusTarget(playerController);
     hud.reset({ counts });
     gameState.currentStageId = stageData.id;
+    hud.setStatusMessage("");
   },
 });
+
+const availableStageIds = new Set(["story_001"]);
+
+function getHudViewModel() {
+  const nextStageId = gameState.getNextStageId();
+  const hasPlayableNextStage = availableStageIds.has(nextStageId);
+
+  return {
+    gameState: gameState.getState(),
+    currentStageId: gameState.currentStageId,
+    loadingText: "加载中...",
+    menuTitle: "TOTM MVP",
+    menuSubtitle: "滑动角色，直到撞墙停下。",
+    menuActionLabel: "开始游戏",
+    menuAction: "start_game",
+    completeActionLabel: hasPlayableNextStage ? "下一关" : "重复游玩",
+    completeAction: hasPlayableNextStage ? "next_stage" : "replay_stage",
+    statusMessage: hud.viewModel?.statusMessage ?? "",
+  };
+}
 
 function resizeCanvas() {
   const pixelRatio = Math.max(1, window.devicePixelRatio || 1);
@@ -73,17 +94,31 @@ function resizeCanvas() {
 
 function render(deltaTime) {
   renderer.render(deltaTime);
-  hud.render(context, canvas);
+  hud.render(context, canvas, getHudViewModel());
+}
+
+function reportNavigationError(error) {
+  console.error(error);
 }
 
 function handleHudAction(action) {
+  if (action === "start_game") {
+    void startGame().catch(reportNavigationError);
+    return;
+  }
+
   if (action === "restart") {
-    void restartCurrentStage();
+    void restartCurrentStage().catch(reportNavigationError);
     return;
   }
 
   if (action === "next_stage") {
-    void loadStageById(gameState.getNextStageId());
+    void advanceToNextStage().catch(reportNavigationError);
+    return;
+  }
+
+  if (action === "replay_stage") {
+    void loadStageById(gameState.currentStageId || "story_001").catch(reportNavigationError);
   }
 }
 
@@ -103,10 +138,19 @@ async function loadStageById(stageId) {
     return false;
   }
 
+  if (!availableStageIds.has(stageId)) {
+    hud.setStatusMessage(`关卡 ${stageId} 尚未接入，当前回到 Story 1。`);
+    gameState.setState("menu");
+    return false;
+  }
+
+  hud.dismiss();
+  hud.setStatusMessage("");
   gameState.setState("loading");
   const result = await stageLoader.loadAndStart(stageId);
 
   if (!result.success) {
+    hud.setStatusMessage(`关卡加载失败：${result.error}`);
     gameState.setState("menu");
     throw new Error(`[Main] Failed to load stage ${stageId}: ${result.error}`);
   }
@@ -114,15 +158,34 @@ async function loadStageById(stageId) {
   return true;
 }
 
+async function startGame() {
+  const stageId = gameState.currentStageId && availableStageIds.has(gameState.currentStageId)
+    ? gameState.currentStageId
+    : "story_001";
+
+  return loadStageById(stageId);
+}
+
 async function restartCurrentStage() {
-  return loadStageById(gameState.currentStageId);
+  return loadStageById(gameState.currentStageId || "story_001");
+}
+
+async function advanceToNextStage() {
+  const nextStageId = gameState.getNextStageId();
+
+  if (availableStageIds.has(nextStageId)) {
+    return loadStageById(nextStageId);
+  }
+
+  hud.setStatusMessage("后续关卡尚未接入，当前回到 Story 1。");
+  return loadStageById(STAGE_ORDER[0] || "story_001");
 }
 
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("orientationchange", resizeCanvas);
 canvas.addEventListener("click", (event) => {
   const { x, y } = getCanvasCoordinates(event);
-  const action = hud.handleClick(x, y);
+  const action = hud.handleClick(x, y, getHudViewModel());
 
   if (action) {
     handleHudAction(action);
@@ -154,8 +217,6 @@ async function bootstrap() {
   resizeCanvas();
   gameState.setState("menu");
   gameLoop.start();
-
-  await loadStageById("story_001");
 }
 
 void bootstrap();

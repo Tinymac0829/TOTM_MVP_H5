@@ -77,7 +77,7 @@
 | ENG-02 | DONE | `R-005,R-010,R-015` | 搭建运行时基础层 | TileType、GridMap、StageLoader、Renderer + Camera 已接通，能加载 JSON 关卡并渲染瓦片画面 |
 | ENG-03 | DONE | `R-006,R-008` | 实现输入基础层 | 触屏滑动与键盘输入统一走同一输入层，并可在 `playing` 状态下输出标准化方向命令 |
 | ENG-04 | IN_PROGRESS | `R-007,R-008,R-009,R-011` | 实现核心移动手感 | 滑到受阻才停、撞墙停下、当前支持瓦片碰撞与输入缓冲手感正确，并完成浏览器内人工手感验收后方可标记 `DONE` |
-| ENG-05 | TODO | `R-012,R-013,R-015` | 实现最小玩法 UI | 开始、失败、通关、重开、重复游玩流程可见且可用；在 `ENG-04` 验收完成并标记 `DONE` 前，理论上不得标记 `DONE` |
+| ENG-05 | IN_PROGRESS | `R-012,R-013,R-015` | 实现最小玩法 UI | 开始、失败、通关、重开、重复游玩流程可见且可用；在 `ENG-04` 验收完成并标记 `DONE` 前，理论上不得标记 `DONE` |
 | LVL-01 | TODO | `R-010,R-011,R-012,R-017` | 接入 `Story 1` | 关卡可完整游玩并进入失败/通关 |
 | QA-01 | TODO | `R-006,R-007,R-008,R-009,R-017` | 完成 `Story 1` 手感验证 | 基线设备上输入到响应延迟低于 `50ms`、四向识别测试正确、且 `20ms` 缓冲窗口内输入可生效 |
 | OPS-01 | TODO | `R-020` | 配置 GitHub Pages 部署 | 当前可玩构建可通过 URL 在多设备浏览器访问 |
@@ -145,6 +145,8 @@
 | `2026-04-23` | `CODE` | `ENG-03` 输入基础层已完成：新增 `TouchInput`、`KeyboardInput`、`InputManager`，并在 `main.js` 中接入 `playing` 状态启停与方向命令控制台输出；已通过 Node smoke 验证。 | `v0.1.0` 的基础层现已闭环完成，后续可继续进入 ENG-04 核心移动手感实现。 |
 | `2026-04-24` | `STATUS` | `ENG-04` 已完成核心移动主链路与 `ENG-05` 最小 HUD/状态流桥接代码，并通过 Node smoke；由于浏览器内人工手感验收尚未完成，因此当前维持 `IN_PROGRESS`，不能标记 `DONE`。 | `v0.1.1` 已切换到执行中；`ENG-05` 当前仅具备启动边界，在 `ENG-04` 验收并标记 `DONE` 前，理论上不能标记 `DONE`。 |
 | `2026-04-24` | `RISK` | 若后续浏览器人工验收发现 `ENG-04` 仍需调整事件时序、移动手感或状态边界，则 `ENG-05` 可能需要联调。 | 后续 UI/状态流开发需以 `ENG-04` 验收收口结果为准，避免过早冻结交互边界。 |
+| `2026-04-24` | `CODE` | `ENG-05` 已从过渡桥接层推进到正式实现阶段：`HUD.js` 新增 `menu/loading/fail/complete` 状态覆盖层、按 `1080x1920` 设计尺寸缩放的布局与点击区域、以及失败/通关按钮动作映射；`main.js` 已接入开始界面、Story 1 启动链路、失败重开、通关后在当前仅接入 `story_001` 时的重复游玩 fallback，并通过浏览器桩 smoke 验证。 | `ENG-05` 已从 `TODO` 切换到 `IN_PROGRESS`，当前最小玩法 UI 已具备开始→游玩→通关/失败→重开/重复游玩的主链路；后续仍需结合真实浏览器手工验证与 `ENG-04` 联调收口。 |
+| `2026-04-24` | `DOC` | 已为 `ENG-04 × ENG-05` 联调新增 3 份配套文档：`docs/features/eng04_eng05_joint_acceptance_card.md`、`docs/features/eng04_eng05_joint_acceptance_checklist.md`、`docs/features/eng04_eng05_browser_validation_log_template.md`，并补齐三者之间的相对路径互链。 | 后续真实浏览器联调、现场勾选与问题记录现在已有统一模板，`ENG-04` 与 `ENG-05` 的联合验收口径更容易保持一致。 |
 
 
 
