@@ -39,6 +39,7 @@
 | `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `DONE` | `2026-04-23` | 运行时基础层已完成并提交 `b1b69b4`：`TileType`、`GridMap`、`StageLoader`、`Renderer + Camera` 与 `story_001` JSON 已接通，并通过 Node smoke、HTTP 访问和 `1080x1920` 设备模拟验证。 |
 | `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `DONE` | `2026-04-23` | 输入基础层已完成：`TouchInput`、`KeyboardInput`、`InputManager` 已接入 `main.js`，在 `playing` 状态下统一输出方向命令；稳定 session id 暂记为 `TBD`。 |
 | `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `IN_PROGRESS` | `2026-04-24` | 核心移动主链路与最小 HUD/状态流桥接代码已接通，并通过 Node smoke；由于尚未完成浏览器内人工手感验收，当前保持 `IN_PROGRESS`，不能标记为 `DONE`。若后续验收触发事件时序或手感边界调整，`ENG-05` 可能需要联调，因此在 `ENG-04` 变为 `DONE` 前，理论上 `ENG-05` 也不能标记为 `DONE`。 |
+| `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `READY` | `2026-04-24` | 已创建任务分支与 sibling worktree。当前会话只完成主工作区登记，不写代码，等待 `ENG-05` 任务管理 thread 接管并回填 session id。 |
 
 ## 更新日志
 
@@ -58,6 +59,7 @@
 | `2026-04-23` | `STATUS` | `ENG-03` 已完成输入基础层实现并通过 Node smoke 验证。 | `WORKTREE_ROOT/ENG-03` 已具备统一输入命令层，`v0.1.0` 的基础层编码项现已完成。 |
 | `2026-04-24` | `WORKTREE` | 已创建 `ENG-04` 的任务分支 `codex/eng-04` 与 sibling worktree `WORKTREE_ROOT/ENG-04`，并登记到中央台账。 | 核心移动手感任务现在已有独立执行环境，后续可在专属任务管理 thread 中启动实现。 |
 | `2026-04-24` | `STATUS` | `ENG-04` 已完成核心移动主链路与 `ENG-05` 最小 HUD/状态流桥接代码，并通过 Node smoke；但浏览器内人工手感验收尚未完成，因此当前维持 `IN_PROGRESS`。 | 在 `ENG-04` 验收并标记 `DONE` 前，`ENG-05` 只能视为具备启动边界，不能标记 `DONE`；若 `ENG-04` 后续调整，`ENG-05` 可能需要联调。 |
+| `2026-04-24` | `WORKTREE` | 已创建 `ENG-05` 的任务分支 `codex/eng-05` 与 sibling worktree `WORKTREE_ROOT/ENG-05`，并登记到中央台账。 | 最小玩法 UI 任务现在已有独立执行环境，后续可在专属任务管理 thread 中启动实现。 |
 
 
 

@@ -39,6 +39,7 @@
 | `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `DONE` | `2026-04-23` | Runtime foundation completed in commit `b1b69b4`: `TileType`, `GridMap`, `StageLoader`, `Renderer + Camera`, and `story_001` JSON are wired, with Node smoke, HTTP access, and `1080x1920` device-emulation checks passed. |
 | `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `DONE` | `2026-04-23` | Input foundation completed: `TouchInput`, `KeyboardInput`, and `InputManager` are wired into `main.js`, emitting unified direction commands in the `playing` state; stable session ID remains `TBD`. |
 | `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `IN_PROGRESS` | `2026-04-24` | The core movement chain and the minimal HUD/state-flow bridge are wired and have passed Node smoke. Browser feel validation is still pending, so `ENG-04` must remain `IN_PROGRESS` and cannot be marked `DONE` yet. If later validation forces changes to timing, feel, or state boundaries, `ENG-05` may require integration follow-up; therefore `ENG-05` must not be marked `DONE` before `ENG-04` is validated and closed. |
+| `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `READY` | `2026-04-24` | Task branch and sibling worktree have been created. This session only completes central-registry sync from the master workspace and does not write code; the `ENG-05` task-management thread should take ownership and fill in the session ID later. |
 
 ## Update Log
 
@@ -58,6 +59,7 @@
 | `2026-04-23` | `STATUS` | `ENG-03` completed the input-foundation implementation and passed Node smoke verification. | `WORKTREE_ROOT/ENG-03` now has the unified input-command layer, and the `v0.1.0` foundation coding scope is complete. |
 | `2026-04-24` | `WORKTREE` | Created the `ENG-04` task branch `codex/eng-04` and sibling worktree `WORKTREE_ROOT/ENG-04`, then registered them in the central registry. | The core-movement-feel task now has an isolated execution environment and can start in its own task-management thread. |
 | `2026-04-24` | `STATUS` | `ENG-04` completed the core movement chain and the minimal `ENG-05` HUD/state-flow bridge in code and passed Node smoke, but browser feel validation is still pending so the task remains `IN_PROGRESS`. | `ENG-05` currently has a startup boundary only and must not be marked `DONE` before `ENG-04` is validated; later `ENG-04` adjustments may require `ENG-05` integration follow-up. |
+| `2026-04-24` | `WORKTREE` | Created the `ENG-05` task branch `codex/eng-05` and sibling worktree `WORKTREE_ROOT/ENG-05`, then registered them in the central registry. | The minimal-playable-UI task now has an isolated execution environment and can start in its own task-management thread. |
 
 
 
