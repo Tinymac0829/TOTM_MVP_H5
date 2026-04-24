@@ -38,6 +38,7 @@
 | `ENG-01` | `codex/eng-01` | `WORKTREE_ROOT/ENG-01` | `TBD` | `DONE` | `2026-04-23` | 任务管理 thread 已接管并完成项目骨架：`index.html`、`src/main.js`、`src/GameLoop.js`、`src/GameState.js`。当前会话无法读取稳定 session id，暂保留 `TBD`。 |
 | `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `DONE` | `2026-04-23` | 运行时基础层已完成并提交 `b1b69b4`：`TileType`、`GridMap`、`StageLoader`、`Renderer + Camera` 与 `story_001` JSON 已接通，并通过 Node smoke、HTTP 访问和 `1080x1920` 设备模拟验证。 |
 | `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `DONE` | `2026-04-23` | 输入基础层已完成：`TouchInput`、`KeyboardInput`、`InputManager` 已接入 `main.js`，在 `playing` 状态下统一输出方向命令；稳定 session id 暂记为 `TBD`。 |
+| `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `TODO` | `2026-04-24` | 已创建核心移动手感任务的专属分支与 sibling worktree，当前尚未开始代码写入；稳定 session id 暂记为 `TBD`。 |
 
 ## 更新日志
 
@@ -55,6 +56,7 @@
 | `2026-04-23` | `STATUS` | `ENG-02` 已完成运行时基础层并提交 `b1b69b4`。 | `WORKTREE_ROOT/ENG-02` 可进入合并/归档收口流程，`v0.1.0` 剩余编码项为 ENG-03 输入层。 |
 | `2026-04-23` | `WORKTREE` | 已创建 `ENG-03` 的任务分支 `codex/eng-03` 与 sibling worktree `WORKTREE_ROOT/ENG-03`，并登记到中央台账。 | 输入基础层任务现在已有独立执行环境，后续可在专属任务管理 thread 中启动实现。 |
 | `2026-04-23` | `STATUS` | `ENG-03` 已完成输入基础层实现并通过 Node smoke 验证。 | `WORKTREE_ROOT/ENG-03` 已具备统一输入命令层，`v0.1.0` 的基础层编码项现已完成。 |
+| `2026-04-24` | `WORKTREE` | 已创建 `ENG-04` 的任务分支 `codex/eng-04` 与 sibling worktree `WORKTREE_ROOT/ENG-04`，并登记到中央台账。 | 核心移动手感任务现在已有独立执行环境，后续可在专属任务管理 thread 中启动实现。 |
 
 
 
