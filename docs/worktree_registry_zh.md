@@ -19,7 +19,8 @@
 ## 路径锚点约定
 
 - `REPO_ROOT` = 当前仓库根目录。
-- `WORKTREE_ROOT` = 相对 `REPO_ROOT` 的 `../TOTM_MVP_Dev_worktrees`。
+- `WORKTREE_ROOT` 的解析规则：相对于 `REPO_ROOT` 取 `../TOTM_MVP_Dev_worktrees`。
+- `WORKTREE_ROOT` 与 `REPO_ROOT` 是同级目录，不在 `REPO_ROOT` 内部。
 - 除非特别说明，版本化文档中的相对路径一律以 `REPO_ROOT` 为解析基准。
 - 实际执行命令时，应先将 `REPO_ROOT` / `WORKTREE_ROOT` 展开为当前机器上的绝对路径，再传给 Git、Shell 或聊天交付。
 

@@ -5,7 +5,8 @@
 - 本文档定义项目级 thread、任务级 thread、子功能 thread 之间的协作关系。
 - 它用于统一进度同步、任务拆解与工作区纪律，避免 thread 数量增加后管理失控。
 - 本文档中的路径默认以 `REPO_ROOT` 为解析基准。
-- 路径锚点约定：`WORKTREE_ROOT = ../TOTM_MVP_Dev_worktrees`。
+- `WORKTREE_ROOT` 的解析规则：相对于 `REPO_ROOT` 取 `../TOTM_MVP_Dev_worktrees`。
+- `WORKTREE_ROOT` 与 `REPO_ROOT` 是同级目录，不在 `REPO_ROOT` 内部。
 
 ## Thread 分层
 

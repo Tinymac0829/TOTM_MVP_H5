@@ -19,7 +19,8 @@
 ## Path Anchor Conventions
 
 - `REPO_ROOT` = the current repository root directory.
-- `WORKTREE_ROOT` = `../TOTM_MVP_Dev_worktrees` relative to `REPO_ROOT`.
+- Resolve `WORKTREE_ROOT` by taking `../TOTM_MVP_Dev_worktrees` relative to `REPO_ROOT`.
+- `WORKTREE_ROOT` and `REPO_ROOT` are sibling directories; `WORKTREE_ROOT` is not inside `REPO_ROOT`.
 - Unless noted otherwise, relative paths in versioned documents are resolved from `REPO_ROOT`.
 - Before running commands, passing arguments to Git/Shell, or delivering local paths in chat, expand `REPO_ROOT` / `WORKTREE_ROOT` to the current machine's absolute paths.
 

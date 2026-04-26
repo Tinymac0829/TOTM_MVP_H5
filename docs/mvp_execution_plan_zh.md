@@ -40,7 +40,8 @@
 - `REPO_ROOT` 作为主工作区，只负责宏观讨论、版本管理与集中状态同步。
 - 只有在多个开发 thread 需要并行写代码时，才引入专属 branch/worktree。
 - 并行任务执行统一使用 `WORKTREE_ROOT` 下的 sibling Git worktree。
-- 路径锚点约定：`WORKTREE_ROOT = ../TOTM_MVP_Dev_worktrees`。
+- `WORKTREE_ROOT` 的解析规则：相对于 `REPO_ROOT` 取 `../TOTM_MVP_Dev_worktrees`。
+- `WORKTREE_ROOT` 与 `REPO_ROOT` 是同级目录，不在 `REPO_ROOT` 内部。
 - 默认映射规则：任务 ID -> 分支 `codex/<task-id-lower>` -> worktree 路径 `WORKTREE_ROOT/<TASK-ID>`。
 - 不要手动复制出多个独立工作区副本；需要隔离时统一使用 Git branch/worktree。
 - 一旦某任务存在专属 worktree，就不要再在主工作区里并行做该任务的功能开发。

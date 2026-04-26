@@ -40,7 +40,8 @@
 - `REPO_ROOT` is the master workspace for macro planning, version management, and central status sync.
 - Only introduce dedicated branches/worktrees when multiple development threads need to write code in parallel.
 - Parallel task execution should use sibling Git worktrees under `WORKTREE_ROOT`.
-- Path anchor convention: `WORKTREE_ROOT = ../TOTM_MVP_Dev_worktrees`.
+- Resolve `WORKTREE_ROOT` by taking `../TOTM_MVP_Dev_worktrees` relative to `REPO_ROOT`.
+- `WORKTREE_ROOT` and `REPO_ROOT` are sibling directories; `WORKTREE_ROOT` is not inside `REPO_ROOT`.
 - Default mapping: task ID -> branch `codex/<task-id-lower>` -> worktree path `WORKTREE_ROOT/<TASK-ID>`.
 - Do not manually duplicate the repository into multiple independent workspace copies; use Git branches/worktrees for isolation instead.
 - Do not run parallel feature development directly in the master workspace when a dedicated task worktree exists.
