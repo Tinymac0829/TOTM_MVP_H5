@@ -8,6 +8,17 @@
 
 ==================================================
 
+[Local Browser Validation]
+
+- For real-browser H5 validation, ask the user to start the static server manually in PowerShell and keep that window open.
+- Recommended command from the task worktree:
+  `python -m http.server 8094 --bind 127.0.0.1`
+- Then validate in Chrome or Edge at `http://127.0.0.1:8094/`.
+- If the port is occupied, use another free port and keep the command port and browser URL in sync.
+- Do not rely on a short-lived background helper process for manual browser validation.
+
+==================================================
+
 [Template A] New Task Management Thread
 
 这个 thread 只用于单个任务的管理和执行同步。

@@ -25,11 +25,30 @@
 | 方向 | 竖屏 |
 | 构建方式 | 本地 HTTP / 其他 |
 
+### 本地 HTTP 启动方式
+
+真实浏览器联调时，优先由执行人在本机 PowerShell 手动启动静态服务，并保持该 PowerShell 窗口打开：
+
+```powershell
+cd E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev_worktrees\ENG-04
+python -m http.server 8094 --bind 127.0.0.1
+```
+
+浏览器访问：
+
+```text
+http://127.0.0.1:8094/
+http://127.0.0.1:8094/?stage=eng04_death_validation
+```
+
+如果 `8094` 被占用，将命令和浏览器 URL 中的端口同步改为其他空闲端口，例如 `8095`。
+
 ## 2. 测试前确认
 
 - [ ] 当前代码已更新到待验收版本
 - [ ] `git status` 已确认
 - [ ] 当前环境能正常打开页面
+- [ ] 本地 HTTP 服务由 PowerShell 手动启动，且服务窗口保持打开
 - [ ] 本次验收口径已与联合验收功能卡对齐
 - [ ] 已知上游风险：`ENG-04` 仍可能后续调整
 

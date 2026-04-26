@@ -32,6 +32,7 @@
 - `menu -> loading -> playing` 启动链路
 - `playing -> paused_fail -> loading -> playing` 失败重开链路
 - `playing -> paused_complete -> loading/menu/replay` 通关链路
+- `eng04_death_validation` 本地验证关卡中的 Spikes 死亡链路
 - HUD 顶部计数、失败弹窗、通关弹窗、加载提示、开始界面
 - 弹窗期间输入屏蔽
 - `1080x1920` 下 UI 不遮挡核心可玩区域
@@ -40,6 +41,7 @@
 
 **不包含**：
 - `Story 2`、`Story 3` 真正加载与跳转
+- 将 `eng04_death_validation` 视为正式 Story 内容或玩家默认路径
 - 新视觉稿、美术润色、动效美化
 - `ENG-04` 规则改写
 - `Empty(0)` 规则变更
@@ -51,6 +53,7 @@
 - `GameState` 已提供 `playing`、`paused_fail`、`paused_complete`、`onPlayerDead()`、`onStageComplete()`、`getNextStageId()`
 - `PlayerController` 已提供四向滑行、`0.02s` 输入缓冲、`5.0 tiles/s` 固定步长移动、收集物拾取、死亡回调、出口回调，以及 `stageClearPending`
 - `main.js` 已接通 `onCollect -> HUD.addCollectible()`、`onDeath -> GameState.onPlayerDead() + HUD.showFailPopup()`、`onExit -> GameState.onStageComplete() + HUD.showCompletePopup()`
+- 当前 `story_001` 不包含 Spikes；失败链路需通过 `?stage=eng04_death_validation` 进入本地验证关卡执行
 - 当前 `HUD` 已进入正式实现阶段，但仍允许在不破坏接口契约的前提下继续联调
 
 **推断**：
@@ -105,7 +108,7 @@
 
 ### 场景 C：失败闭环
 
-1. 进入一个能触发死亡的测试场景后执行死亡验证
+1. 用 `?stage=eng04_death_validation` 进入本地验证关卡后执行死亡验证
 2. 观察是否出现失败弹窗，且玩法 fixedUpdate 已暂停
 3. 弹窗淡入未完成前尝试点击按钮，确认无响应
 4. 淡入完成后点击“重新开始”

@@ -56,7 +56,25 @@ const stageLoader = new StageLoader({
   },
 });
 
-const availableStageIds = new Set(["story_001"]);
+const DEFAULT_STAGE_ID = "story_001";
+const VALIDATION_STAGE_ID = "eng04_death_validation";
+const availableStageIds = new Set([DEFAULT_STAGE_ID, VALIDATION_STAGE_ID]);
+
+function getRequestedStageId() {
+  const params = new URLSearchParams(window.location.search);
+  const requestedStageId = params.get("stage");
+
+  if (!requestedStageId) {
+    return DEFAULT_STAGE_ID;
+  }
+
+  if (availableStageIds.has(requestedStageId)) {
+    return requestedStageId;
+  }
+
+  hud.setStatusMessage(`关卡 ${requestedStageId} 尚未接入，当前回到 Story 1。`);
+  return DEFAULT_STAGE_ID;
+}
 
 function getHudViewModel() {
   const nextStageId = gameState.getNextStageId();
@@ -161,13 +179,13 @@ async function loadStageById(stageId) {
 async function startGame() {
   const stageId = gameState.currentStageId && availableStageIds.has(gameState.currentStageId)
     ? gameState.currentStageId
-    : "story_001";
+    : getRequestedStageId();
 
   return loadStageById(stageId);
 }
 
 async function restartCurrentStage() {
-  return loadStageById(gameState.currentStageId || "story_001");
+  return loadStageById(gameState.currentStageId || getRequestedStageId());
 }
 
 async function advanceToNextStage() {
@@ -178,7 +196,7 @@ async function advanceToNextStage() {
   }
 
   hud.setStatusMessage("后续关卡尚未接入，当前回到 Story 1。");
-  return loadStageById(STAGE_ORDER[0] || "story_001");
+  return loadStageById(STAGE_ORDER[0] || DEFAULT_STAGE_ID);
 }
 
 window.addEventListener("resize", resizeCanvas);
