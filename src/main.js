@@ -3,7 +3,7 @@ import GameLoop from "./GameLoop.js";
 import GameState from "./GameState.js";
 import HUD from "./HUD.js";
 import InputManager from "./InputManager.js";
-import PlayerController from "./PlayerController.js";
+import PlayerController from "./PlayerController.js?v=eng04_collect_step_v2";
 import Renderer from "./Renderer.js";
 import StageLoader, { STAGE_ORDER } from "./StageLoader.js";
 

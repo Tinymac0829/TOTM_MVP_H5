@@ -54,6 +54,7 @@ export default class PlayerController {
     this.bufferTimer = 0;
 
     this.lastPath = [];
+    this.processedPathSteps = 0;
     this.lastStopReason = null;
     this.lastStopTile = null;
     this.collectedCounts = {
@@ -85,6 +86,7 @@ export default class PlayerController {
     this.bufferTimer = 0;
 
     this.lastPath = [];
+    this.processedPathSteps = 0;
     this.lastStopReason = null;
     this.lastStopTile = null;
     this.collectedCounts = {
@@ -144,8 +146,10 @@ export default class PlayerController {
     }
 
     this.moveProgress += (this.moveSpeed / this.moveDistance) * fixedDeltaTime;
+    this.processReachedPathSteps();
 
     if (this.moveProgress + FLOAT_EPSILON >= 1.0) {
+      this.processReachedPathSteps(this.lastPath.length);
       this.gridX = this.moveTargetX;
       this.gridZ = this.moveTargetZ;
       this.visualX = this.gridX;
@@ -203,9 +207,9 @@ export default class PlayerController {
     this.moveDistance = Math.abs(result.targetX - this.gridX) + Math.abs(result.targetZ - this.gridZ);
     this.moveProgress = 0;
     this.lastPath = result.path;
+    this.processedPathSteps = 0;
     this.lastStopReason = result.stopReason;
     this.lastStopTile = result.stopTile;
-    this.processPath(result.path);
 
     this.logger?.log?.(
       `[Player] startMove(${direction}) -> target(${result.targetX}, ${result.targetZ}), distance=${this.moveDistance}`,
@@ -250,32 +254,43 @@ export default class PlayerController {
     this.bufferTimer = 0;
   }
 
-  processPath(path) {
-    if (!this.gridMap || !Array.isArray(path)) {
+  processReachedPathSteps(forcedStepCount = null) {
+    if (!this.gridMap || !Array.isArray(this.lastPath) || this.moveDistance <= 0) {
       return;
     }
 
-    for (const step of path) {
-      const tile = this.gridMap.getTile(step.x, step.z);
-      if (!isCollectibleTile(tile)) {
-        continue;
-      }
+    const reachedStepCount = forcedStepCount ?? Math.floor(
+      Math.min(this.moveDistance, this.moveProgress * this.moveDistance + FLOAT_EPSILON),
+    );
+    const nextStepCount = Math.min(reachedStepCount, this.lastPath.length);
 
-      this.gridMap.setTile(step.x, step.z, TileType.Empty);
-
-      const counterKey = COLLECTIBLE_COUNTER_KEYS[tile];
-      if (counterKey) {
-        this.collectedCounts[counterKey] += 1;
-      }
-
-      this.logger?.log?.(`[Player] collect(${counterKey}) at (${step.x}, ${step.z})`);
-      this.onCollect?.({
-        type: counterKey,
-        x: step.x,
-        z: step.z,
-        total: this.collectedCounts[counterKey],
-      });
+    for (let index = this.processedPathSteps; index < nextStepCount; index += 1) {
+      this.processCollectibleAtStep(this.lastPath[index]);
     }
+
+    this.processedPathSteps = Math.max(this.processedPathSteps, nextStepCount);
+  }
+
+  processCollectibleAtStep(step) {
+    const tile = this.gridMap.getTile(step.x, step.z);
+    if (!isCollectibleTile(tile)) {
+      return;
+    }
+
+    this.gridMap.setTile(step.x, step.z, TileType.Empty);
+
+    const counterKey = COLLECTIBLE_COUNTER_KEYS[tile];
+    if (counterKey) {
+      this.collectedCounts[counterKey] += 1;
+    }
+
+    this.logger?.log?.(`[Player] collect(${counterKey}) at (${step.x}, ${step.z})`);
+    this.onCollect?.({
+      type: counterKey,
+      x: step.x,
+      z: step.z,
+      total: this.collectedCounts[counterKey],
+    });
   }
 
   isIdle() {
