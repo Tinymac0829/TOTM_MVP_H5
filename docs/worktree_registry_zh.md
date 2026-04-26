@@ -39,8 +39,8 @@
 | `ENG-01` | `codex/eng-01` | `WORKTREE_ROOT/ENG-01` | `TBD` | `DONE` | `2026-04-23` | 任务管理 thread 已接管并完成项目骨架：`index.html`、`src/main.js`、`src/GameLoop.js`、`src/GameState.js`。当前会话无法读取稳定 session id，暂保留 `TBD`。 |
 | `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `DONE` | `2026-04-23` | 运行时基础层已完成并提交 `b1b69b4`：`TileType`、`GridMap`、`StageLoader`、`Renderer + Camera` 与 `story_001` JSON 已接通，并通过 Node smoke、HTTP 访问和 `1080x1920` 设备模拟验证。 |
 | `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `DONE` | `2026-04-23` | 输入基础层已完成：`TouchInput`、`KeyboardInput`、`InputManager` 已接入 `main.js`，在 `playing` 状态下统一输出方向命令；稳定 session id 暂记为 `TBD`。 |
-| `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `IN_PROGRESS` | `2026-04-24` | 核心移动主链路与最小 HUD/状态流桥接代码已接通，并通过 Node smoke；由于尚未完成浏览器内人工手感验收，当前保持 `IN_PROGRESS`，不能标记为 `DONE`。若后续验收触发事件时序或手感边界调整，`ENG-05` 可能需要联调，因此在 `ENG-04` 变为 `DONE` 前，理论上 `ENG-05` 也不能标记为 `DONE`。 |
-| `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `IN_PROGRESS` | `2026-04-24` | 任务管理 thread 已接管并启动实现：`HUD.js` 已从过渡桥接层扩展到正式状态覆盖层，`main.js` 已接入开始界面、加载提示、失败重开、通关后重复游玩 fallback；同时已补充 `docs/features/eng04_eng05_joint_acceptance_card.md`、`docs/features/eng04_eng05_joint_acceptance_checklist.md`、`docs/features/eng04_eng05_browser_validation_log_template.md` 作为联合验收文档；由于 `ENG-04` 仍为 `IN_PROGRESS`，后续仍可能需要联调。 |
+| `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `DONE` | `2026-04-26` | 核心移动主链路已完成真实浏览器人工验收：四向滑行、撞墙停止、输入缓冲、收集物逐格消失、Exit 移动收尾、Spikes 死亡、`stageClearPending` 后输入锁定均通过；收集物提前消失问题已修复并回归通过。 |
+| `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `DONE` | `2026-04-26` | 最小玩法 UI 已结合 `ENG-04` 在 `WORKTREE_ROOT/ENG-04` 中完成真实浏览器联合验收：开始、loading、失败弹窗、通关弹窗、重开、重复游玩 fallback、HUD 计数、按钮点击与缩放均通过；当前仍保留 `eng04_death_validation` 作为本地死亡链路验证关卡。 |
 
 ## 更新日志
 
@@ -63,6 +63,7 @@
 | `2026-04-24` | `WORKTREE` | 已创建 `ENG-05` 的任务分支 `codex/eng-05` 与 sibling worktree `WORKTREE_ROOT/ENG-05`，并登记到中央台账。 | 最小玩法 UI 任务现在已有独立执行环境，后续可在专属任务管理 thread 中启动实现。 |
 | `2026-04-24` | `STATUS` | `ENG-05` 已从 `READY` 切换为 `IN_PROGRESS`：当前 worktree 已完成 HUD 正式状态流第一轮实现，包括 `menu/loading/fail/complete` 覆盖层、开始按钮进入 `story_001`、失败重开、以及在仅接入 `story_001` 时通关后回退到重复游玩；已通过浏览器桩 smoke 验证主链路。 | `WORKTREE_ROOT/ENG-05` 现在已进入实际开发阶段，但在 `ENG-04` 收口前仍需保留联调空间，暂不能宣告最终完成。 |
 | `2026-04-24` | `DOC` | 已在 `WORKTREE_ROOT/ENG-05/docs/features/` 下新增 `ENG-04 × ENG-05` 联合验收功能卡、短版执行清单与真实浏览器联调记录模板，并补齐三份文档之间的相对路径引用。 | `ENG-05` 的任务管理 thread 现在已具备完整的联调执行材料，后续浏览器联调和问题记录可以直接在当前 worktree 内闭环进行。 |
+| `2026-04-26` | `VALIDATION` | `ENG-04 × ENG-05` 已在 `WORKTREE_ROOT/ENG-04` 完成真实浏览器联合验收，并将 `ENG-04`、`ENG-05` 标记为 `DONE`。 | `story_001` 默认链路和 `eng04_death_validation` 死亡验证链路均通过；后续可进入 LVL-01/QA-01 相关收口，但浏览器回归需强制刷新或无痕窗口避免 ES Module 缓存误判。 |
 
 
 
