@@ -27,7 +27,7 @@
 | R-006 | FROZEN | Input | 游戏必须同时支持触屏滑动与键盘输入。 | 两种输入路径都应汇聚到同一个玩法命令层。 |
 | R-007 | FROZEN | Movement | 玩家移动规则为四向滑行，直到受阻才停。 | 一次移动会持续到撞墙、阻挡物或规则中断点。 |
 | R-008 | FROZEN | Movement | 输入缓冲窗口固定为 `0.02s`。 | 若缓冲仍有效，则在当前滑行结束后立即执行。 |
-| R-009 | FROZEN | Movement | 玩家移动速度基线为 `5.0 tiles/s`。 | 作为第一版可玩手感基准。 |
+| R-009 | FROZEN | Movement | 玩家实际移动速度基线为 `8.0 tiles/s`。 | 逆向确认 `_runSpeed = 5.0` 为 base 值，需乘以 `_gameStageScale = 1.6`，等效实际速度为 `8.0 tiles/s`。 |
 | R-010 | FROZEN | Data | MVP 关卡数据必须使用 JSON 兼容的网格格式。 | 每关必须可表示为二维瓦片数组加关卡元数据，例如出生点、出口、收集物和关卡标记。 |
 | R-011 | FROZEN | Rules | MVP 必须明确冻结当前支持的瓦片与碰撞子集。 | 当前冻结子集为：`Empty`、`Wall`、`Enter`、`Exit`、`Dot`、`Coin`、`Star`、`Spikes`。新增瓦片必须先更新需求。 |
 | R-012 | FROZEN | Flow | 所有纳入范围的 Story 关卡都必须支持完整的开始 -> 失败/通关闭环。 | 适用于 `Story 1`、`Story 2`、`Story 3`。 |

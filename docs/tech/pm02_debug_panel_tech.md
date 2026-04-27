@@ -152,11 +152,11 @@ initKeyBindings() {
 ```javascript
 applySpeedModifier() {
   if (this.slowMotion) {
-    playerController.moveSpeed = 5.0 * 0.5;  // 2.5 tiles/s
+    playerController.moveSpeed = 8.0 * 0.5;  // 4.0 tiles/s
   } else if (this.fastMotion) {
-    playerController.moveSpeed = 5.0 * 2.0;  // 10.0 tiles/s
+    playerController.moveSpeed = 8.0 * 2.0;  // 16.0 tiles/s
   } else {
-    playerController.moveSpeed = 5.0;         // 恢复默认
+    playerController.moveSpeed = 8.0;         // 恢复默认
   }
 }
 
@@ -209,7 +209,7 @@ checkTileEvent() {
 │  Target: (5, 15)                │
 │  Progress: 0.67                 │
 │  Buffer: up (0.01s)             │
-│  Speed: 5.0 tiles/s (x1.0)     │
+│  Speed: 8.0 tiles/s (x1.0)     │
 │  Stage: story_001 (17x30)        │
 │  Dots: 8/12  Coins: 2/4        │
 │  fixedUpdate: 0.3ms             │
@@ -547,10 +547,10 @@ if (tile === TileType.Spikes) {
 | 测试用例 | 输入 | 预期输出 | 验证点 |
 |---------|------|---------|--------|
 | FPS 计算 | 模拟 30 帧 / 0.5s | fps === 60 | FPS 计数准确 |
-| 慢动作开启 | 按 F5 | moveSpeed === 2.5 | 速度减半 |
-| 快动作开启 | 按 F6 | moveSpeed === 10.0 | 速度翻倍 |
+| 慢动作开启 | 按 F5 | moveSpeed === 4.0 | 速度减半 |
+| 快动作开启 | 按 F6 | moveSpeed === 16.0 | 速度翻倍 |
 | 慢动作→快动作 | 先 F5 再 F6 | slowMotion=false, fastMotion=true | 互斥 |
-| 速度恢复 | 开启慢动作后再按 F5 | moveSpeed === 5.0 | 恢复默认 |
+| 速度恢复 | 开启慢动作后再按 F5 | moveSpeed === 8.0 | 恢复默认 |
 | collectLines | 各种状态组合 | 返回正确行数和内容 | 面板内容 |
 
 ### 10.2 集成测试

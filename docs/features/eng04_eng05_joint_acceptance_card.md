@@ -51,7 +51,7 @@
 
 **已核实**：
 - `GameState` 已提供 `playing`、`paused_fail`、`paused_complete`、`onPlayerDead()`、`onStageComplete()`、`getNextStageId()`
-- `PlayerController` 已提供四向滑行、`0.02s` 输入缓冲、`5.0 tiles/s` 固定步长移动、收集物拾取、死亡回调、出口回调，以及 `stageClearPending`
+- `PlayerController` 已提供四向滑行、`0.02s` 输入缓冲、`8.0 tiles/s` 实际移动速度（`_runSpeed 5.0 × _gameStageScale 1.6`）、收集物拾取、死亡回调、出口回调，以及 `stageClearPending`
 - `main.js` 已接通 `onCollect -> HUD.addCollectible()`、`onDeath -> GameState.onPlayerDead() + HUD.showFailPopup()`、`onExit -> GameState.onStageComplete() + HUD.showCompletePopup()`
 - 当前 `story_001` 不包含 Spikes；失败链路需通过 `?stage=eng04_death_validation` 进入本地验证关卡执行
 - 当前 `HUD` 已进入正式实现阶段，但仍允许在不破坏接口契约的前提下继续联调

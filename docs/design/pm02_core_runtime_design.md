@@ -79,7 +79,9 @@ MVP 阶段支持的瓦片类型：
 
 | 参数 | 值 | 单位 | 说明 |
 |------|-----|------|------|
-| 玩家移动速度 | 5.0 | 格/秒 | 核心手感参数 |
+| 玩家基础速度 `_runSpeed` | 5.0 | 格/秒 | 逆向 base 值，不直接作为最终实际速度 |
+| 舞台缩放 `_gameStageScale` | 1.6 | 倍率 | 源自 `_referenceGameplaySize`，参与移动速度计算 |
+| 玩家实际移动速度 | 8.0 | 格/秒 | `5.0 × 1.6`，核心手感参数 |
 | 输入缓冲窗口 | 0.02 | 秒 | 20ms |
 | 滑动识别阈值 | 0.3 | 归一化距离 | 触摸滑动超过此距离才算有效 |
 | 瓦片逻辑尺寸 | 1.0 | 单位 | 网格中每格的逻辑尺寸 |
@@ -408,7 +410,7 @@ class PlayerController {
     
     // 状态
     this.state = 'idle';  // 'idle' | 'moving' | 'dead'
-    this.moveSpeed = 5.0;  // 格/秒（源自逆向报告 GameplayConstants._playerSpeed）
+    this.moveSpeed = 8.0;  // 格/秒（_runSpeed 5.0 × _gameStageScale 1.6）
     
     // 移动
     this.moveDirection = null;
@@ -533,7 +535,7 @@ class PlayerController {
 ```
 
 **关键点**：
-- 移动进度按 `moveSpeed / moveDistance * fixedDt` 累加，距离越远移动时间越长，速度恒定
+- 移动进度按 `moveSpeed / moveDistance * fixedDt` 累加，距离越远移动时间越长，速度恒定；MVP 中 `moveSpeed` 指等效实际速度 `8.0 tiles/s`
 - 输入缓冲在 `handleMovingState` 中接收新输入，在 `handleIdleState` 中消费
 - 收集物在 `startMove` 时立即处理（路径碰撞），不等到到达目标格子
 

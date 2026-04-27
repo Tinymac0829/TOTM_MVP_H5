@@ -27,7 +27,7 @@
 | R-006 | FROZEN | Input | The game must support both touch swipe and keyboard input. | Both paths should resolve into the same gameplay command layer. |
 | R-007 | FROZEN | Movement | Player movement is four-direction slide-until-blocked. | A move continues until wall, blocker, or rule-driven interrupt stops it. |
 | R-008 | FROZEN | Movement | Input buffer window is `0.02s`. | Buffered direction executes immediately after the current slide ends if still valid. |
-| R-009 | FROZEN | Movement | Player move speed baseline is `5.0 tiles/s`. | Treated as the first playable feel anchor. |
+| R-009 | FROZEN | Movement | Effective player move speed baseline is `8.0 tiles/s`. | Reverse validation confirmed `_runSpeed = 5.0` is the base value and is multiplied by `_gameStageScale = 1.6`, yielding `8.0 tiles/s` effective movement. |
 | R-010 | FROZEN | Data | MVP stage data must use a JSON-compatible grid format. | Each stage must be representable as a 2D tile array plus stage metadata such as enter, exit, collectibles, and stage flags. |
 | R-011 | FROZEN | Rules | MVP must explicitly freeze the supported tile and collision subset. | Current frozen subset: `Empty`, `Wall`, `Enter`, `Exit`, `Dot`, `Coin`, `Star`, `Spikes`. Additional tile types require requirement update first. |
 | R-012 | FROZEN | Flow | Each included story stage must support full start -> fail/clear loop. | Applies to `Story 1`, `Story 2`, and `Story 3`. |

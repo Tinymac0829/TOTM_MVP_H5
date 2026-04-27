@@ -463,7 +463,7 @@ PlayerController.fixedUpdate():
 |------|-----|------|------|
 | `swipeThreshold` | 0.3（归一化距离） | PM-02 TouchInput | 滑动识别最小距离，低于此值视为点击 |
 | `bufferDuration` | 0.02s (20ms) | R-008 / 逆向报告 | 输入缓冲窗口，等于一个 fixedUpdate 步长 |
-| `moveSpeed` | 5.0 tiles/s | PM-02 PlayerController | 玩家移动速度（调试模式下可修改） |
+| `moveSpeed` | 8.0 tiles/s | PM-02 PlayerController / R-009 | 玩家实际移动速度（`_runSpeed 5.0 × _gameStageScale 1.6`，调试模式下可修改） |
 | `fixedDeltaTime` | 0.02s (20ms) | PM-02 GameLoop | 固定步长，PlayerController 消费输入的频率 |
 | Canvas 逻辑尺寸 | 1080×1920 | PM-02 Renderer | 归一化坐标的基准 |
 
