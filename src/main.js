@@ -19,6 +19,12 @@ if (!context) {
   throw new Error("[Main] Canvas2D context is not available.");
 }
 
+let currentViewport = {
+  width: canvas.clientWidth || window.innerWidth || 1,
+  height: canvas.clientHeight || window.innerHeight || 1,
+  pixelRatio: Math.max(1, window.devicePixelRatio || 1),
+};
+
 const gameState = new GameState();
 const hud = new HUD();
 const inputManager = new InputManager({ canvas });
@@ -94,25 +100,42 @@ function getHudViewModel() {
   };
 }
 
+function resolveViewport() {
+  const visualViewport = window.visualViewport;
+  const width = Number.isFinite(visualViewport?.width) && visualViewport.width > 0
+    ? visualViewport.width
+    : window.innerWidth || canvas.clientWidth || 1;
+  const height = Number.isFinite(visualViewport?.height) && visualViewport.height > 0
+    ? visualViewport.height
+    : window.innerHeight || canvas.clientHeight || 1;
+
+  return {
+    width,
+    height,
+    pixelRatio: Math.max(1, window.devicePixelRatio || 1),
+  };
+}
+
 function resizeCanvas() {
-  const pixelRatio = Math.max(1, window.devicePixelRatio || 1);
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const targetWidth = Math.floor(width * pixelRatio);
-  const targetHeight = Math.floor(height * pixelRatio);
+  currentViewport = resolveViewport();
+  const targetWidth = Math.max(1, Math.round(currentViewport.width * currentViewport.pixelRatio));
+  const targetHeight = Math.max(1, Math.round(currentViewport.height * currentViewport.pixelRatio));
+
+  canvas.style.width = `${currentViewport.width}px`;
+  canvas.style.height = `${currentViewport.height}px`;
 
   if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
     canvas.width = targetWidth;
     canvas.height = targetHeight;
   }
 
-  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-  renderer.snapCameraToFocus();
+  context.setTransform(currentViewport.pixelRatio, 0, 0, currentViewport.pixelRatio, 0, 0);
+  renderer.snapCameraToFocus(currentViewport);
 }
 
 function render(deltaTime) {
-  renderer.render(deltaTime);
-  hud.render(context, canvas, getHudViewModel());
+  renderer.render(deltaTime, currentViewport);
+  hud.render(context, canvas, getHudViewModel(), currentViewport);
 }
 
 function reportNavigationError(error) {
@@ -142,10 +165,12 @@ function handleHudAction(action) {
 
 function getCanvasCoordinatesFromClient(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
+  const scaleX = rect.width > 0 ? currentViewport.width / rect.width : 1;
+  const scaleY = rect.height > 0 ? currentViewport.height / rect.height : 1;
 
   return {
-    x: clientX - rect.left,
-    y: clientY - rect.top,
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY,
   };
 }
 
@@ -220,6 +245,8 @@ async function advanceToNextStage() {
 
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("orientationchange", resizeCanvas);
+window.visualViewport?.addEventListener("resize", resizeCanvas);
+window.visualViewport?.addEventListener("scroll", resizeCanvas);
 canvas.addEventListener("click", (event) => {
   handleHudPointer(event.clientX, event.clientY);
 });

@@ -30,6 +30,17 @@ function resolveViewport(canvas) {
   };
 }
 
+function normalizeViewport(canvas, viewport = null) {
+  if (viewport && Number.isFinite(viewport.width) && Number.isFinite(viewport.height)) {
+    return {
+      width: viewport.width,
+      height: viewport.height,
+    };
+  }
+
+  return resolveViewport(canvas);
+}
+
 function resolveFrame(viewport) {
   const scale = Math.min(
     viewport.width / HUD_DESIGN_WIDTH || 1,
@@ -210,8 +221,8 @@ export default class HUD {
     return hitButton.action;
   }
 
-  render(context, canvas, viewModel = {}) {
-    const viewport = resolveViewport(canvas);
+  render(context, canvas, viewModel = {}, viewportOverride = null) {
+    const viewport = normalizeViewport(canvas, viewportOverride);
     const frame = resolveFrame(viewport);
     const model = this.resolveViewModel(viewModel);
     const overlayMode = this.resolveOverlayMode(model.gameState);

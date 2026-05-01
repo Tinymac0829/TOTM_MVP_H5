@@ -29,12 +29,22 @@ function resolveViewportSize(canvas) {
   };
 }
 
+function normalizeViewport(canvas, viewport = null) {
+  if (viewport && Number.isFinite(viewport.width) && Number.isFinite(viewport.height)) {
+    return {
+      width: viewport.width,
+      height: viewport.height,
+    };
+  }
+
+  return resolveViewportSize(canvas);
+}
+
 export default class Renderer {
   constructor({
     canvas,
     context = canvas?.getContext("2d"),
     tileSize = 60,
-    cameraLerpSpeed = 0.6,
     visiblePaddingTiles = 1,
     backgroundColor = "#18232d",
   } = {}) {
@@ -49,7 +59,6 @@ export default class Renderer {
     this.canvas = canvas;
     this.context = context;
     this.tileSize = tileSize;
-    this.cameraLerpSpeed = cameraLerpSpeed;
     this.visiblePaddingTiles = visiblePaddingTiles;
     this.backgroundColor = backgroundColor;
 
@@ -79,8 +88,8 @@ export default class Renderer {
     this.focusPoint = { x, z };
   }
 
-  render(dt = 0) {
-    const viewport = resolveViewportSize(this.canvas);
+  render(dt = 0, viewportOverride = null) {
+    const viewport = normalizeViewport(this.canvas, viewportOverride);
 
     this.clear(viewport.width, viewport.height);
 
@@ -101,39 +110,27 @@ export default class Renderer {
 
   updateCamera(dt, viewportWidth, viewportHeight) {
     const focus = this.resolveFocusPoint();
-    const targetOffsetX = this.clampCameraOffset(
-      focus.x * this.tileSize - viewportWidth / 2 + this.tileSize / 2,
-      this.getWorldWidth() - viewportWidth,
-    );
-    const targetOffsetZ = this.clampCameraOffset(
-      focus.z * this.tileSize - viewportHeight / 2 + this.tileSize / 2,
-      this.getWorldHeight() - viewportHeight,
-    );
+    const targetOffsetX = this.resolveCameraOffset(focus.x, viewportWidth);
+    const targetOffsetZ = this.resolveCameraOffset(focus.z, viewportHeight);
 
-    const lerpAlpha = clamp(this.cameraLerpSpeed * Math.max(dt, 0) * 60, 0, 1);
+    const lerpAlpha = clamp(Math.max(dt, 0) * 10, 0, 1);
 
     this.cameraOffsetX = lerp(this.cameraOffsetX, targetOffsetX, lerpAlpha);
     this.cameraOffsetZ = lerp(this.cameraOffsetZ, targetOffsetZ, lerpAlpha);
   }
 
-  snapCameraToFocus() {
+  snapCameraToFocus(viewportOverride = null) {
     if (!this.gridMap) {
       this.cameraOffsetX = 0;
       this.cameraOffsetZ = 0;
       return;
     }
 
-    const viewport = resolveViewportSize(this.canvas);
+    const viewport = normalizeViewport(this.canvas, viewportOverride);
     const focus = this.resolveFocusPoint();
 
-    this.cameraOffsetX = this.clampCameraOffset(
-      focus.x * this.tileSize - viewport.width / 2 + this.tileSize / 2,
-      this.getWorldWidth() - viewport.width,
-    );
-    this.cameraOffsetZ = this.clampCameraOffset(
-      focus.z * this.tileSize - viewport.height / 2 + this.tileSize / 2,
-      this.getWorldHeight() - viewport.height,
-    );
+    this.cameraOffsetX = this.resolveCameraOffset(focus.x, viewport.width);
+    this.cameraOffsetZ = this.resolveCameraOffset(focus.z, viewport.height);
   }
 
   renderMap(viewportWidth, viewportHeight) {
@@ -220,8 +217,8 @@ export default class Renderer {
     return { x: 0, z: 0 };
   }
 
-  clampCameraOffset(offset, maxOffset) {
-    return clamp(offset, 0, Math.max(0, maxOffset));
+  resolveCameraOffset(focusTilePosition, viewportSize) {
+    return (focusTilePosition + 0.5) * this.tileSize - viewportSize / 2;
   }
 
   getWorldWidth() {
