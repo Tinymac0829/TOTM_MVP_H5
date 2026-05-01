@@ -194,6 +194,25 @@ worldToTile(world) = world / WORLD_UNITS_PER_TILE;
 
 本轮采用 C 方案：新增 center-point / TileHalfSize API，但暂不切换主坐标语义。`PlayerController.worldX/worldZ` 继续表示 tile origin 对应的 world 位置，`Renderer` 继续按该 origin 位置绘制玩家占位方块；`tileToWorldCenter()` 只作为后续更贴近 Unity center-point 空间定位时的显式 API。
 
+### 2.2.2 Story 相机与 viewport 边界
+
+Story/Lava 相机规则以逆向 `1.6` 节为准：
+
+- 相机目标为玩家位置，跟随因子为 `clamp(deltaTime * 10, 0, 1)`。
+- Story/Lava 不使用 Arcade/Boss 的二次曲线 `t² * 0.85 + 0.15`、X 轴对齐动画、Y 偏移或 Section 添加逻辑。
+- `cameraLerpSpeed` 不是 Story/Lava 的全局 Lerp 速度；它只属于 Arcade/Boss 开局 `0 -> 1` 渐变参数。
+- Story MVP 的 Renderer 不应把相机夹在地图边界内；地图边缘允许显示背景留白，以保持玩家在可视区域内稳定跟随。
+
+该相机规则属于 Screen/Renderer 层，只影响画面构图、HUD 点击坐标和移动端 viewport 适配，不改变 Tile 拓扑碰撞、World 运动速度或 `PlayerController` 的状态机语义。
+
+移动端实现时必须统一以下口径：
+
+- canvas CSS 可视尺寸。
+- canvas backing store 尺寸。
+- Renderer viewport。
+- HUD 渲染坐标。
+- `main.js` 中 HUD 点击命中坐标。
+
 ### 2.3 状态机设计
 
 **PlayerController 状态机**：
@@ -535,6 +554,8 @@ console.log(`[Player] reached target(${gridX}, ${gridZ}), tile=${tile}`);
 | 输入缓冲窗口实现仍停留在 20ms | 连续滑动丢失，偏离逆向确认的 100ms 原版预输入手感 | 默认 `bufferDuration` 改为 0.1s，并按 `update(dt)` 递减 |
 | 坐标域混用 | 速度、碰撞和渲染互相污染，后续再次误用 `tiles/s` 或 `_gameStageScale` | 统一通过 `CoordinateSystem` 转换；`PlayerController` 使用 world-units 主运动口径，`CollisionSystem` 只接收 tile 拓扑坐标 |
 | 移动速度不合适 | 手感太快/太慢 | 以 `5.0 world units/s` 与 `0.12 world units/tile` 为当前逆向校正基线，`41.67 tiles/s` 仅作为派生显示；任何调整都需重新验证 ENG-04/ENG-05 联动边界 |
+| Story 相机沿用地图边界 clamp | 玩家在关卡边缘贴近屏幕边缘，移动端 HUD 命中和滑动阈值体感被 viewport/camera 问题污染 | Story/Lava 相机改为 `clamp(dt * 10, 0, 1)` 跟随玩家，不做地图边界 clamp，允许背景留白 |
+| 移动端 viewport 口径不统一 | canvas 显示、HUD 命中、Renderer viewport 与浏览器可视区域错位 | 统一 canvas CSS 尺寸、backing store、Renderer viewport、HUD 渲染和点击命中坐标 |
 | 短距离移动被固定步长量化拖慢 | 1-2 格滑行体感偏慢，输入缓冲时序偏离原版 | 在 `PlayerController` 内进行 world-units 过冲/剩余距离处理，不改全局 fixed runtime |
 | 固定步长累加器卡顿 | 帧率过低时游戏卡死 | 限制累加器最大执行次数（已在 PM-02 实现） |
 | 路径检测性能不足 | 长路径导致卡顿 | 限制路径长度上限为 50 格 |
@@ -551,6 +572,7 @@ console.log(`[Player] reached target(${gridX}, ${gridZ}), tile=${tile}`);
 | 2026-04-30 | BASELINE | 修正输入缓冲窗口为 `0.1s/100ms`，并明确缓冲倒计时应在 `update(dt)` 路径中递减；空间定位采用 C 方案，只新增 `TileHalfSize` / center API，暂不切换 `worldX/worldZ` 的 origin 主语义 | ENG-04 文档、PM-02 文档、ENG-03 输入文档、`CoordinateSystem`、`PlayerController`、真实浏览器回归 | 已批准批次 1-3 文档更新 |
 | 2026-05-01 | CODE | 已按 C 方案完成代码批次：`CoordinateSystem` 新增 half-tile/center API 且保留 `tileToWorld()` origin 语义；`PlayerController` 默认 `bufferDuration = 0.1`，缓冲倒计时走 `update(deltaTime)`；`fixedUpdate()` 继续负责玩家位移；模块缓存 query 更新为 `eng04_input_buffer_v1` | `CoordinateSystem`、`PlayerController`、`main.js`、`index.html`、浏览器缓存版本 | 已批准并完成 |
 | 2026-05-01 | VALIDATION | 自动校验和真实浏览器回归均已通过：`story_001` 主链路、快速连续滑动与 AHK 边界测试、`eng04_death_validation`、弹窗输入屏蔽、点击/缩放和缓存版本确认均为 `PASS`；两个入口均加载 `eng04_input_buffer_v1` | ENG-04/ENG-05 联合验收、输入缓冲边界、死亡/通关时序、HUD 同步、点击缩放 | 已验收通过 |
+| 2026-05-02 | BASELINE | 补充 Story/Lava 相机基线：相机按 `clamp(dt * 10, 0, 1)` 跟随玩家，不使用地图边界 clamp；`cameraLerpSpeed` 仅属于 Arcade/Boss 渐变；移动端 viewport/canvas/HUD/Renderer 口径需统一 | Renderer、Camera、Screen/Design 坐标、OPS-01 Android 阻断 | 已批准本批文档更新 |
 
 ---
 

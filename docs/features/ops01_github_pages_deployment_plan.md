@@ -139,6 +139,50 @@ OPS-01 只有在以下条件同时满足时才能标记为 `DONE`：
 - 地图边缘镜头留白 / 居中策略。
 - 移动端 HUD 顶部 safe-area / 视口适配。
 
+## 2026-05-02 Android 第二轮验收记录
+
+| 字段 | 内容 |
+|---|---|
+| 验收日期 | `2026-05-02` |
+| Pages URL | `https://tinymac0829.github.io/TOTM_MVP_H5/` |
+| 提交版本 | `fix: align mobile HUD taps and swipe gestures for OPS-01` |
+| 桌面浏览器 | Chrome |
+| 移动设备 / 浏览器 | Xiaomi 13 Ultra / Android 16 Xiaomi HyperOS 3.0.4.0 / Chrome 147.0.7727.49 |
+| 设备物理分辨率 | `3200x1440` WQHD 竖屏 |
+| 静态资源加载 | `PASS`：直接访问 `src/TouchInput.js` 可见 `resolveSwipeThreshold`、`NORMAL_DPI_FACTOR`、`INVALID_DPI_WIDTH_FACTOR` |
+| 桌面 smoke | `PASS` |
+| 开始按钮命中 | `FAIL`：点击蓝色视觉按钮中心、上半部、下半部与边缘内侧仍不能稳定命中，需要点击按钮视觉区域上方 |
+| 通关按钮命中 | `FAIL`：通关后“重复游玩”按钮同样需要点击视觉按钮上方 |
+| 移动端滑动阈值 | `BLOCKED`：阈值已明显短于上一轮且接近竞品，但当前 camera / viewport 显示比例异常可能影响体感，暂不继续调参 |
+| 不离屏连续滑动 | `PASS`：手指不离屏连续多次方向滑动已实现，表现与竞品一致 |
+| 角色移动与页面稳定 | `PASS`：角色按方向移动，页面不滚动、不缩放、不丢 Canvas 焦点 |
+| 收集/HUD 或通关 smoke | `PASS` |
+| 截图证据 | Android 页面截图覆盖开始界面、游玩中、通关弹窗；竞品截图覆盖 Story 模式相机参考 |
+| 总体结论 | `FAIL`：OPS-01 仍不能收口；下一轮先统一移动端 viewport / canvas / HUD 坐标口径，并按 Story/Lava 相机规则修正 Renderer。 |
+
+### Android 第二轮根因判断
+
+- 第一轮“点击开始游戏完全无响应”可能同时包含两个问题：移动端 touch 未接入 HUD action，以及 HUD 视觉按钮与命中区域存在垂直偏移；`5a057c9` 的 `touchend` 接入方向保留，不直接回滚。
+- `6bbc4e4` 已将 HUD touch 坐标从缩放换算改为 `client - rect`，但第二轮仍复现偏上命中，说明根因不只是单个 hit-test 公式。
+- 当前更高概率根因是移动端 `100vh`、`window.innerHeight`、canvas backing size、HUD viewport 与 Renderer viewport 的尺寸口径不一致。
+- 竞品逆向确认 Story/Lava 模式是 `clamp(dt * 10, 0, 1)` Lerp 跟随玩家，且无地图边界 clamp；当前 Renderer 使用地图边界 clamp，会导致角色在地图边缘贴近屏幕边缘并暴露 viewport/camera 适配问题。
+- `cameraLerpSpeed` 不是全局相机跟随速度，而是 Arcade/Boss 开局的 `0 -> 1` 渐变参数；当前 Story MVP 不应引入 Arcade/Boss 的二次曲线、X 对齐动画或 Y 偏移规则。
+
+### Android 第二轮后续修复边界
+
+下一轮代码修复建议只处理以下内容：
+
+- 统一移动端 viewport / canvas 尺寸口径，优先使用 `window.visualViewport`，fallback 到 `window.innerWidth / innerHeight`。
+- 确保 canvas CSS 尺寸、backing store 尺寸、HUD 渲染坐标和 HUD 命中坐标使用同一套 viewport。
+- Story 模式 Renderer 相机改为按玩家中心 `Lerp(dt * 10)` 跟随，不做地图边界 clamp，允许地图边缘显示背景留白。
+- 修复后重新验收 HUD 按钮命中、移动端 camera 画面、滑动阈值体感和主链路 smoke。
+
+下一轮暂不处理：
+
+- Arcade/Boss 相机规则。
+- Story 2 / Story 3 验收。
+- 最终 HUD 视觉稿与 safe-area 精修；如统一 viewport 后顶部 HUD 仍有问题，再单独开批。
+
 ## 后续收口动作
 
 线上 smoke 通过后，同步更新：

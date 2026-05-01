@@ -669,11 +669,16 @@ class Renderer {
   }
 
   updateCamera(dt) {
+    const targetOffsetX = playerController.gridX * this.tileSize
+                        - this.canvas.width / 2
+                        + this.tileSize / 2;
     const targetOffsetZ = playerController.gridZ * this.tileSize
-                        - this.canvas.height / 2;
-    const lerpSpeed = 0.6;  // 源自逆向报告 cameraLerpSpeed
-    this.cameraOffsetZ += (targetOffsetZ - this.cameraOffsetZ)
-                        * lerpSpeed * dt * 60;
+                        - this.canvas.height / 2
+                        + this.tileSize / 2;
+    const t = Math.min(1, Math.max(0, dt * 10));
+
+    this.cameraOffsetX += (targetOffsetX - this.cameraOffsetX) * t;
+    this.cameraOffsetZ += (targetOffsetZ - this.cameraOffsetZ) * t;
   }
 
   renderMap() {
@@ -749,7 +754,14 @@ function lerp(a, b, t) {
 
 **瓦片尺寸**：60px（1080 / 18 ≈ 60，竖屏下约 18 列可见宽度）
 
-**相机跟随**：平滑插值 lerpSpeed = 0.6（源自逆向报告），玩家保持在屏幕中央偏下
+**相机跟随**：Story/Lava 模式使用逆向确认的 `clamp(dt * 10, 0, 1)` Lerp 跟随玩家中心；当前 Story MVP 不做地图边界 clamp，允许地图边缘显示背景留白。
+
+**相机参数边界**：
+
+- `cameraLerpSpeed` 不是 Story/Lava 的全局跟随速度；它是 Arcade/Boss 开局 `0 -> 1` 的渐变参数。
+- `_gameStageScale = 1.6` 是舞台/相机缩放相关参考值，不参与玩家 tile 位移速度换算。
+- Arcade/Boss 的二次曲线 `t² * 0.85 + 0.15`、X 轴对齐动画、Y 偏移和 Section 触发逻辑不属于当前 Story `1-3` MVP 实现范围。
+- 移动端 viewport 口径必须统一：canvas CSS 尺寸、backing store 尺寸、Renderer viewport、HUD 渲染坐标和 HUD 点击命中坐标应使用同一套可视 viewport。
 
 #### 2.3.7 HUD（界面）
 
@@ -1098,6 +1110,7 @@ MVP 完成后，以下升级均为增量操作，不需要重写现有代码：
 | 2026-04-30 | BASELINE | 修正输入缓冲窗口为 `0.1s/100ms`，并明确缓冲计时在 `update(deltaTime)` 中递减、玩家位移仍在 `fixedUpdate` 中执行；空间定位采用 C 方案，新增 center API 但不切换现有 origin 主语义 | 输入、PlayerController、CoordinateSystem、ENG-04/ENG-05 回归 | 已批准批次 1-3 文档更新 |
 | 2026-05-01 | CODE | ENG-04 已完成运行时相关实现：`CoordinateSystem` 提供 half-tile/center API 并保留 origin 语义，`PlayerController.update(deltaTime)` 负责 100ms 输入缓冲倒计时，`fixedUpdate()` 继续负责位移，入口模块 query 更新为 `eng04_input_buffer_v1` | GameLoop、PlayerController、CoordinateSystem、模块缓存版本 | 已批准并完成 |
 | 2026-05-01 | VALIDATION | ENG-04/ENG-05 真实浏览器回归通过，覆盖 `story_001`、`eng04_death_validation`、快速连续滑动、AHK 边界测试、弹窗输入屏蔽、点击/缩放和缓存版本确认 | 运行时循环、输入缓冲、移动/事件时序、HUD 状态流 | 已验收通过 |
+| 2026-05-02 | BASELINE | 根据逆向 1.6 节修正相机设计：Story/Lava 使用 `clamp(dt * 10, 0, 1)` 跟随玩家且不做地图边界 clamp；`cameraLerpSpeed` 仅属于 Arcade/Boss 开局渐变；移动端 viewport / canvas / HUD / Renderer 必须统一可视口径 | Renderer、Camera、HUD 点击命中、OPS-01 Android 阻断 | 已批准本批文档更新 |
 
 ---
 
