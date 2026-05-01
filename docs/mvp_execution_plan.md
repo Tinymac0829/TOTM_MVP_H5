@@ -81,7 +81,7 @@
 | ENG-05 | DONE | `R-012,R-013,R-015` | Implement minimal gameplay UI | HUD/state flow passed the `2026-05-01` joint real-browser regression. Buttons, popups, HUD sync, input lockout, click/resize timing, and replay fallback were all rechecked as `PASS` |
 | LVL-01 | DONE | `R-010,R-011,R-012,R-017` | Integrate `Story 1` | The `story_001` main path was completed in the `2026-05-01` ENG-04 × ENG-05 real-browser regression: startup, sliding, collection/HUD, clear, replay, click/resize, and cache-version confirmation |
 | QA-01 | DONE | `R-006,R-007,R-008,R-009,R-017` | Finish `Story 1` feel validation | Closed by `docs/features/qa01_story1_feel_validation_closeout.md`: four-direction sliding and `100ms` buffering passed `2026-05-01` real-browser regression; `<50ms` response is closed by input-path code review and the documented `44ms` engineering budget, not by high-speed-camera measurement |
-| OPS-01 | TODO | `R-020` | Set up GitHub Pages deployment | Current playable build can be opened by URL on multiple devices |
+| OPS-01 | TODO | `R-020` | Set up GitHub Pages deployment | GitHub Pages URL opens the current playable build, desktop and mobile smoke pass, mobile touch swipe moves the player, static assets load without blocking errors, and `eng04_input_buffer_v1` is confirmed online |
 | LVL-02 | TODO | `R-010,R-011,R-012,R-018` | Integrate `Story 2` | Stage is fully playable and does not regress `Story 1` |
 | QA-02 | TODO | `R-017,R-018` | Finish `Story 1-2` regression pass | Shared feel and state flow stay consistent across both stages |
 | LVL-03 | TODO | `R-010,R-011,R-012,R-019` | Integrate `Story 3` | Stage is fully playable and closes the first MVP stage set |
