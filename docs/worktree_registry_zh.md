@@ -39,8 +39,8 @@
 | `ENG-01` | `codex/eng-01` | `WORKTREE_ROOT/ENG-01` | `TBD` | `DONE` | `2026-04-23` | 任务管理 thread 已接管并完成项目骨架：`index.html`、`src/main.js`、`src/GameLoop.js`、`src/GameState.js`。当前会话无法读取稳定 session id，暂保留 `TBD`。 |
 | `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `DONE` | `2026-04-23` | 运行时基础层已完成并提交 `b1b69b4`：`TileType`、`GridMap`、`StageLoader`、`Renderer + Camera` 与 `story_001` JSON 已接通，并通过 Node smoke、HTTP 访问和 `1080x1920` 设备模拟验证。 |
 | `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `DONE` | `2026-04-23` | 输入基础层已完成：`TouchInput`、`KeyboardInput`、`InputManager` 已接入 `main.js`，在 `playing` 状态下统一输出方向命令；稳定 session id 暂记为 `TBD`。 |
-| `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `IN_PROGRESS` | `2026-04-27` | 已按新版逆向结论校正 `R-009`：`_runSpeed = 5.0` 为 base 值，实际移动速度应为 `_runSpeed × _gameStageScale = 8.0 tiles/s`；代码回改和真实浏览器回归待执行，完成前不再视为 DONE。 |
-| `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `IN_PROGRESS` | `2026-04-27` | 最小玩法 UI 已完成首轮联合验收，但需随 `ENG-04` 实际速度从 `5.0` 回改到 `8.0 tiles/s` 后重新确认失败/通关弹窗、输入屏蔽、按钮可用时机与 HUD 同步，因此暂回到 IN_PROGRESS。 |
+| `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `IN_PROGRESS` | `2026-05-01` | ENG-04 worktree 内已完成 `R-009` 三层坐标域实现和 `R-008` `0.1s/100ms` 输入缓冲代码批次。`CoordinateSystem`、`PlayerController`、`Renderer` 与模块缓存 query 已通过自动校验和加载 `eng04_input_buffer_v1` 的真实浏览器回归；任务最终关闭仍等待明确收口指令。 |
+| `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `IN_PROGRESS` | `2026-05-01` | 最小玩法 UI 与 ENG-04 集成链路已在 `2026-05-01` 随 world-units 运动、Renderer 坐标适配、短距离过冲处理和 `100ms` 输入缓冲完成真实浏览器回归。失败/通关弹窗、输入屏蔽、按钮可用时机、HUD 同步和点击缩放均已复测为 `PASS`。 |
 
 ## 更新日志
 
@@ -64,7 +64,12 @@
 | `2026-04-24` | `STATUS` | `ENG-05` 已从 `READY` 切换为 `IN_PROGRESS`：当前 worktree 已完成 HUD 正式状态流第一轮实现，包括 `menu/loading/fail/complete` 覆盖层、开始按钮进入 `story_001`、失败重开、以及在仅接入 `story_001` 时通关后回退到重复游玩；已通过浏览器桩 smoke 验证主链路。 | `WORKTREE_ROOT/ENG-05` 现在已进入实际开发阶段，但在 `ENG-04` 收口前仍需保留联调空间，暂不能宣告最终完成。 |
 | `2026-04-24` | `DOC` | 已在 `WORKTREE_ROOT/ENG-05/docs/features/` 下新增 `ENG-04 × ENG-05` 联合验收功能卡、短版执行清单与真实浏览器联调记录模板，并补齐三份文档之间的相对路径引用。 | `ENG-05` 的任务管理 thread 现在已具备完整的联调执行材料，后续浏览器联调和问题记录可以直接在当前 worktree 内闭环进行。 |
 | `2026-04-26` | `VALIDATION` | `ENG-04 × ENG-05` 已在 `WORKTREE_ROOT/ENG-04` 完成真实浏览器联合验收，并在当时将 `ENG-04`、`ENG-05` 标记为 `DONE`。 | 该结论为历史记录；已被 `2026-04-27` runspeed 基线重开覆盖。 |
-| `2026-04-27` | `BASELINE` | 新版逆向报告确认实际移动速度应为 `8.0 tiles/s`，前一轮实现误把 `_runSpeed = 5.0` base 值当作实际速度。 | `ENG-04/ENG-05` 状态退回 `IN_PROGRESS`；后续需先完成文档基线同步，再回改代码并重新执行真实浏览器人工验收。 |
+| `2026-04-27` | `BASELINE` | 当时新版逆向报告确认实际移动速度应为 `8.0 tiles/s`，前一轮实现误把 `_runSpeed = 5.0` base 值当作实际速度。 | 该结论已被 `2026-04-28` 记录覆盖；保留为历史记录。 |
+| `2026-04-28` | `BASELINE` | 逆向报告与人工逐帧验证重新确认：`_runSpeed = 5.0 world units/s`，单格尺寸 `0.12 world units/tile`，当前 tile-grid 代码应使用约 `41.67 tiles/s`，`_gameStageScale = 1.6` 不参与玩家 tile 位移速度换算。 | 该基线仍为当前权威口径，并已由 `2026-05-01` ENG-04 代码与验收记录完成实现和回归。 |
+| `2026-04-29` | `DESIGN` | ENG-04 采用三层坐标域严谨化方案，并要求新增统一坐标模块、改 `PlayerController` world 坐标字段、在 `PlayerController` 内处理固定步长过冲、让 `Renderer` 适配 `worldX/worldZ`。 | 该设计方向已由 `2026-05-01` 实现与真实浏览器回归记录覆盖；当前剩余状态是任务收口确认，不是代码回改。 |
+| `2026-04-30` | `BASELINE` | ENG-04 修正 `R-008` 输入缓冲窗口为 `0.1s/100ms`，并明确缓冲倒计时走 `update(dt)`、玩家位移仍走 `fixedUpdate`；空间定位采用 C 方案，只新增 center API，不切换现有 origin 主坐标语义。 | 该基线已由 `2026-05-01` 代码与真实浏览器回归记录完成实现和复验。 |
+| `2026-05-01` | `CODE` | 已完成 ENG-04 当前基线代码批次：新增 `CoordinateSystem` half-tile 与 center API 且保留 origin 语义；将输入缓冲倒计时迁移到 `PlayerController.update(deltaTime)`；玩家位移继续走 `fixedUpdate`；模块缓存 query 更新为 `eng04_input_buffer_v1`。 | 移动、收集、死亡、通关、缓冲过期/覆盖和连锁转向语义的自动语法与行为校验均已通过。 |
+| `2026-05-01` | `VALIDATION` | 真实浏览器回归已通过：`story_001` 主链路、快速连续滑动与 AHK 边界测试、`eng04_death_validation`、弹窗输入屏蔽、点击/缩放对齐和缓存版本确认均为 `PASS`。 | `ENG-04 × ENG-05` 集成基线已在 R-009 坐标域与 R-008 输入缓冲变更后重新验证；两个测试入口均确认加载 `eng04_input_buffer_v1`。 |
 
 
 

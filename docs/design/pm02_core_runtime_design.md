@@ -3,8 +3,8 @@
 **文档类型**：L3 设计文档（策划案 + 技术方案）  
 **任务 ID**：PM-02  
 **创建日期**：2026-04-16  
-**最后更新**：2026-04-16  
-**状态**：初稿  
+**最后更新**：2026-05-01
+**状态**：坐标域与输入缓冲运行时基线已实现并通过 ENG-04 回归
 **来源**：基于逆向报告中冻结的原版 Tomb of the Mask v1.25.0 运行时规则
 
 ---
@@ -34,7 +34,7 @@
 
 #### 输入缓冲规则
 - 玩家在角色移动中滑动时，方向被缓存
-- 缓冲有效期：0.02 秒（20ms）
+- 缓冲有效期：0.1 秒（100ms）
 - 角色停下后，如果缓冲仍有效，立即执行缓冲的方向
 - 这是"跟手感"的关键机制
 
@@ -79,12 +79,14 @@ MVP 阶段支持的瓦片类型：
 
 | 参数 | 值 | 单位 | 说明 |
 |------|-----|------|------|
-| 玩家基础速度 `_runSpeed` | 5.0 | 格/秒 | 逆向 base 值，不直接作为最终实际速度 |
-| 舞台缩放 `_gameStageScale` | 1.6 | 倍率 | 源自 `_referenceGameplaySize`，参与移动速度计算 |
-| 玩家实际移动速度 | 8.0 | 格/秒 | `5.0 × 1.6`，核心手感参数 |
-| 输入缓冲窗口 | 0.02 | 秒 | 20ms |
+| 舞台缩放 `_gameStageScale` | 1.6 | 倍率 | 舞台/相机缩放相关参数，不参与玩家 tile 位移速度换算 |
+| 玩家源速度 `_runSpeed` | 5.0 | world units/s | 核心手感源参数 |
+| 单格尺寸 `TileSize` | 0.12 | world units/tile | 用于在 Tile 拓扑坐标与 World 运动坐标之间换算 |
+| 玩家 tile-grid 等效速度 | 41.6667 | tiles/s | `_runSpeed / TileSize`，仅作为显示和验收派生值 |
+| 输入缓冲窗口 | 0.1 | 秒 | 100ms，源自 `_nextSwipeTimeout = 0.1f` |
 | 滑动识别阈值 | 0.3 | 归一化距离 | 触摸滑动超过此距离才算有效 |
-| 瓦片逻辑尺寸 | 1.0 | 单位 | 网格中每格的逻辑尺寸 |
+| Tile 拓扑尺寸 | 1.0 | tile index | 关卡 JSON、碰撞和事件判定的离散拓扑单位 |
+| World 单格尺寸 | 0.12 | world units/tile | 玩家连续运动距离换算单位 |
 | 固定步长 | 0.02 | 秒 | 50Hz，保证跨设备手感一致 |
 
 ### 1.5 失败与成功条件
@@ -151,6 +153,9 @@ index.html
        │    └─ inputBuffer (输入缓冲)
        ├─ CollisionSystem (碰撞检测)
        │    └─ checkPath() (路径碰撞检测)
+       ├─ CoordinateSystem (坐标/单位转换)
+       │    ├─ tile <-> world units
+       │    └─ world/tile -> screen helper
        ├─ Renderer (渲染器)
        │    └─ Canvas2D 绘制
        ├─ HUD (界面)
@@ -159,6 +164,22 @@ index.html
        └─ StageLoader (关卡加载)
             └─ loadStage(id) (加载 JSON 关卡数据)
 ```
+
+### 2.2.1 坐标域总策略
+
+PM-02 运行时采用三层坐标域：
+
+| 坐标域 | 单位 | 模块边界 | 用途 |
+|---|---|---|---|
+| Tile 拓扑坐标 | 整数 tile index | `StageLoader`、`GridMap`、`CollisionSystem`、`PlayerController.gridX/gridZ` | 关卡 JSON、路径扫描、墙/尖刺/出口/收集物判定 |
+| World 运动坐标 | world units | `CoordinateSystem`、`PlayerController.worldX/worldZ` | 玩家连续位移、源速度、移动距离、耗时、进度 |
+| Screen/Design 像素坐标 | CSS pixel / 1080x1920 design pixel | `Renderer`、`HUD`、`main.js` 点击坐标 | Canvas 渲染、相机、HUD 和按钮命中 |
+
+设计边界：
+- 关卡 JSON 不切换到 world units，继续使用整数 tile 拓扑；否则 `tiles[][]`、`enter`、`exit`、碰撞路径和收集物状态都会被浮点化，风险高且不必要。
+- 玩家运动主口径使用 `5.0 world units/s`，`41.6667 tiles/s` 只作为由 `5.0 / 0.12` 得出的显示/验收派生值。
+- `Renderer` 不能再直接假设玩家的连续位置是 tile-space `visualX/visualZ`；它应通过 `CoordinateSystem` 把 `worldX/worldZ` 转为 tile-space 或 screen pixel。
+- HUD 的 1080x1920 设计坐标只服务 UI 布局和点击命中，不参与玩法速度、碰撞和相机焦点判定。
 
 ### 2.3 核心模块设计
 
@@ -405,12 +426,12 @@ class PlayerController {
     // 位置
     this.gridX = 0;
     this.gridZ = 0;
-    this.visualX = 0;  // 渲染位置（用于 Tween）
-    this.visualZ = 0;
+    this.worldX = 0;  // 连续 world units 坐标
+    this.worldZ = 0;
     
     // 状态
     this.state = 'idle';  // 'idle' | 'moving' | 'dead'
-    this.moveSpeed = 8.0;  // 格/秒（_runSpeed 5.0 × _gameStageScale 1.6）
+    this.runSpeedWorldUnitsPerSecond = 5.0;  // world units/s
     
     // 移动
     this.moveDirection = null;
@@ -422,19 +443,21 @@ class PlayerController {
     // 输入缓冲
     this.bufferedDirection = null;
     this.bufferTimer = 0;
-    this.bufferDuration = 0.02;  // 20ms（源自逆向报告 ProcessSwipe._nextSwipeTimeout）
+    this.bufferDuration = 0.1;  // 100ms（源自逆向报告 ProcessSwipe._nextSwipeTimeout = 0.1f）
   }
 
-  fixedUpdate() {
-    if (this.state === 'dead') return;
-    
-    // 更新输入缓冲计时器
+  update(deltaTime) {
+    // 更新输入缓冲计时器；原版在 DoUpdate 中按 Time.deltaTime 递减
     if (this.bufferedDirection) {
-      this.bufferTimer -= 0.02;
+      this.bufferTimer -= deltaTime;
       if (this.bufferTimer <= 0) {
         this.bufferedDirection = null;
       }
     }
+  }
+
+  fixedUpdate() {
+    if (this.state === 'dead') return;
     
     if (this.state === 'idle') {
       this.handleIdleState();
@@ -490,6 +513,7 @@ class PlayerController {
       this.moveTargetZ = result.targetZ;
       this.moveDistance = Math.abs(result.targetX - this.gridX)
                        + Math.abs(result.targetZ - this.gridZ);
+      this.moveDistanceWorld = this.moveDistance * WORLD_UNITS_PER_TILE;
       this.moveProgress = 0;
       this.state = 'moving';
       
@@ -524,8 +548,8 @@ class PlayerController {
   reset(x, z) {
     this.gridX = x;
     this.gridZ = z;
-    this.visualX = x;
-    this.visualZ = z;
+    this.worldX = tileToWorld(x);
+    this.worldZ = tileToWorld(z);
     this.state = 'idle';
     this.moveDirection = null;
     this.bufferedDirection = null;
@@ -535,8 +559,10 @@ class PlayerController {
 ```
 
 **关键点**：
-- 移动进度按 `moveSpeed / moveDistance * fixedDt` 累加，距离越远移动时间越长，速度恒定；MVP 中 `moveSpeed` 指等效实际速度 `8.0 tiles/s`
+- 移动主口径按 `runSpeedWorldUnitsPerSecond * fixedDt` 推进 world-units 距离；`moveProgress` 由 `traveledWorld / moveDistanceWorld` 派生，`41.67 tiles/s` 只用于调试显示
+- 1-2 格短距离移动的固定步长量化误差由 `PlayerController` 内的过冲/剩余距离处理，不改变全局 `GameLoop.fixedDeltaTime = 0.02`
 - 输入缓冲在 `handleMovingState` 中接收新输入，在 `handleIdleState` 中消费
+- 输入缓冲倒计时在 `update(deltaTime)` 中递减，贴近原版 `DoUpdate`；位移仍在 `fixedUpdate` 中执行
 - 收集物在 `startMove` 时立即处理（路径碰撞），不等到到达目标格子
 
 #### 2.3.5 CollisionSystem（碰撞检测）
@@ -683,19 +709,14 @@ class Renderer {
   renderPlayer(dt) {
     if (playerController.state === 'moving') {
       const t = playerController.moveProgress;
-      playerController.visualX = lerp(
-        playerController.gridX, playerController.moveTargetX, t
-      );
-      playerController.visualZ = lerp(
-        playerController.gridZ, playerController.moveTargetZ, t
-      );
+      // PlayerController now owns world-units interpolation.
+      // Renderer only converts world coordinates to screen pixels.
     } else {
-      playerController.visualX = playerController.gridX;
-      playerController.visualZ = playerController.gridZ;
+      // Idle world coordinates are kept in sync by PlayerController.reset/reachTarget.
     }
     
-    const screenX = playerController.visualX * this.tileSize;
-    const screenZ = playerController.visualZ * this.tileSize - this.cameraOffsetZ;
+    const screenX = worldToTile(playerController.worldX) * this.tileSize;
+    const screenZ = worldToTile(playerController.worldZ) * this.tileSize - this.cameraOffsetZ;
     
     this.ctx.fillStyle = '#ffffff';
     this.ctx.fillRect(
@@ -933,6 +954,7 @@ class GameState {
   index.html              ← 入口 HTML，<script type="module" src="src/main.js">
   src/
     main.js               ← 入口，初始化 Canvas 和各模块
+    CoordinateSystem.js    ← tile/world/screen 坐标与速度单位换算
     GameLoop.js            ← 主循环（update / fixedUpdate / render）
     GameState.js           ← 状态机
     InputManager.js        ← 输入合并
@@ -979,18 +1001,21 @@ class GameState {
 **模块依赖关系**：
 ```
 main.js
+  ├─ CoordinateSystem.js
   ├─ GameLoop.js
   ├─ GameState.js
   ├─ InputManager.js
   │    ├─ TouchInput.js
   │    └─ KeyboardInput.js
   ├─ PlayerController.js
-  │    └─ TileType.js
+  │    ├─ TileType.js
+  │    └─ CoordinateSystem.js
   ├─ GridMap.js
   │    └─ TileType.js
   ├─ StageLoader.js
   │    └─ GridMap.js
   ├─ Renderer.js
+  │    └─ CoordinateSystem.js
   ├─ HUD.js
   └─ DebugPanel.js (条件加载)
 ```
@@ -1005,7 +1030,7 @@ main.js
 | 2 | TileType、GridMap、StageLoader | ENG-02 | 能加载 JSON 关卡并在控制台打印地图数据 |
 | 3 | Renderer + Camera | PM-02 2.3.6 | 能看到关卡瓦片渲染和相机跟随 |
 | 4 | TouchInput、KeyboardInput、InputManager | ENG-03 | 滑动/按键能在控制台输出方向 |
-| 5 | PlayerController（移动 + 碰撞 + 收集） | ENG-04 | 角色能在地图中滑行、碰壁停止、收集物品、触刺死亡 |
+| 5 | CoordinateSystem + PlayerController（world-units 移动 + 碰撞 + 收集） | ENG-04 | 角色能按 `5.0 world units/s` 滑行、碰壁停止、收集物品、触刺死亡；派生显示约 `41.67 tiles/s` |
 | 6 | HUD + 弹窗 + 状态流闭环 | ENG-05 | 完整的 开始→游玩→失败/通关→重开/下一关 循环 |
 | 7 | DebugPanel | PM-02 调试面板方案 | F1-F8 快捷键全部可用 |
 
@@ -1040,7 +1065,7 @@ MVP 完成后，以下升级均为增量操作，不需要重写现有代码：
 | 四向移动 | 上下左右四个方向都能正常移动 |
 | 撞墙停止 | 角色停在墙前一格，不穿墙 |
 | 输入缓冲 | 移动中滑动，停下后立即执行缓冲方向 |
-| 输入缓冲过期 | 停下超过 20ms 后缓冲失效 |
+| 输入缓冲过期 | 停下超过 100ms 后缓冲失效 |
 | 收集圆点 | 经过时消失，计数 +1 |
 | 收集金币 | 经过时消失，计数 +1 |
 | 收集星星 | 经过时消失，计数 +1 |
@@ -1057,7 +1082,7 @@ MVP 完成后，以下升级均为增量操作，不需要重写现有代码：
 |------|------|---------|
 | Canvas 渲染性能不足 | FPS < 55 | 降低瓦片尺寸、离屏 Canvas、按颜色分批绘制 |
 | 触屏滑动识别不准 | 误触、方向错误 | 调整 swipeThreshold、增加方向锁定 |
-| 输入缓冲窗口太短 | 连续滑动丢失 | 增加到 50ms（需验证手感） |
+| 输入缓冲窗口仍误用 20ms | 连续滑动丢失，偏离逆向确认的 100ms 预输入窗口 | 改为 0.1s，并在 `update(deltaTime)` 中递减 |
 | 固定步长累加器卡顿 | 帧率过低时卡死 | 限制最大执行次数（已实现） |
 | 关卡数据格式变化 | 加载失败 | 增加版本号校验 |
 
@@ -1069,6 +1094,10 @@ MVP 完成后，以下升级均为增量操作，不需要重写现有代码：
 |------|---------|---------|---------|---------|
 | 2026-04-16 | INIT | 创建初稿 | 全文档 | — |
 | 2026-04-21 | ADD | 新增 2.8 代码组织与实现顺序；更新 2.7 目录结构为 ES Modules 多文件方案 | 2.7、2.8（原 2.8-2.10 顺延为 2.9-2.11） | — |
+| 2026-04-29 | DESIGN | 增补三层坐标域总策略和 `CoordinateSystem` 模块边界：Tile 拓扑用于关卡/碰撞，World 运动坐标用于玩家连续位移与速度，Screen/Design 像素用于渲染和 HUD；明确 `Renderer` 适配 `worldX/worldZ`，并将 `41.67 tiles/s` 降为派生显示值 | 2.2、2.3.4、2.3.6、2.7、2.8 | 已批准步骤 1-4 文档更新 |
+| 2026-04-30 | BASELINE | 修正输入缓冲窗口为 `0.1s/100ms`，并明确缓冲计时在 `update(deltaTime)` 中递减、玩家位移仍在 `fixedUpdate` 中执行；空间定位采用 C 方案，新增 center API 但不切换现有 origin 主语义 | 输入、PlayerController、CoordinateSystem、ENG-04/ENG-05 回归 | 已批准批次 1-3 文档更新 |
+| 2026-05-01 | CODE | ENG-04 已完成运行时相关实现：`CoordinateSystem` 提供 half-tile/center API 并保留 origin 语义，`PlayerController.update(deltaTime)` 负责 100ms 输入缓冲倒计时，`fixedUpdate()` 继续负责位移，入口模块 query 更新为 `eng04_input_buffer_v1` | GameLoop、PlayerController、CoordinateSystem、模块缓存版本 | 已批准并完成 |
+| 2026-05-01 | VALIDATION | ENG-04/ENG-05 真实浏览器回归通过，覆盖 `story_001`、`eng04_death_validation`、快速连续滑动、AHK 边界测试、弹窗输入屏蔽、点击/缩放和缓存版本确认 | 运行时循环、输入缓冲、移动/事件时序、HUD 状态流 | 已验收通过 |
 
 ---
 

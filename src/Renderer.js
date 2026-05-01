@@ -1,3 +1,7 @@
+import {
+  worldToScreen,
+  worldToTile,
+} from "./CoordinateSystem.js";
 import TileType from "./TileType.js";
 
 const TILE_COLORS = Object.freeze({
@@ -174,10 +178,12 @@ export default class Renderer {
       return;
     }
 
-    const x = Number.isFinite(this.player.visualX) ? this.player.visualX : this.player.gridX;
-    const z = Number.isFinite(this.player.visualZ) ? this.player.visualZ : this.player.gridZ;
-    const screenX = x * this.tileSize - this.cameraOffsetX;
-    const screenZ = z * this.tileSize - this.cameraOffsetZ;
+    const screenX = Number.isFinite(this.player.worldX)
+      ? worldToScreen(this.player.worldX, this.tileSize, this.cameraOffsetX)
+      : this.player.gridX * this.tileSize - this.cameraOffsetX;
+    const screenZ = Number.isFinite(this.player.worldZ)
+      ? worldToScreen(this.player.worldZ, this.tileSize, this.cameraOffsetZ)
+      : this.player.gridZ * this.tileSize - this.cameraOffsetZ;
     const inset = this.tileSize * 0.15;
 
     this.context.fillStyle = this.player.state === "dead" ? "#550000" : "#00e5ff";
@@ -191,8 +197,12 @@ export default class Renderer {
 
   resolveFocusPoint() {
     if (this.focusTarget) {
-      const x = this.focusTarget.visualX ?? this.focusTarget.gridX ?? this.focusTarget.x;
-      const z = this.focusTarget.visualZ ?? this.focusTarget.gridZ ?? this.focusTarget.z;
+      const x = Number.isFinite(this.focusTarget.worldX)
+        ? worldToTile(this.focusTarget.worldX)
+        : this.focusTarget.gridX ?? this.focusTarget.x;
+      const z = Number.isFinite(this.focusTarget.worldZ)
+        ? worldToTile(this.focusTarget.worldZ)
+        : this.focusTarget.gridZ ?? this.focusTarget.z;
 
       if (Number.isFinite(x) && Number.isFinite(z)) {
         return { x, z };

@@ -3,10 +3,10 @@
 **文档类型**：L2 技术方案文档  
 **任务 ID**：ENG-03  
 **创建日期**：2026-04-21  
-**最后更新**：2026-04-21  
-**状态**：初稿  
+**最后更新**：2026-05-01
+**状态**：输入缓冲基线已随 ENG-04 回归通过  
 **依赖**：PM-02 核心运行时设计文档（InputManager 2.3.3、PlayerController 2.3.4）  
-**覆盖需求**：R-006（触屏滑动与键盘输入）、R-008（输入缓冲窗口 0.02s）
+**覆盖需求**：R-006（触屏滑动与键盘输入）、R-008（输入缓冲窗口 0.1s）
 
 ---
 
@@ -72,7 +72,7 @@ InputManager.update() 在主循环的 update(dt) 阶段被调用（非 fixedUpda
   1. inputManager.update()          // 采集本帧输入
   2. // ... 其他 update 逻辑
 
-每次 fixedUpdate (0.02s):
+每次 update(dt) / fixedUpdate(0.02s):
   1. playerController.fixedUpdate() // 消费 inputManager.consumeDirection()
 ```
 
@@ -418,22 +418,22 @@ class InputManager {
 ### 8.2 缓冲流程回顾
 
 ```
+PlayerController.update(dt):
+  if (bufferedDirection):
+    bufferTimer -= dt
+    if (bufferTimer <= 0): bufferedDirection = null
+
 PlayerController.fixedUpdate():
   if (state === 'idle'):
     dir = bufferedDirection || inputManager.consumeDirection()
     if (dir): startMove(dir)
   
   if (state === 'moving'):
-    // 更新缓冲计时器
-    if (bufferedDirection):
-      bufferTimer -= 0.02
-      if (bufferTimer <= 0): bufferedDirection = null
-    
     // 检查新输入
     newDir = inputManager.consumeDirection()
     if (newDir):
       bufferedDirection = newDir
-      bufferTimer = 0.02  // 重置计时器
+      bufferTimer = 0.1  // 重置计时器
     
     // 继续移动...
 ```
@@ -453,17 +453,17 @@ PlayerController.fixedUpdate():
 
 | 参数 | 值 | 来源 |
 |------|-----|------|
-| `bufferDuration` | 0.02s (20ms) | R-008，源自逆向报告 ProcessSwipe._nextSwipeTimeout |
+| `bufferDuration` | 0.1s (100ms) | R-008，源自逆向报告 ProcessSwipe._nextSwipeTimeout = 0.1f |
 
-20ms 等于一个 fixedUpdate 步长。这意味着缓冲方向最多在下一个 fixedUpdate 中被消费，如果没被消费就过期。这个窗口足够短，不会让玩家感觉"输入被延迟执行"，但足够长，能容纳快速连续滑动的第二次输入。
+100ms 约等于 5 个 fixedUpdate 步长或 5~6 个 60fps 渲染帧。它用于覆盖玩家在角色接近墙体前提前滑动下一个方向的预输入窗口；倒计时应按 `update(dt)` 递减，实际位移仍由 `fixedUpdate` 执行。
 
 ## 9. 关键参数汇总
 
 | 参数 | 值 | 来源 | 说明 |
 |------|-----|------|------|
 | `swipeThreshold` | 0.3（归一化距离） | PM-02 TouchInput | 滑动识别最小距离，低于此值视为点击 |
-| `bufferDuration` | 0.02s (20ms) | R-008 / 逆向报告 | 输入缓冲窗口，等于一个 fixedUpdate 步长 |
-| `moveSpeed` | 8.0 tiles/s | PM-02 PlayerController / R-009 | 玩家实际移动速度（`_runSpeed 5.0 × _gameStageScale 1.6`，调试模式下可修改） |
+| `bufferDuration` | 0.1s (100ms) | R-008 / 逆向报告 | 输入缓冲窗口，约 5 个 fixedUpdate 步长，按 update(dt) 递减 |
+| `runSpeedWorldUnitsPerSecond` | 5.0 world units/s | PM-02 PlayerController / R-009 | 玩家连续位移主速度；`41.6667 tiles/s` 仅作为由 `TileSize = 0.12 world units/tile` 派生出的显示/验收换算值 |
 | `fixedDeltaTime` | 0.02s (20ms) | PM-02 GameLoop | 固定步长，PlayerController 消费输入的频率 |
 | Canvas 逻辑尺寸 | 1080×1920 | PM-02 Renderer | 归一化坐标的基准 |
 
@@ -562,6 +562,9 @@ PlayerController.fixedUpdate():
 | 日期 | 变更类型 | 变更内容 | 影响范围 |
 |------|---------|---------|---------|
 | 2026-04-21 | INIT | 创建初稿 | 全文档 |
+| 2026-04-29 | DESIGN | 同步 R-009 三层坐标域方案，将输入文档中的玩家速度参数从 `moveSpeed tiles/s` 改为 world-units 主口径说明 | 9. 关键参数汇总 |
+| 2026-04-30 | BASELINE | 修正 R-008 输入缓冲窗口为 `0.1s/100ms`，并明确缓冲倒计时由 `update(dt)` 递减、移动仍由 `fixedUpdate` 执行 | 8. 输入缓冲机制、9. 关键参数汇总 |
+| 2026-05-01 | VALIDATION | ENG-04 已完成 100ms 输入缓冲代码实现与真实浏览器回归；快速连续滑动、AHK 边界测试、缓冲过期和单缓冲覆盖语义均为 `PASS` | 8. 输入缓冲机制、12. 性能要求、ENG-04 联动 |
 
 ---
 

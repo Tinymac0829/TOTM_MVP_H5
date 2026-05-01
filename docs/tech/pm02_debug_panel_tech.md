@@ -2,8 +2,8 @@
 
 **文档类型**：L2 技术方案文档  
 **创建日期**：2026-04-17  
-**最后更新**：2026-04-17  
-**状态**：初稿  
+**最后更新**：2026-05-01  
+**状态**：已同步 world-units 速度调试口径  
 **依赖**：PM-02 核心运行时设计文档（调试方案 2.5）、ENG-04 核心移动手感设计文档（调试方案 2.8）  
 **覆盖范围**：开发期调试工具，不属于任何需求 ID，纯开发辅助
 
@@ -152,11 +152,11 @@ initKeyBindings() {
 ```javascript
 applySpeedModifier() {
   if (this.slowMotion) {
-    playerController.moveSpeed = 8.0 * 0.5;  // 4.0 tiles/s
+    playerController.runSpeedWorldUnitsPerSecond = 5.0 * 0.5;  // 2.5 world units/s
   } else if (this.fastMotion) {
-    playerController.moveSpeed = 8.0 * 2.0;  // 16.0 tiles/s
+    playerController.runSpeedWorldUnitsPerSecond = 5.0 * 2.0;  // 10.0 world units/s
   } else {
-    playerController.moveSpeed = 8.0;         // 恢复默认
+    playerController.runSpeedWorldUnitsPerSecond = 5.0;     // 恢复默认
   }
 }
 
@@ -169,8 +169,8 @@ getSpeedLabel() {
 
 **关键点**：
 - 慢动作和快动作互斥，开启一个自动关闭另一个
-- 速度修改直接作用于 `playerController.moveSpeed`
-- 关卡重新加载时 `playerController.reset()` 不会重置 moveSpeed，调试模式跨关卡保持
+- 速度修改直接作用于 `playerController.runSpeedWorldUnitsPerSecond`
+- 关卡重新加载时 `playerController.reset()` 不会重置 `runSpeedWorldUnitsPerSecond`，调试模式跨关卡保持
 
 ### 4.4 无敌模式接入
 
@@ -209,7 +209,7 @@ checkTileEvent() {
 │  Target: (5, 15)                │
 │  Progress: 0.67                 │
 │  Buffer: up (0.01s)             │
-│  Speed: 8.0 tiles/s (x1.0)     │
+│  Speed: 5.0 wu/s (41.7 tiles/s)│
 │  Stage: story_001 (17x30)        │
 │  Dots: 8/12  Coins: 2/4        │
 │  fixedUpdate: 0.3ms             │
@@ -268,7 +268,7 @@ collectLines() {
     lines.push('Buffer: none');
   }
 
-  lines.push(`Speed: ${pc.moveSpeed.toFixed(1)} tiles/s (${this.getSpeedLabel()})`);
+  lines.push(`Speed: ${pc.runSpeedWorldUnitsPerSecond.toFixed(1)} wu/s (${pc.derivedRunSpeedTilesPerSecond.toFixed(1)} tiles/s, ${this.getSpeedLabel()})`);
 
   if (gridMap) {
     lines.push(`Stage: ${gridMap.id} (${gridMap.width}x${gridMap.height})`);
@@ -533,7 +533,7 @@ if (tile === TileType.Spikes) {
 | F5 和 F6 同时按下 | 互斥，后按的覆盖先按的 | 手动测试 |
 | 调试面板开启时性能下降 | 面板渲染 <1ms，影响可忽略 | 性能采样 |
 | 无敌模式下到达 Spikes | 角色停在 Spikes 格子但不死亡，可继续操作 | 集成测试 |
-| 慢动作/快动作跨关卡 | moveSpeed 修改在 reset() 中不重置，调试模式保持 | 集成测试 |
+| 慢动作/快动作跨关卡 | `runSpeedWorldUnitsPerSecond` 修改在 reset() 中不重置，调试模式保持 | 集成测试 |
 | F7 重新加载时正在移动 | restart() 会重置 PlayerController，移动中断 | 集成测试 |
 | F8 跳关时正在移动 | 同上 | 集成测试 |
 | DEBUG=false 时访问 debugPanel | 短路求值 `DEBUG && debugPanel.xxx` 不会报错 | 代码审查 |
@@ -547,10 +547,10 @@ if (tile === TileType.Spikes) {
 | 测试用例 | 输入 | 预期输出 | 验证点 |
 |---------|------|---------|--------|
 | FPS 计算 | 模拟 30 帧 / 0.5s | fps === 60 | FPS 计数准确 |
-| 慢动作开启 | 按 F5 | moveSpeed === 4.0 | 速度减半 |
-| 快动作开启 | 按 F6 | moveSpeed === 16.0 | 速度翻倍 |
+| 慢动作开启 | 按 F5 | `runSpeedWorldUnitsPerSecond ≈ 2.5`，派生速度约 `20.8333 tiles/s` | 速度减半 |
+| 快动作开启 | 按 F6 | `runSpeedWorldUnitsPerSecond ≈ 10.0`，派生速度约 `83.3333 tiles/s` | 速度翻倍 |
 | 慢动作→快动作 | 先 F5 再 F6 | slowMotion=false, fastMotion=true | 互斥 |
-| 速度恢复 | 开启慢动作后再按 F5 | moveSpeed === 8.0 | 恢复默认 |
+| 速度恢复 | 开启慢动作后再按 F5 | `runSpeedWorldUnitsPerSecond ≈ 5.0`，派生速度约 `41.6667 tiles/s` | 恢复默认 |
 | collectLines | 各种状态组合 | 返回正确行数和内容 | 面板内容 |
 
 ### 10.2 集成测试
@@ -594,6 +594,7 @@ if (tile === TileType.Spikes) {
 | 日期 | 变更类型 | 变更内容 | 影响范围 |
 |------|---------|---------|---------|
 | 2026-04-17 | INIT | 创建初稿 | 全文档 |
+| 2026-05-01 | BASELINE | 同步 ENG-04 R-009 world-units 速度口径：调试面板速度字段改为 `runSpeedWorldUnitsPerSecond`，并显示派生 `tiles/s`；慢动作/快动作按 `5.0 world units/s` 基线倍率调整 | 4.3 调试模式、5.2 面板内容、10.1 单元测试 |
 
 ---
 

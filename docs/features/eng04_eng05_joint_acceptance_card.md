@@ -3,8 +3,8 @@
 **文档类型**：L1 功能卡  
 **关联任务**：ENG-04、ENG-05  
 **创建日期**：2026-04-24  
-**最后更新**：2026-04-24  
-**状态**：联调中  
+**最后更新**：2026-05-01
+**状态**：真实浏览器回归通过  
 **依赖文档**：
 - `docs/design/eng04_core_movement_design.md`
 - `docs/tech/eng05_hud_state_flow_tech.md`
@@ -51,7 +51,7 @@
 
 **已核实**：
 - `GameState` 已提供 `playing`、`paused_fail`、`paused_complete`、`onPlayerDead()`、`onStageComplete()`、`getNextStageId()`
-- `PlayerController` 已提供四向滑行、`0.02s` 输入缓冲、`8.0 tiles/s` 实际移动速度（`_runSpeed 5.0 × _gameStageScale 1.6`）、收集物拾取、死亡回调、出口回调，以及 `stageClearPending`
+- `PlayerController` 需按三层坐标域方案提供四向滑行、`0.1s` 输入缓冲、`5.0 world units/s` 主速度、约 `41.67 tiles/s` 派生显示速度、收集物拾取、死亡回调、出口回调，以及 `stageClearPending`
 - `main.js` 已接通 `onCollect -> HUD.addCollectible()`、`onDeath -> GameState.onPlayerDead() + HUD.showFailPopup()`、`onExit -> GameState.onStageComplete() + HUD.showCompletePopup()`
 - 当前 `story_001` 不包含 Spikes；失败链路需通过 `?stage=eng04_death_validation` 进入本地验证关卡执行
 - 当前 `HUD` 已进入正式实现阶段，但仍允许在不破坏接口契约的前提下继续联调
@@ -59,8 +59,8 @@
 **推断**：
 - 在 `ENG-04` 保持现有事件语义不变时，本清单中的大部分验收项应可直接复用到 `ENG-05` 最终收口
 
-**待确认**：
-- 若 `ENG-04` 浏览器手感验收后调整死亡/通关触发时机、输入屏蔽时机或移动收尾时序，本清单需同步更新
+**已确认**：
+- `2026-05-01` 真实浏览器回归已覆盖 world-units 运动、短距离过冲、Renderer 坐标适配、`100ms` 输入缓冲、死亡/通关触发时机、输入屏蔽时机和移动收尾时序，结果为 `PASS`
 
 ## 联合验收清单
 
@@ -131,8 +131,10 @@
 - `ENG-05` 的 HUD 状态流、按钮动作、缩放点击区域与当前文档口径一致
 - 未发现会阻断继续联调或后续验收的 P0/P1 级问题
 
+`2026-05-01` 结果：以上条件均已通过；两个验收入口均确认加载 `eng04_input_buffer_v1`。
+
 ## 风险与待联调项
 
-- `ENG-04` 当前仍为 `IN_PROGRESS`，若后续调整死亡/通关事件时序、移动收尾时机或输入屏蔽边界，`ENG-05` 需重新联调
+- `ENG-04` 当前仍为 `IN_PROGRESS`，但本轮 `100ms` 输入缓冲与坐标域回归已通过；若后续再次调整死亡/通关事件时序、移动收尾时机或输入屏蔽边界，`ENG-05` 需重新联调
 - 当前仅接入 `story_001`，因此“下一关”链路实际采用重复游玩 fallback；待 `LVL-02/LVL-03` 接入后，需要重新验收真实多关卡流转
 - 当前 HUD 已是正式实现方向，但不是最终视觉稿；后续视觉调整不应破坏本清单定义的交互与验收口径

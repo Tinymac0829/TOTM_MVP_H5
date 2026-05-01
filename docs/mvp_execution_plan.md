@@ -57,8 +57,8 @@
 
 ## Acceptance Baseline
 
-- `FROZEN` Input buffer: `0.02s`
-- `FROZEN` Effective player move speed: `8.0 tiles/s` (`_runSpeed 5.0 × _gameStageScale 1.6`)
+- `FROZEN` Input buffer: `0.1s`
+- `FROZEN` Player movement source baseline: `_runSpeed = 5.0 world units/s`, `TileSize = 0.12 world units/tile`; implementation primary units are World movement coordinates, while about `41.67 tiles/s` is only a derived display/validation value
 - `FROZEN` Four-direction slide until blocked
 - `FROZEN` Cross-device feel consistency via fixed-step gameplay loop
 - `FROZEN` `Story 1-3` each supports full start -> fail/clear loop
@@ -77,10 +77,10 @@
 | ENG-01 | DONE | `R-002,R-003,R-004` | Create the runnable project skeleton | `index.html` + `src/` ES Modules directory structure in place, Canvas init, GameLoop, GameState running, blank Canvas refreshing at 60fps |
 | ENG-02 | DONE | `R-005,R-010,R-015` | Implement the runtime foundation | TileType, GridMap, StageLoader, Renderer + Camera wired, can load JSON stage and render tile visuals |
 | ENG-03 | DONE | `R-006,R-008` | Implement input foundation | Touch swipe and keyboard input both work through one input layer, emitting standardized direction commands in the `playing` state |
-| ENG-04 | IN_PROGRESS | `R-007,R-008,R-009,R-011` | Implement core movement feel | The core chain passed the first browser validation pass; `R-009` is now corrected to `8.0 tiles/s` effective speed, so the code update and browser regression are still pending |
-| ENG-05 | IN_PROGRESS | `R-012,R-013,R-015` | Implement minimal gameplay UI | HUD/state flow passed the first joint validation pass; because `ENG-04` speed must move from effective `5.0` to `8.0 tiles/s`, HUD buttons, popups, and input-lock timing need joint regression |
+| ENG-04 | IN_PROGRESS | `R-007,R-008,R-009,R-011` | Implement core movement feel | The current code pass for `R-009` three-coordinate-domain movement and `R-008` `0.1s/100ms` input buffering is complete. `CoordinateSystem`, `PlayerController`, `Renderer`, `main.js`, and module cache queries passed automated checks and real-browser regression with `eng04_input_buffer_v1`; final task closure is still pending explicit closeout |
+| ENG-05 | IN_PROGRESS | `R-012,R-013,R-015` | Implement minimal gameplay UI | HUD/state flow passed the `2026-05-01` joint real-browser regression after ENG-04 world-units movement, Renderer coordinate adaptation, short-move overrun handling, and `100ms` input buffering. Buttons, popups, HUD sync, input-lock timing, and click/resize behavior were all rechecked as `PASS` |
 | LVL-01 | TODO | `R-010,R-011,R-012,R-017` | Integrate `Story 1` | Stage is fully playable and reaches fail/clear |
-| QA-01 | TODO | `R-006,R-007,R-008,R-009,R-017` | Finish `Story 1` feel validation | Input-to-response latency is under `50ms` on baseline device, four-direction recognition is accurate in test cases, and buffered input works inside the `20ms` window |
+| QA-01 | TODO | `R-006,R-007,R-008,R-009,R-017` | Finish `Story 1` feel validation | Input-to-response latency is under `50ms` on baseline device, four-direction recognition is accurate in test cases, and buffered input works inside the `100ms` window |
 | OPS-01 | TODO | `R-020` | Set up GitHub Pages deployment | Current playable build can be opened by URL on multiple devices |
 | LVL-02 | TODO | `R-010,R-011,R-012,R-018` | Integrate `Story 2` | Stage is fully playable and does not regress `Story 1` |
 | QA-02 | TODO | `R-017,R-018` | Finish `Story 1-2` regression pass | Shared feel and state flow stay consistent across both stages |
@@ -113,8 +113,8 @@
 | `2026-04-06` | `v0.0.1` | Git baseline commit |
 | `2026-04-06` to `2026-04-21` | `v0.1.0` (design phase) | Technical design documents (PM-02 complete) |
 | `2026-04-22` to `2026-04-25` | `v0.1.0` (coding phase) | Project skeleton (ENG-01), runtime foundation (ENG-02), input layer (ENG-03) |
-| `2026-04-26` to `2026-04-30` | `v0.1.1` | Core movement feel (ENG-04), minimal gameplay UI (ENG-05), `Story 1` integration (LVL-01), feel validation (QA-01), deployment (OPS-01) |
-| `2026-05-01` to `2026-05-03` | `v0.2.0` | `Story 2` integration (LVL-02), regression pass (QA-02) |
+| `2026-04-26` to `2026-05-01` | `v0.1.1` | Core movement feel (ENG-04), minimal gameplay UI (ENG-05), `Story 1` integration (LVL-01), feel validation (QA-01), deployment (OPS-01), and R-008/R-009 regression closeout |
+| `2026-05-02` to `2026-05-03` | `v0.2.0` | `Story 2` integration (LVL-02), regression pass (QA-02) |
 | `2026-05-04` to `2026-05-06` | `v0.3.0` | `Story 3` integration (LVL-03), regression pass (QA-03) |
 | `2026-05-07` to `2026-05-09` | `v0.3.1` | Performance pass (PERF-01), freeze candidate (REL-01) |
 
@@ -149,7 +149,12 @@
 | `2026-04-24` | `CODE` | `ENG-05` has moved from the transition bridge into formal implementation: `HUD.js` now includes `menu/loading/fail/complete` overlay states, layout and hit areas scaled from the `1080x1920` design baseline, and fail/clear button action mapping; `main.js` now wires the start screen, the `Story 1` startup path, fail restart, and the replay fallback when only `story_001` is currently integrated, with browser-stub smoke verification passing. | `ENG-05` has moved from `TODO` to `IN_PROGRESS`. The minimal gameplay UI now has the main start -> play -> clear/fail -> restart/replay loop in code, but still requires real-browser manual validation and final integration with `ENG-04`. |
 | `2026-04-24` | `DOC` | Added three supporting documents for `ENG-04 × ENG-05` integration validation: `docs/features/eng04_eng05_joint_acceptance_card.md`, `docs/features/eng04_eng05_joint_acceptance_checklist.md`, and `docs/features/eng04_eng05_browser_validation_log_template.md`, then added relative-path cross-links among them. | Real-browser integration runs, on-site checklist execution, and issue logging now have a unified document set, making it easier to keep the combined `ENG-04` / `ENG-05` acceptance criteria aligned. |
 | `2026-04-26` | `VALIDATION` | `ENG-04 × ENG-05` completed real-browser joint validation: `story_001` startup, sliding, collection/HUD, clear, replay, and click/resize checks passed; the local `eng04_death_validation` stage passed Spikes death, fail popup, restart recovery, input lockout, and click/resize checks. | The conclusion at the time was that `ENG-04` and `ENG-05` could be marked `DONE`; this conclusion is superseded by the `2026-04-27` runspeed baseline reopen record. |
-| `2026-04-27` | `BASELINE` | Corrected `R-009` from the updated reverse report: `_runSpeed = 5.0` is the base value and is multiplied by `_gameStageScale = 1.6`, yielding `8.0 tiles/s` effective movement. | The prior `ENG-04/ENG-05` browser validation was run against an effective `5.0 tiles/s` implementation; after code correction, movement feel, collection/HUD, clear, death, popup input lockout, and click/resize behavior must be regressed. Until that regression passes, `ENG-04/ENG-05` return to `IN_PROGRESS`. |
+| `2026-04-27` | `BASELINE` | Corrected `R-009` from the then-current reverse report: `_runSpeed = 5.0` is the base value and is multiplied by `_gameStageScale = 1.6`, yielding `8.0 tiles/s` effective movement. | This conclusion is superseded by the `2026-04-28` frame-check and reverse-validation record; retained as history only. |
+| `2026-04-28` | `BASELINE` | Corrected `R-009` again: `_runSpeed = 5.0` is measured in `world units/s`, `TileSize = 0.12 world units/tile`, and the current tile-grid implementation should use about `41.67 tiles/s`; `_gameStageScale = 1.6` does not participate in player tile displacement conversion. | Supersedes the `8.0 tiles/s` code-correction direction; the corrected baseline is now implemented and regressed by the `2026-05-01` ENG-04 code/validation records. |
+| `2026-04-29` | `DESIGN` | Upgraded `ENG-04` runspeed correction from a minimal derived-speed patch to a stricter coordinate-domain design: Tile topology remains authoritative for stages/collision/events, World movement coordinates become the primary player displacement/speed units, and Screen/Design pixels remain rendering/HUD-only. | The design direction is now represented by the `2026-05-01` implementation and real-browser regression records; remaining status is task closeout, not code correction. |
+| `2026-04-30` | `BASELINE` | Corrected `R-008` input buffering: reverse verification confirms `_nextSwipeTimeout = 0.1f`, or 100ms; the previous `0.02s/20ms` value was an incorrect inherited record. | ENG-04, ENG-03, PM-02, and joint validation docs now use the 100ms window; rapid chaining, expiry, and overwrite semantics were rechecked in the `2026-05-01` regression. |
+| `2026-05-01` | `CODE` | Completed the ENG-04 baseline implementation pass: `CoordinateSystem` now exposes half-tile/center APIs while keeping `tileToWorld()` origin semantics, `PlayerController` uses a 100ms buffer with countdown in `update(deltaTime)`, `fixedUpdate()` remains responsible for displacement, and module cache queries now use `eng04_input_buffer_v1`. | Automated syntax and behavior checks passed for coordinate APIs, input-buffer validity/expiry/overwrite, movement, collection, death, clear, and chained-turn behavior. |
+| `2026-05-01` | `VALIDATION` | Completed real-browser regression for `story_001`, rapid chained sliding with AHK boundary testing, `eng04_death_validation`, popup input lockout, click/resize alignment, and cache-version confirmation. | The R-008/R-009 code pass is validated in browser; both tested pages loaded `eng04_input_buffer_v1` and the recorded result is `PASS`. |
 
 
 

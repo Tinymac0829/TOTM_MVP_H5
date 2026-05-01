@@ -1,4 +1,19 @@
+import {
+  DERIVED_RUN_SPEED_TILES_PER_SECOND,
+  RUN_SPEED_WORLD_UNITS_PER_SECOND,
+  WORLD_UNITS_PER_TILE,
+  tileDistanceToWorld,
+  tileToWorld,
+  worldDistanceToTiles,
+} from "./CoordinateSystem.js";
 import TileType, { isCollectibleTile } from "./TileType.js";
+
+export {
+  RUN_SPEED_WORLD_UNITS_PER_SECOND,
+  WORLD_UNITS_PER_TILE,
+};
+
+export const DEFAULT_MOVE_SPEED_TILES_PER_SECOND = DERIVED_RUN_SPEED_TILES_PER_SECOND;
 
 const PLAYER_STATES = Object.freeze({
   Idle: "idle",
@@ -7,6 +22,7 @@ const PLAYER_STATES = Object.freeze({
 });
 
 const FLOAT_EPSILON = 1e-9;
+const DEFAULT_MAX_MOVE_SEGMENTS_PER_TICK = 4;
 
 const COLLECTIBLE_COUNTER_KEYS = Object.freeze({
   [TileType.Dot]: "dot",
@@ -14,12 +30,18 @@ const COLLECTIBLE_COUNTER_KEYS = Object.freeze({
   [TileType.Star]: "star",
 });
 
+function isPositiveFiniteNumber(value) {
+  return Number.isFinite(value) && value > 0;
+}
+
 export default class PlayerController {
   constructor({
     collisionSystem,
     gridMap = null,
-    moveSpeed = 5.0,
-    bufferDuration = 0.02,
+    runSpeedWorldUnitsPerSecond = RUN_SPEED_WORLD_UNITS_PER_SECOND,
+    moveSpeed = null,
+    bufferDuration = 0.1,
+    maxMoveSegmentsPerTick = DEFAULT_MAX_MOVE_SEGMENTS_PER_TICK,
     onCollect = null,
     onDeath = null,
     onExit = null,
@@ -31,8 +53,11 @@ export default class PlayerController {
 
     this.collisionSystem = collisionSystem;
     this.gridMap = gridMap;
-    this.moveSpeed = moveSpeed;
+    this.runSpeedWorldUnitsPerSecond = Number.isFinite(moveSpeed)
+      ? tileDistanceToWorld(moveSpeed)
+      : runSpeedWorldUnitsPerSecond;
     this.bufferDuration = bufferDuration;
+    this.maxMoveSegmentsPerTick = maxMoveSegmentsPerTick;
     this.onCollect = onCollect;
     this.onDeath = onDeath;
     this.onExit = onExit;
@@ -40,15 +65,21 @@ export default class PlayerController {
 
     this.gridX = 0;
     this.gridZ = 0;
-    this.visualX = 0;
-    this.visualZ = 0;
+    this.worldX = 0;
+    this.worldZ = 0;
 
     this.state = PLAYER_STATES.Idle;
     this.moveDirection = null;
     this.moveProgress = 0;
-    this.moveTargetX = 0;
-    this.moveTargetZ = 0;
-    this.moveDistance = 0;
+    this.targetGridX = 0;
+    this.targetGridZ = 0;
+    this.targetWorldX = 0;
+    this.targetWorldZ = 0;
+    this.startWorldX = 0;
+    this.startWorldZ = 0;
+    this.moveDistanceTiles = 0;
+    this.moveDistanceWorld = 0;
+    this.traveledWorld = 0;
 
     this.bufferedDirection = null;
     this.bufferTimer = 0;
@@ -65,6 +96,26 @@ export default class PlayerController {
     this.stageClearPending = false;
   }
 
+  get derivedRunSpeedTilesPerSecond() {
+    return worldDistanceToTiles(this.runSpeedWorldUnitsPerSecond);
+  }
+
+  get moveSpeed() {
+    return this.derivedRunSpeedTilesPerSecond;
+  }
+
+  set moveSpeed(value) {
+    this.setRunSpeedWorldUnitsPerSecond(tileDistanceToWorld(value));
+  }
+
+  setRunSpeedWorldUnitsPerSecond(value) {
+    if (!isPositiveFiniteNumber(value)) {
+      throw new Error(`[PlayerController] runSpeedWorldUnitsPerSecond must be positive, got ${value}`);
+    }
+
+    this.runSpeedWorldUnitsPerSecond = value;
+  }
+
   setGridMap(gridMap) {
     this.gridMap = gridMap ?? null;
   }
@@ -72,15 +123,21 @@ export default class PlayerController {
   reset(x, z) {
     this.gridX = x;
     this.gridZ = z;
-    this.visualX = x;
-    this.visualZ = z;
+    this.worldX = tileToWorld(x);
+    this.worldZ = tileToWorld(z);
 
     this.state = PLAYER_STATES.Idle;
     this.moveDirection = null;
     this.moveProgress = 0;
-    this.moveTargetX = x;
-    this.moveTargetZ = z;
-    this.moveDistance = 0;
+    this.targetGridX = x;
+    this.targetGridZ = z;
+    this.targetWorldX = this.worldX;
+    this.targetWorldZ = this.worldZ;
+    this.startWorldX = this.worldX;
+    this.startWorldZ = this.worldZ;
+    this.moveDistanceTiles = 0;
+    this.moveDistanceWorld = 0;
+    this.traveledWorld = 0;
 
     this.bufferedDirection = null;
     this.bufferTimer = 0;
@@ -98,96 +155,98 @@ export default class PlayerController {
   }
 
   fixedUpdate(fixedDeltaTime, inputDirection = null) {
-    this.updateBufferTimer(fixedDeltaTime);
+    if (!Number.isFinite(fixedDeltaTime) || fixedDeltaTime <= 0) {
+      return;
+    }
 
     if (this.state === PLAYER_STATES.Dead || this.stageClearPending) {
-      this.visualX = this.gridX;
-      this.visualZ = this.gridZ;
       return;
     }
 
-    if (this.state === PLAYER_STATES.Idle) {
-      this.handleIdleState(inputDirection);
-      inputDirection = null;
-    }
+    let remainingTime = fixedDeltaTime;
+    let pendingInputDirection = inputDirection;
+    let moveSegmentsThisTick = 0;
 
-    if (this.state === PLAYER_STATES.Moving) {
-      this.handleMovingState(fixedDeltaTime, inputDirection);
-
-      if (this.state === PLAYER_STATES.Idle && !this.stageClearPending) {
-        this.handleIdleState(null);
+    while (remainingTime > FLOAT_EPSILON) {
+      if (this.state === PLAYER_STATES.Dead || this.stageClearPending) {
+        break;
       }
-      return;
-    }
 
-    this.visualX = this.gridX;
-    this.visualZ = this.gridZ;
+      if (this.state === PLAYER_STATES.Idle) {
+        if (moveSegmentsThisTick >= this.maxMoveSegmentsPerTick) {
+          break;
+        }
+
+        const didStartMove = this.tryStartIdleMove(pendingInputDirection);
+        pendingInputDirection = null;
+
+        if (!didStartMove) {
+          this.syncWorldToGrid();
+          break;
+        }
+
+        moveSegmentsThisTick += 1;
+      }
+
+      if (this.state !== PLAYER_STATES.Moving) {
+        continue;
+      }
+
+      if (pendingInputDirection) {
+        this.bufferInput(pendingInputDirection);
+        pendingInputDirection = null;
+      }
+
+      const result = this.advanceMovingState(remainingTime);
+      remainingTime -= result.elapsedTime;
+
+      if (!result.reachedTarget) {
+        break;
+      }
+    }
   }
 
-  handleIdleState(inputDirection) {
-    let direction = this.consumeBufferedDirection();
-
-    if (!direction && inputDirection) {
-      direction = inputDirection;
-    }
+  tryStartIdleMove(inputDirection) {
+    const bufferedDirection = this.consumeBufferedDirection();
+    const direction = bufferedDirection ?? inputDirection;
 
     if (!direction) {
-      this.visualX = this.gridX;
-      this.visualZ = this.gridZ;
-      return;
+      return false;
     }
 
-    this.startMove(direction);
+    return this.startMove(direction);
   }
 
-  handleMovingState(fixedDeltaTime, inputDirection) {
-    if (inputDirection) {
-      this.bufferInput(inputDirection);
+  advanceMovingState(availableTime) {
+    if (!isPositiveFiniteNumber(this.runSpeedWorldUnitsPerSecond)) {
+      return { elapsedTime: availableTime, reachedTarget: false };
     }
 
-    this.moveProgress += (this.moveSpeed / this.moveDistance) * fixedDeltaTime;
-    this.processReachedPathSteps();
-
-    if (this.moveProgress + FLOAT_EPSILON >= 1.0) {
-      this.processReachedPathSteps(this.lastPath.length);
-      this.gridX = this.moveTargetX;
-      this.gridZ = this.moveTargetZ;
-      this.visualX = this.gridX;
-      this.visualZ = this.gridZ;
-      this.moveProgress = 0;
-      this.moveDirection = null;
-
-      if (this.lastStopReason === "spikes") {
-        this.clearBuffer();
-        this.state = PLAYER_STATES.Dead;
-        this.logger?.log?.(`[Player] died at (${this.gridX}, ${this.gridZ})`);
-        this.onDeath?.({
-          x: this.gridX,
-          z: this.gridZ,
-          tile: this.lastStopTile,
-        });
-        return;
-      }
-
-      if (this.lastStopReason === "exit") {
-        this.clearBuffer();
-        this.state = PLAYER_STATES.Idle;
-        this.stageClearPending = true;
-        this.logger?.log?.(`[Player] exit reached at (${this.gridX}, ${this.gridZ})`);
-        this.onExit?.({
-          x: this.gridX,
-          z: this.gridZ,
-          tile: this.lastStopTile,
-        });
-        return;
-      }
-
-      this.state = PLAYER_STATES.Idle;
-      return;
+    const remainingWorld = Math.max(0, this.moveDistanceWorld - this.traveledWorld);
+    if (remainingWorld <= FLOAT_EPSILON) {
+      this.reachMoveTarget();
+      return { elapsedTime: 0, reachedTarget: true };
     }
 
-    this.visualX = this.gridX + (this.moveTargetX - this.gridX) * this.moveProgress;
-    this.visualZ = this.gridZ + (this.moveTargetZ - this.gridZ) * this.moveProgress;
+    const stepWorld = this.runSpeedWorldUnitsPerSecond * availableTime;
+
+    if (stepWorld + FLOAT_EPSILON < remainingWorld) {
+      this.traveledWorld += stepWorld;
+      this.updateWorldPositionFromProgress();
+      this.processReachedPathSteps();
+      return { elapsedTime: availableTime, reachedTarget: false };
+    }
+
+    const elapsedTime = remainingWorld / this.runSpeedWorldUnitsPerSecond;
+    this.traveledWorld = this.moveDistanceWorld;
+    this.updateWorldPositionFromProgress();
+    this.processReachedPathSteps(this.lastPath.length);
+    this.reachMoveTarget();
+
+    return {
+      elapsedTime,
+      reachedTarget: true,
+    };
   }
 
   startMove(direction) {
@@ -195,16 +254,22 @@ export default class PlayerController {
 
     if (!result.canMove) {
       this.logger?.log?.(`[Player] blocked(${direction}) at (${this.gridX}, ${this.gridZ})`);
-      this.visualX = this.gridX;
-      this.visualZ = this.gridZ;
+      this.syncWorldToGrid();
       return false;
     }
 
     this.state = PLAYER_STATES.Moving;
     this.moveDirection = direction;
-    this.moveTargetX = result.targetX;
-    this.moveTargetZ = result.targetZ;
-    this.moveDistance = Math.abs(result.targetX - this.gridX) + Math.abs(result.targetZ - this.gridZ);
+    this.targetGridX = result.targetX;
+    this.targetGridZ = result.targetZ;
+    this.targetWorldX = tileToWorld(result.targetX);
+    this.targetWorldZ = tileToWorld(result.targetZ);
+    this.startWorldX = this.worldX;
+    this.startWorldZ = this.worldZ;
+    this.moveDistanceTiles =
+      Math.abs(result.targetX - this.gridX) + Math.abs(result.targetZ - this.gridZ);
+    this.moveDistanceWorld = tileDistanceToWorld(this.moveDistanceTiles);
+    this.traveledWorld = 0;
     this.moveProgress = 0;
     this.lastPath = result.path;
     this.processedPathSteps = 0;
@@ -212,18 +277,83 @@ export default class PlayerController {
     this.lastStopTile = result.stopTile;
 
     this.logger?.log?.(
-      `[Player] startMove(${direction}) -> target(${result.targetX}, ${result.targetZ}), distance=${this.moveDistance}`,
+      `[Player] startMove(${direction}) -> target(${result.targetX}, ${result.targetZ}), ` +
+        `distance=${this.moveDistanceTiles} tiles/${this.moveDistanceWorld.toFixed(3)} wu, ` +
+        `speed=${this.runSpeedWorldUnitsPerSecond.toFixed(1)} wu/s ` +
+        `(${this.derivedRunSpeedTilesPerSecond.toFixed(1)} tiles/s)`,
     );
 
     return true;
   }
 
-  updateBufferTimer(fixedDeltaTime) {
+  updateWorldPositionFromProgress() {
+    if (this.moveDistanceWorld <= FLOAT_EPSILON) {
+      this.moveProgress = 1;
+    } else {
+      this.moveProgress = Math.min(1, this.traveledWorld / this.moveDistanceWorld);
+    }
+
+    this.worldX = this.startWorldX + (this.targetWorldX - this.startWorldX) * this.moveProgress;
+    this.worldZ = this.startWorldZ + (this.targetWorldZ - this.startWorldZ) * this.moveProgress;
+  }
+
+  reachMoveTarget() {
+    this.processReachedPathSteps(this.lastPath.length);
+    this.gridX = this.targetGridX;
+    this.gridZ = this.targetGridZ;
+    this.worldX = this.targetWorldX;
+    this.worldZ = this.targetWorldZ;
+    this.moveProgress = 0;
+    this.moveDirection = null;
+    this.traveledWorld = 0;
+
+    if (this.lastStopReason === "spikes") {
+      this.clearBuffer();
+      this.state = PLAYER_STATES.Dead;
+      this.logger?.log?.(`[Player] died at (${this.gridX}, ${this.gridZ})`);
+      this.onDeath?.({
+        x: this.gridX,
+        z: this.gridZ,
+        tile: this.lastStopTile,
+      });
+      return;
+    }
+
+    if (this.lastStopReason === "exit") {
+      this.clearBuffer();
+      this.state = PLAYER_STATES.Idle;
+      this.stageClearPending = true;
+      this.logger?.log?.(`[Player] exit reached at (${this.gridX}, ${this.gridZ})`);
+      this.onExit?.({
+        x: this.gridX,
+        z: this.gridZ,
+        tile: this.lastStopTile,
+      });
+      return;
+    }
+
+    this.state = PLAYER_STATES.Idle;
+  }
+
+  syncWorldToGrid() {
+    this.worldX = tileToWorld(this.gridX);
+    this.worldZ = tileToWorld(this.gridZ);
+  }
+
+  update(deltaTime) {
+    if (!Number.isFinite(deltaTime) || deltaTime <= 0) {
+      return;
+    }
+
+    this.updateBufferTimer(deltaTime);
+  }
+
+  updateBufferTimer(elapsedTime) {
     if (!this.bufferedDirection) {
       return;
     }
 
-    this.bufferTimer -= fixedDeltaTime;
+    this.bufferTimer -= elapsedTime;
     if (this.bufferTimer <= 0) {
       this.logger?.log?.(`[Player] buffer expired(${this.bufferedDirection})`);
       this.bufferedDirection = null;
@@ -255,12 +385,12 @@ export default class PlayerController {
   }
 
   processReachedPathSteps(forcedStepCount = null) {
-    if (!this.gridMap || !Array.isArray(this.lastPath) || this.moveDistance <= 0) {
+    if (!this.gridMap || !Array.isArray(this.lastPath) || this.moveDistanceTiles <= 0) {
       return;
     }
 
     const reachedStepCount = forcedStepCount ?? Math.floor(
-      Math.min(this.moveDistance, this.moveProgress * this.moveDistance + FLOAT_EPSILON),
+      Math.min(this.moveDistanceTiles, this.moveProgress * this.moveDistanceTiles + FLOAT_EPSILON),
     );
     const nextStepCount = Math.min(reachedStepCount, this.lastPath.length);
 
