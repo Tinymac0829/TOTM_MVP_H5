@@ -140,15 +140,36 @@ function handleHudAction(action) {
   }
 }
 
-function getCanvasCoordinates(event) {
+function getCanvasCoordinatesFromClient(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = (canvas.clientWidth || rect.width || 1) / Math.max(rect.width, 1);
   const scaleY = (canvas.clientHeight || rect.height || 1) / Math.max(rect.height, 1);
 
   return {
-    x: (event.clientX - rect.left) * scaleX,
-    y: (event.clientY - rect.top) * scaleY,
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY,
   };
+}
+
+function canHandleHudPointer() {
+  const state = gameState.getState();
+  return state === "menu" || state === "paused_fail" || state === "paused_complete";
+}
+
+function handleHudPointer(clientX, clientY) {
+  if (!canHandleHudPointer()) {
+    return false;
+  }
+
+  const { x, y } = getCanvasCoordinatesFromClient(clientX, clientY);
+  const action = hud.handleClick(x, y, getHudViewModel());
+
+  if (!action) {
+    return false;
+  }
+
+  handleHudAction(action);
+  return true;
 }
 
 async function loadStageById(stageId) {
@@ -202,13 +223,19 @@ async function advanceToNextStage() {
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("orientationchange", resizeCanvas);
 canvas.addEventListener("click", (event) => {
-  const { x, y } = getCanvasCoordinates(event);
-  const action = hud.handleClick(x, y, getHudViewModel());
-
-  if (action) {
-    handleHudAction(action);
-  }
+  handleHudPointer(event.clientX, event.clientY);
 });
+canvas.addEventListener("touchend", (event) => {
+  const touch = event.changedTouches[0];
+
+  if (!touch) {
+    return;
+  }
+
+  if (handleHudPointer(touch.clientX, touch.clientY)) {
+    event.preventDefault();
+  }
+}, { passive: false });
 
 gameState.onChange(({ previousState, nextState }) => {
   inputManager.setEnabled(nextState === "playing");
