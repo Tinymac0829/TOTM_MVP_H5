@@ -39,8 +39,8 @@
 | `ENG-01` | `codex/eng-01` | `WORKTREE_ROOT/ENG-01` | `TBD` | `DONE` | `2026-04-23` | 任务管理 thread 已接管并完成项目骨架：`index.html`、`src/main.js`、`src/GameLoop.js`、`src/GameState.js`。当前会话无法读取稳定 session id，暂保留 `TBD`。 |
 | `ENG-02` | `codex/eng-02` | `WORKTREE_ROOT/ENG-02` | `TBD` | `DONE` | `2026-04-23` | 运行时基础层已完成并提交 `b1b69b4`：`TileType`、`GridMap`、`StageLoader`、`Renderer + Camera` 与 `story_001` JSON 已接通，并通过 Node smoke、HTTP 访问和 `1080x1920` 设备模拟验证。 |
 | `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `DONE` | `2026-04-23` | 输入基础层已完成：`TouchInput`、`KeyboardInput`、`InputManager` 已接入 `main.js`，在 `playing` 状态下统一输出方向命令；稳定 session id 暂记为 `TBD`。 |
-| `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `IN_PROGRESS` | `2026-05-01` | ENG-04 worktree 内已完成 `R-009` 三层坐标域实现和 `R-008` `0.1s/100ms` 输入缓冲代码批次。`CoordinateSystem`、`PlayerController`、`Renderer` 与模块缓存 query 已通过自动校验和加载 `eng04_input_buffer_v1` 的真实浏览器回归；任务最终关闭仍等待明确收口指令。 |
-| `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `IN_PROGRESS` | `2026-05-01` | 最小玩法 UI 与 ENG-04 集成链路已在 `2026-05-01` 随 world-units 运动、Renderer 坐标适配、短距离过冲处理和 `100ms` 输入缓冲完成真实浏览器回归。失败/通关弹窗、输入屏蔽、按钮可用时机、HUD 同步和点击缩放均已复测为 `PASS`。 |
+| `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `DONE` | `2026-05-01` | `R-009` 三层坐标域实现和 `R-008` `0.1s/100ms` 输入缓冲已由 `2026-05-01` ENG-04 × ENG-05 真实浏览器联合回归正式收口。`CoordinateSystem`、`PlayerController`、`Renderer`、模块缓存 query、快速连续滑动、死亡/通关行为、点击/缩放对齐和缓存版本确认均已在加载 `eng04_input_buffer_v1` 时通过。 |
+| `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `DONE` | `2026-05-01` | 最小玩法 UI 与 ENG-04 集成链路已由 `2026-05-01` 真实浏览器回归正式收口。world-units 运动、Renderer 坐标适配、短距离过冲处理、`100ms` 输入缓冲、失败/通关弹窗、输入屏蔽、按钮可用时机、HUD 同步、点击/缩放和重复游玩 fallback 均复测为 `PASS`。 |
 
 ## 更新日志
 
@@ -70,6 +70,7 @@
 | `2026-04-30` | `BASELINE` | ENG-04 修正 `R-008` 输入缓冲窗口为 `0.1s/100ms`，并明确缓冲倒计时走 `update(dt)`、玩家位移仍走 `fixedUpdate`；空间定位采用 C 方案，只新增 center API，不切换现有 origin 主坐标语义。 | 该基线已由 `2026-05-01` 代码与真实浏览器回归记录完成实现和复验。 |
 | `2026-05-01` | `CODE` | 已完成 ENG-04 当前基线代码批次：新增 `CoordinateSystem` half-tile 与 center API 且保留 origin 语义；将输入缓冲倒计时迁移到 `PlayerController.update(deltaTime)`；玩家位移继续走 `fixedUpdate`；模块缓存 query 更新为 `eng04_input_buffer_v1`。 | 移动、收集、死亡、通关、缓冲过期/覆盖和连锁转向语义的自动语法与行为校验均已通过。 |
 | `2026-05-01` | `VALIDATION` | 真实浏览器回归已通过：`story_001` 主链路、快速连续滑动与 AHK 边界测试、`eng04_death_validation`、弹窗输入屏蔽、点击/缩放对齐和缓存版本确认均为 `PASS`。 | `ENG-04 × ENG-05` 集成基线已在 R-009 坐标域与 R-008 输入缓冲变更后重新验证；两个测试入口均确认加载 `eng04_input_buffer_v1`。 |
+| `2026-05-01` | `STATUS` | 基于已归档的联合真实浏览器回归结果，正式将 `ENG-04` 与 `ENG-05` 标记为 `DONE`。 | 任务台账已与主分支基线同步；`LVL-01` 在执行计划中收口，`QA-01` 保留为独立待关闭项。 |
 
 
 
