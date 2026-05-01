@@ -1,23 +1,42 @@
-const DEFAULT_SWIPE_THRESHOLD = 0.3;
+const INVALID_DPI_WIDTH_FACTOR = 0.03;
+const NORMAL_DPI_FACTOR = 0.16;
+const MIN_VALID_DPI = 100;
+const MAX_VALID_DPI = 1000;
 
-function getNormalizedTouchPosition(touch, canvas) {
-  const width = Math.max(1, canvas.clientWidth || canvas.width || 1);
-  const height = Math.max(1, canvas.clientHeight || canvas.height || 1);
-
+function getTouchPosition(touch) {
   return {
-    x: touch.clientX / width,
-    y: touch.clientY / height,
+    x: touch.clientX,
+    y: touch.clientY,
   };
 }
 
+function resolveScreenDpi() {
+  const dpi = window.screen?.deviceXDPI
+    ?? window.screen?.logicalXDPI
+    ?? (window.devicePixelRatio || 1) * 96;
+
+  return Number.isFinite(dpi) ? dpi : 0;
+}
+
+function resolveSwipeThreshold(canvas) {
+  const dpi = resolveScreenDpi();
+
+  if (dpi <= MIN_VALID_DPI || dpi >= MAX_VALID_DPI) {
+    const width = canvas.clientWidth || canvas.getBoundingClientRect().width || window.innerWidth || 1;
+    return width * INVALID_DPI_WIDTH_FACTOR;
+  }
+
+  return dpi * NORMAL_DPI_FACTOR;
+}
+
 export default class TouchInput {
-  constructor({ canvas, swipeThreshold = DEFAULT_SWIPE_THRESHOLD } = {}) {
+  constructor({ canvas, swipeThreshold = null } = {}) {
     if (!(canvas instanceof HTMLCanvasElement)) {
       throw new Error("[TouchInput] canvas must be an HTMLCanvasElement.");
     }
 
     this.canvas = canvas;
-    this.swipeThreshold = swipeThreshold;
+    this.swipeThreshold = swipeThreshold ?? resolveSwipeThreshold(canvas);
     this.tracking = false;
     this.startX = 0;
     this.startY = 0;
@@ -41,9 +60,9 @@ export default class TouchInput {
       return;
     }
 
-    const normalized = getNormalizedTouchPosition(touch, this.canvas);
-    this.startX = normalized.x;
-    this.startY = normalized.y;
+    const position = getTouchPosition(touch);
+    this.startX = position.x;
+    this.startY = position.y;
     this.tracking = true;
   }
 
@@ -59,11 +78,11 @@ export default class TouchInput {
       return;
     }
 
-    const normalized = getNormalizedTouchPosition(touch, this.canvas);
-    const dx = normalized.x - this.startX;
-    const dy = normalized.y - this.startY;
+    const position = getTouchPosition(touch);
+    const dx = position.x - this.startX;
+    const dy = position.y - this.startY;
 
-    if (Math.abs(dx) < this.swipeThreshold && Math.abs(dy) < this.swipeThreshold) {
+    if (Math.abs(dx) <= this.swipeThreshold && Math.abs(dy) <= this.swipeThreshold) {
       return;
     }
 
@@ -73,7 +92,8 @@ export default class TouchInput {
       this.detectedDirection = dy > 0 ? "down" : "up";
     }
 
-    this.tracking = false;
+    this.startX = position.x;
+    this.startY = position.y;
   }
 
   onTouchEnd() {

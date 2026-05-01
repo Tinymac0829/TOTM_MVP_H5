@@ -142,12 +142,10 @@ function handleHudAction(action) {
 
 function getCanvasCoordinatesFromClient(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
-  const scaleX = (canvas.clientWidth || rect.width || 1) / Math.max(rect.width, 1);
-  const scaleY = (canvas.clientHeight || rect.height || 1) / Math.max(rect.height, 1);
 
   return {
-    x: (clientX - rect.left) * scaleX,
-    y: (clientY - rect.top) * scaleY,
+    x: clientX - rect.left,
+    y: clientY - rect.top,
   };
 }
 
