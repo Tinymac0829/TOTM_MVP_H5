@@ -176,14 +176,14 @@ tileSize = Math.min(
 
 ## 7. 实现边界
 
-本批代码修改应严格限制在 Renderer 视距 / 缩放相关逻辑内。
+首轮视距校准代码修改应严格限制在 Renderer 视距 / 缩放相关逻辑内。
 
 允许修改：
 
 - `src/Renderer.js` 中的 tile size 来源、viewport 下的等效 tile size 计算、相机 offset 计算。
 - 必要时增加少量内部常量或私有方法，命名需体现 Story 视距校准用途。
 
-不允许修改：
+首轮视距校准不允许修改：
 
 - `src/TouchInput.js` 的滑动阈值。
 - `src/HUD.js` 的按钮视觉区域和 hit-test 逻辑。
@@ -191,6 +191,25 @@ tileSize = Math.min(
 - `src/PlayerController.js` 的速度、缓冲、碰撞、收集、死亡或通关逻辑。
 - `stages/*.json` 关卡数据。
 - OPS-01 之外的 Story 2 / Story 3 验收范围。
+
+### 7.1 第四轮微调边界
+
+`2026-05-04` 第四轮 Android 真机测试确认首轮视距修复有效，主链路和滑动手感基本通过，但仍观察到两个可微调项：
+
+- 竞品纵向可见范围仍比当前 H5 多约 `1 tile`，上下约各多半格。
+- 滑动阈值体感仍可略微提高灵敏度，但可能受剩余视距差异影响。
+
+因此第四轮允许做以下最小改动：
+
+- 将 Story 目标可见范围从 `12 x 24` 微调为 `12.5 x 25`，使 tile size 约缩小 `4%`，画面等比例拉远。
+- 将 TouchInput 的 DPI 阈值因子整体降低 `10%`，先作为真机体感试调。
+
+第四轮仍不修改：
+
+- HUD 按钮视觉区域和 hit-test 逻辑。
+- PlayerController 速度、缓冲、碰撞、收集、死亡或通关逻辑。
+- 关卡 JSON。
+- Story 2 / Story 3 验收范围。
 
 ## 8. 验收标准
 
@@ -239,3 +258,33 @@ OPS-01 只有在上述项目全部达到 `PASS`，且静态资源加载和线上
 OPS-01 当前阻断不是 HUD touch、连续滑动或页面稳定性，而是 Story 视距与竞品不匹配。
 
 在完整逆向公式缺失的情况下，本批可以先用 viewport 约束下的动态 Story tile size 做截图校准，让可见范围接近竞品，再进行 Android 真机复验。滑动阈值体感应在视距修复后重新判断。
+
+## 12. 第四轮微调方案
+
+首轮 Story 视距校准提交后，Android 真机测试确认视距问题已修正成功，滑动手感也基本通过。当前不再视为 P0 阻断，而是收口前的体感微调。
+
+本轮目标：
+
+- 视距再等比例拉远一点，匹配竞品纵向多约 `1 tile` 的观察。
+- 滑动阈值先提高约 `10%` 灵敏度，待真机复验确认是否保留。
+
+代码目标：
+
+```javascript
+const STORY_TARGET_VISIBLE_COLUMNS = 12.5;
+const STORY_TARGET_VISIBLE_ROWS = 25;
+```
+
+```javascript
+const INVALID_DPI_WIDTH_FACTOR = 0.027;
+const NORMAL_DPI_FACTOR = 0.144;
+```
+
+复验重点：
+
+- camera / viewport 初始入口视距是否比上一轮更接近竞品。
+- 开始按钮与重复游玩按钮命中是否继续 `PASS`。
+- 滑动阈值是否更接近竞品，且不引入误触。
+- 连续不离屏滑动是否继续 `PASS`。
+- 页面不滚动、不缩放、不丢 Canvas 焦点是否继续 `PASS`。
+- 主链路 smoke 是否继续 `PASS`。
