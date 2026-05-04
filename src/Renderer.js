@@ -14,6 +14,9 @@ const TILE_COLORS = Object.freeze({
   [TileType.Spikes]: "#cc0000",
 });
 
+const STORY_TARGET_VISIBLE_COLUMNS = 12;
+const STORY_TARGET_VISIBLE_ROWS = 24;
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
@@ -40,6 +43,26 @@ function normalizeViewport(canvas, viewport = null) {
   return resolveViewportSize(canvas);
 }
 
+function resolveStoryTileSize(viewport, fallbackTileSize) {
+  const candidates = [];
+
+  if (Number.isFinite(viewport.width) && viewport.width > 0) {
+    candidates.push(viewport.width / STORY_TARGET_VISIBLE_COLUMNS);
+  }
+
+  if (Number.isFinite(viewport.height) && viewport.height > 0) {
+    candidates.push(viewport.height / STORY_TARGET_VISIBLE_ROWS);
+  }
+
+  const tileSize = candidates.length > 0
+    ? Math.min(...candidates)
+    : fallbackTileSize;
+
+  return Number.isFinite(tileSize) && tileSize > 0
+    ? tileSize
+    : fallbackTileSize;
+}
+
 export default class Renderer {
   constructor({
     canvas,
@@ -58,6 +81,7 @@ export default class Renderer {
 
     this.canvas = canvas;
     this.context = context;
+    this.baseTileSize = tileSize;
     this.tileSize = tileSize;
     this.visiblePaddingTiles = visiblePaddingTiles;
     this.backgroundColor = backgroundColor;
@@ -91,6 +115,7 @@ export default class Renderer {
   render(dt = 0, viewportOverride = null) {
     const viewport = normalizeViewport(this.canvas, viewportOverride);
 
+    this.updateTileSize(viewport);
     this.clear(viewport.width, viewport.height);
 
     if (!this.gridMap) {
@@ -129,8 +154,13 @@ export default class Renderer {
     const viewport = normalizeViewport(this.canvas, viewportOverride);
     const focus = this.resolveFocusPoint();
 
+    this.updateTileSize(viewport);
     this.cameraOffsetX = this.resolveCameraOffset(focus.x, viewport.width);
     this.cameraOffsetZ = this.resolveCameraOffset(focus.z, viewport.height);
+  }
+
+  updateTileSize(viewport) {
+    this.tileSize = resolveStoryTileSize(viewport, this.baseTileSize);
   }
 
   renderMap(viewportWidth, viewportHeight) {
