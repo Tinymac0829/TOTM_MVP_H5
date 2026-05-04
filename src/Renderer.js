@@ -14,8 +14,8 @@ const TILE_COLORS = Object.freeze({
   [TileType.Spikes]: "#cc0000",
 });
 
-const STORY_TARGET_VISIBLE_COLUMNS = 12.5;
-const STORY_TARGET_VISIBLE_ROWS = 25;
+const STORY_TARGET_VISIBLE_COLUMNS = 12.75;
+const STORY_TARGET_VISIBLE_ROWS = 25.5;
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);

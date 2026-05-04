@@ -288,3 +288,34 @@ const NORMAL_DPI_FACTOR = 0.144;
 - 连续不离屏滑动是否继续 `PASS`。
 - 页面不滚动、不缩放、不丢 Canvas 焦点是否继续 `PASS`。
 - 主链路 smoke 是否继续 `PASS`。
+
+## 13. 第五轮微调方案
+
+第四轮微调提交后，Android 真机测试确认体验比前一轮更接近竞品。当前继续做收口前小幅体感微调。
+
+本轮目标：
+
+- 视距高度从 `25` 微调到 `25.5`。
+- 宽度按当前等比例关系同步，从 `12.5` 微调到 `12.75`。
+- 滑动阈值继续降低，验证更灵敏的触发距离是否更接近竞品且不引入误触。
+
+代码目标：
+
+```javascript
+const STORY_TARGET_VISIBLE_COLUMNS = 12.75;
+const STORY_TARGET_VISIBLE_ROWS = 25.5;
+```
+
+```javascript
+const INVALID_DPI_WIDTH_FACTOR = 0.024;
+const NORMAL_DPI_FACTOR = 0.128;
+```
+
+复验重点：
+
+- 初始入口视距是否继续接近竞品，且没有显得过远。
+- 滑动阈值是否更灵敏，同时不出现明显误触。
+- 开始按钮与重复游玩按钮命中是否继续 `PASS`。
+- 连续不离屏滑动是否继续 `PASS`。
+- 页面不滚动、不缩放、不丢 Canvas 焦点是否继续 `PASS`。
+- 主链路 smoke 是否继续 `PASS`。
