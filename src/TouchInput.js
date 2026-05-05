@@ -87,6 +87,7 @@ export default class TouchInput {
       const position = getTouchPosition(touch);
       this.startX = position.x;
       this.startY = position.y;
+      this.swipeTimeout = this.swipeTime;
       return;
     }
 

@@ -333,7 +333,7 @@ const NORMAL_DPI_FACTOR = 0.128;
 
 这两个值低于逆向确认的竞品原始值 `0.03 / 0.16`，属于 H5 浏览器版本在 Android 真机上的体感校准结果。由于 H5 浏览器触摸事件、CSS 像素、设备 DPI 口径与 Unity App 并不完全等价，本轮暂不把距离阈值回调到竞品原始值。
 
-逆向报告 `8.5a` 进一步确认竞品还有滑动判定时间窗口：手指按下后，必须在 `swipeTime = 1.0s` 内完成滑动；如果 `swipeTimeout <= 0`，本次位移不进入距离阈值判定，而是把起点重置为当前触点。
+逆向报告 `8.5a` 进一步确认竞品还有滑动判定时间窗口：手指按下后，必须在 `swipeTime = 1.0s` 内完成滑动；如果 `swipeTimeout <= 0`，本次位移不进入距离阈值判定，而是把起点重置为当前触点，并重新开启 `swipeTimeout = swipeTime`。
 
 本轮目标：
 
@@ -359,9 +359,15 @@ touchBeginPoint = touch.position;
 ```javascript
 if (swipeTimeout <= 0) {
   touchBeginPoint = touch.position;
+  swipeTimeout = swipeTime;
   return;
 }
 ```
+
+新版完整反编译还确认两个边界：
+
+- 未达距离阈值时，竞品直接返回，不更新起点，也不重置 `swipeTimeout`。
+- 竞品没有速度/加速度辅助判定；理论上仍接受“主要快速位移恰好跨越超时帧，重置后剩余位移不足阈值”的极端输入丢失边界。
 
 复验重点：
 
