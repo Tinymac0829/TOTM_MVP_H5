@@ -9,7 +9,9 @@ export default class InputManager {
     this.enabled = true;
   }
 
-  update() {
+  update(deltaTime = 0) {
+    this.touchInput.update(deltaTime);
+
     if (!this.enabled) {
       this.currentDirection = null;
       this.touchInput.reset();

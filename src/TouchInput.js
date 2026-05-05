@@ -1,5 +1,6 @@
 const INVALID_DPI_WIDTH_FACTOR = 0.024;
 const NORMAL_DPI_FACTOR = 0.128;
+const SWIPE_TIME_SECONDS = 1.0;
 const MIN_VALID_DPI = 100;
 const MAX_VALID_DPI = 1000;
 
@@ -37,6 +38,8 @@ export default class TouchInput {
 
     this.canvas = canvas;
     this.swipeThreshold = swipeThreshold ?? resolveSwipeThreshold(canvas);
+    this.swipeTime = SWIPE_TIME_SECONDS;
+    this.swipeTimeout = this.swipeTime;
     this.tracking = false;
     this.startX = 0;
     this.startY = 0;
@@ -63,6 +66,8 @@ export default class TouchInput {
     const position = getTouchPosition(touch);
     this.startX = position.x;
     this.startY = position.y;
+    this.swipeTimeout = this.swipeTime;
+    this.detectedDirection = null;
     this.tracking = true;
   }
 
@@ -75,6 +80,13 @@ export default class TouchInput {
 
     const touch = event.touches[0];
     if (!touch) {
+      return;
+    }
+
+    if (this.swipeTimeout <= 0) {
+      const position = getTouchPosition(touch);
+      this.startX = position.x;
+      this.startY = position.y;
       return;
     }
 
@@ -96,6 +108,15 @@ export default class TouchInput {
     this.startY = position.y;
   }
 
+  update(deltaTime = 0) {
+    if (!this.tracking) {
+      return;
+    }
+
+    const elapsed = Math.max(deltaTime, 0);
+    this.swipeTimeout = Math.max(0, this.swipeTimeout - elapsed);
+  }
+
   onTouchEnd() {
     this.tracking = false;
   }
@@ -109,5 +130,6 @@ export default class TouchInput {
   reset() {
     this.tracking = false;
     this.detectedDirection = null;
+    this.swipeTimeout = this.swipeTime;
   }
 }

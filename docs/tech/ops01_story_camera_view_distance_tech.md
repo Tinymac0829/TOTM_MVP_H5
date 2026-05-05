@@ -319,3 +319,54 @@ const NORMAL_DPI_FACTOR = 0.128;
 - 连续不离屏滑动是否继续 `PASS`。
 - 页面不滚动、不缩放、不丢 Canvas 焦点是否继续 `PASS`。
 - 主链路 smoke 是否继续 `PASS`。
+
+## 14. 滑动时间窗口补齐方案
+
+逆向报告 `8.5` 已确认竞品存在滑动最小距离阈值，MVP 当前 `TouchInput` 已有同类机制：初始化时计算一次 `swipeThreshold`，`touchmove` 中比较 `dx / dy` 是否超过阈值，超过后再按主导方向产出输入。
+
+当前第五轮 Android 真机体感调参值如下：
+
+```javascript
+const INVALID_DPI_WIDTH_FACTOR = 0.024;
+const NORMAL_DPI_FACTOR = 0.128;
+```
+
+这两个值低于逆向确认的竞品原始值 `0.03 / 0.16`，属于 H5 浏览器版本在 Android 真机上的体感校准结果。由于 H5 浏览器触摸事件、CSS 像素、设备 DPI 口径与 Unity App 并不完全等价，本轮暂不把距离阈值回调到竞品原始值。
+
+逆向报告 `8.5a` 进一步确认竞品还有滑动判定时间窗口：手指按下后，必须在 `swipeTime = 1.0s` 内完成滑动；如果 `swipeTimeout <= 0`，本次位移不进入距离阈值判定，而是把起点重置为当前触点。
+
+本轮目标：
+
+- 补齐 `swipeTime = 1.0s` 的时间窗口机制。
+- 保留第五轮距离阈值 `0.024 / 0.128`，避免同一轮同时改变距离和时间两个变量。
+- Android 真机先单独复验时间窗口对滑动手感的影响，再判断是否需要把距离阈值回调到竞品原始值。
+
+代码目标：
+
+```javascript
+const SWIPE_TIME_SECONDS = 1.0;
+```
+
+`touchstart` 时重置：
+
+```javascript
+swipeTimeout = SWIPE_TIME_SECONDS;
+touchBeginPoint = touch.position;
+```
+
+`touchmove` 时处理：
+
+```javascript
+if (swipeTimeout <= 0) {
+  touchBeginPoint = touch.position;
+  return;
+}
+```
+
+复验重点：
+
+- Android 真机滑动是否更接近竞品，尤其是慢拖、按住后再滑、普通快速滑动三类场景。
+- 当前第五轮距离阈值是否仍然合适。
+- 连续不离屏滑动是否继续 `PASS`。
+- 页面不滚动、不缩放、不丢 Canvas 焦点是否继续 `PASS`。
+- 主链路 smoke 是否继续 `PASS`。

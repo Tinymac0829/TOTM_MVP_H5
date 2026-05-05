@@ -277,7 +277,7 @@ const gameLoop = new GameLoop({
     playerController.fixedUpdate(fixedDeltaTime, direction);
   },
   update: (deltaTime) => {
-    inputManager.update();
+    inputManager.update(deltaTime);
     playerController.update(deltaTime);
     hud.update(deltaTime);
   },
