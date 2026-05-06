@@ -459,3 +459,38 @@ MVP 当前缺口：
 前序实现中已经读到逆向报告 `8.5a` 的 `fingerId != touchId` 检查，但工程判断过早收窄到距离阈值和 `swipeTimeout` 时间窗口，没有把 `touchId / fingerId` 视为触摸状态机的同等级不变量。这导致 MVP 虽然补齐了滑动距离和时间窗口，却仍保留了 `event.touches[0]` 与任意 `touchend` 清 tracking 的脆弱实现。
 
 正确的工程判断应是：只要竞品移动端状态机存在 `touchId / fingerId` 身份匹配，而 MVP 要支持 Android 真机持续滑动，就必须核查并补齐主触点身份绑定。该机制不是可选手感细节，而是防止多触点事件破坏单指手势生命周期的正确性条件。
+
+## 17. 竞品初始滑动阈值体验试验
+
+`2026-05-06` 主触点 ID 修正后，Android 真机验收结果：
+
+- 默认 URL 启动、按钮命中与页面稳定性：`PASS`
+- 普通四向滑动：`PASS`
+- 连续不离屏滑动：`PASS`
+- 多触点干扰复现：`PASS`
+- 长按后再滑：`PASS`
+- 主链路 smoke：`PASS`
+
+由于输入采集失效问题已经解除，本轮可以单独回调距离阈值参数，验证竞品初始阈值在 H5 Android Chrome 中的实际体感。
+
+本轮试验目标：
+
+- 将滑动距离阈值从第五轮 H5 体感校准值回调到逆向确认的竞品初始值。
+- 保持 `SWIPE_TIME_SECONDS = 1.0` 不变。
+- 保持 `activeTouchId` 主触点 ID 机制不变。
+- 不同时调整相机视距、HUD hit-test、玩家速度或关卡数据。
+
+代码目标：
+
+```javascript
+const INVALID_DPI_WIDTH_FACTOR = 0.03;
+const NORMAL_DPI_FACTOR = 0.16;
+```
+
+复验重点：
+
+- 普通快速滑动是否仍稳定触发。
+- 轻微误触是否减少。
+- 慢拖、长按后再滑是否仍可接受。
+- 连续不离屏滑动和多触点干扰是否继续 `PASS`。
+- 主链路 smoke 是否继续 `PASS`。
