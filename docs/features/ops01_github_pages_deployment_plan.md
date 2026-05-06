@@ -3,7 +3,7 @@
 **文档类型**：OPS 计划与验收清单  
 **任务 ID**：OPS-01  
 **创建日期**：2026-05-01  
-**状态**：TODO  
+**状态**：DONE
 **关联需求**：R-020  
 **目标平台**：GitHub Pages、移动端设备浏览器、桌面浏览器
 
@@ -191,3 +191,35 @@ OPS-01 只有在以下条件同时满足时才能标记为 `DONE`：
 - `docs/mvp_execution_plan.md`：将 OPS-01 标记为 `DONE`，并视情况将 `v0.1.1` 标记为 `DONE`。
 - `docs/mvp_execution_plan_zh.md`：同步中文执行计划。
 - `docs/worktree_registry.md` 与 `docs/worktree_registry_zh.md`：追加 OPS-01 主分支收口日志。
+
+## 2026-05-06 Android 最终验收记录
+
+| 字段 | 内容 |
+|---|---|
+| 验收日期 | `2026-05-06` |
+| Pages URL | `https://tinymac0829.github.io/TOTM_MVP_H5/` |
+| 提交版本 | 已推送的 OPS-01 Android 输入修正与竞品初始阈值参数版本 |
+| 桌面浏览器 | Chrome |
+| 移动设备 / 浏览器 | Android / Chrome |
+| 静态资源加载 | `PASS` |
+| 桌面 smoke | `PASS` |
+| 开始按钮与页面稳定性 | `PASS`：默认 URL 启动、按钮命中、页面不滚动、不缩放、不丢 Canvas 焦点 |
+| 普通四向滑动 | `PASS` |
+| 连续不离屏滑动 | `PASS` |
+| 多触点干扰复现 | `PASS` |
+| 长按后再滑 | `PASS` |
+| 调试日志复验 | `NOT_RUN`：多触点干扰复现已 `PASS`，未再单独导出 `?debugInput=1` 日志 |
+| 收集/HUD 或通关 smoke | `PASS`：主链路 smoke 通过 |
+| 最终输入基线 | 距离阈值 `0.03 / 0.16`，`SWIPE_TIME_SECONDS = 1.0`，`activeTouchId` 主触点 ID 跟踪 |
+| 总体结论 | `PASS`：OPS-01 Android 输入采集阻断已解除，GitHub Pages URL 可玩性与桌面/移动端 smoke 达到收口标准。 |
+
+### 最终收口说明
+
+OPS-01 最终采用竞品初始滑动距离阈值 `0.03 / 0.16`。Android 真机验收确认该参数体感通过，并保留 `SWIPE_TIME_SECONDS = 1.0` 时间窗口与 `activeTouchId` 主触点 ID 跟踪机制。
+
+OPS-01 相关收口状态已同步至：
+
+- `docs/mvp_execution_plan.md`
+- `docs/mvp_execution_plan_zh.md`
+- `docs/worktree_registry.md`
+- `docs/worktree_registry_zh.md`

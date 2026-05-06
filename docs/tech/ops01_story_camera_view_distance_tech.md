@@ -494,3 +494,30 @@ const NORMAL_DPI_FACTOR = 0.16;
 - 慢拖、长按后再滑是否仍可接受。
 - 连续不离屏滑动和多触点干扰是否继续 `PASS`。
 - 主链路 smoke 是否继续 `PASS`。
+
+### 17.1 最终验收结论
+
+`2026-05-06` Android 真机复验确认，竞品初始滑动阈值参数体感通过：
+
+```javascript
+const INVALID_DPI_WIDTH_FACTOR = 0.03;
+const NORMAL_DPI_FACTOR = 0.16;
+```
+
+最终保留：
+
+- 滑动距离阈值：`0.03 / 0.16`。
+- 滑动时间窗口：`SWIPE_TIME_SECONDS = 1.0`。
+- 主触点 ID 跟踪：`activeTouchId` 按 `touch.identifier` 匹配。
+- 调试日志：仅 `?debugInput=1` 时写入 `window.__totmInputLog`。
+
+Android 真机最终验收：
+
+- 默认 URL 启动、按钮命中与页面稳定性：`PASS`
+- 普通四向滑动：`PASS`
+- 连续不离屏滑动：`PASS`
+- 多触点干扰复现：`PASS`
+- 长按后再滑：`PASS`
+- 主链路 smoke：`PASS`
+
+OPS-01 Android 输入采集阻断已解除。该参数组合可作为 OPS-01 收口版本的输入基线。

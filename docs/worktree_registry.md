@@ -72,6 +72,7 @@
 | `2026-05-01` | `VALIDATION` | Real-browser regression passed for `story_001`, rapid continuous sliding with AHK boundary testing, `eng04_death_validation`, popup input lockout, click/resize alignment, and cache-version confirmation. | `ENG-04 × ENG-05` integration baseline is revalidated after the R-009 coordinate-domain and R-008 input-buffer changes; both tested pages loaded `eng04_input_buffer_v1`. |
 | `2026-05-01` | `STATUS` | Formally marked `ENG-04` and `ENG-05` as `DONE` based on the archived joint real-browser regression results. | The task registry matched the master-branch baseline at that point; `LVL-01` was closed in the execution plan, while `QA-01` was left for a separate follow-up closeout. |
 | `2026-05-01` | `QA` | Added a master-branch QA-01 documentation closeout record under `docs/features/` and marked QA-01 as `DONE` in the execution plan. | No dedicated QA-01 worktree was created; the closeout is based on existing real-browser regression evidence, input-path review, and the ENG-03 timing budget. |
+| `2026-05-06` | `OPS` | OPS-01 is closed on the master branch: the GitHub Pages playable URL, desktop smoke, Android-device button hit testing, ordinary swiping, continuous no-lift swiping, multi-touch interference, long-hold-then-swipe, and the main smoke path all passed. | OPS-01 is now marked `DONE`; the final mobile input baseline is `0.03 / 0.16` distance thresholds, `SWIPE_TIME_SECONDS = 1.0`, and `activeTouchId` primary-touch tracking. |
 
 
 

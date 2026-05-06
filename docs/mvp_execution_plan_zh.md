@@ -81,7 +81,7 @@
 | ENG-05 | DONE | `R-012,R-013,R-015` | 实现最小玩法 UI | HUD/状态流已通过 `2026-05-01` 联合真实浏览器回归；按钮、弹窗、HUD 同步、输入锁定、点击/缩放时机和重复游玩 fallback 均复测为 `PASS` |
 | LVL-01 | DONE | `R-010,R-011,R-012,R-017` | 接入 `Story 1` | `story_001` 主链路已在 `2026-05-01` ENG-04 × ENG-05 真实浏览器回归中完成启动、滑行、收集/HUD、通关、重复游玩、点击/缩放与缓存版本确认 |
 | QA-01 | DONE | `R-006,R-007,R-008,R-009,R-017` | 完成 `Story 1` 手感验证 | 已由 `docs/features/qa01_story1_feel_validation_closeout.md` 收口：四向滑行与 `100ms` 输入缓冲已通过 `2026-05-01` 真实浏览器回归；`<50ms` 响应目标由输入路径代码核查和约 `44ms` 工程预算收口，不是高速摄像机实测结论 |
-| OPS-01 | TODO | `R-020` | 配置 GitHub Pages 部署 | GitHub Pages URL 可打开当前可玩构建，桌面与移动端 smoke 均通过，移动端触屏滑动可驱动角色移动，静态资源无阻塞加载错误，并在线确认 `eng04_input_buffer_v1` |
+| OPS-01 | DONE | `R-020` | 配置 GitHub Pages 部署 | GitHub Pages URL 可打开当前可玩构建；桌面与 Android 真机 smoke 均通过；移动端触屏滑动、连续不离屏滑动、多触点干扰和长按后再滑均已验收为 `PASS`；最终输入基线为 `0.03 / 0.16` 距离阈值、`SWIPE_TIME_SECONDS = 1.0` 和 `activeTouchId` 主触点 ID 跟踪 |
 | LVL-02 | TODO | `R-010,R-011,R-012,R-018` | 接入 `Story 2` | 关卡可完整游玩，且不回退 `Story 1` 体验 |
 | QA-02 | TODO | `R-017,R-018` | 完成 `Story 1-2` 回归检查 | 两关共享的手感与状态流保持一致 |
 | LVL-03 | TODO | `R-010,R-011,R-012,R-019` | 接入 `Story 3` | 关卡可完整游玩，并完成第一组 MVP 关卡闭环 |
@@ -101,7 +101,7 @@
 |---|---|---|---|---|
 | `v0.0.1` | DONE | `PM-01` | 仓库基线 | Git 已初始化，规则与脚本已提交 |
 | `v0.1.0` | DONE | `PM-02, ENG-01, ENG-02, ENG-03` | 设计 + 基础层 | 技术设计文档存在，关卡数据路径已定义，可运行框架已存在。PM-02、ENG-01、ENG-02、ENG-03 已完成 |
-| `v0.1.1` | IN_PROGRESS | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | 核心手感 + `Story 1` + URL 访问 | ENG-04、ENG-05、LVL-01 与 QA-01 已关闭；OPS-01 仍需单独部署收口 |
+| `v0.1.1` | DONE | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | 核心手感 + `Story 1` + URL 访问 | ENG-04、ENG-05、LVL-01、QA-01 与 OPS-01 均已关闭；`Story 1` 主链路、线上 URL 访问、桌面 smoke 和 Android 真机输入 smoke 均为 `PASS` |
 | `v0.2.0` | TODO | `LVL-02, QA-02` | `Story 2` | `Story 1-2` 均可游玩并完成回归检查 |
 | `v0.3.0` | TODO | `LVL-03, QA-03` | `Story 3` | `Story 1-3` 全部可游玩且可重复体验 |
 | `v0.3.1` | TODO | `PERF-01, REL-01` | 稳定收口 | 只修复问题，不再扩范围 |
@@ -157,6 +157,7 @@
 | `2026-05-01` | `VALIDATION` | 已完成真实浏览器回归：`story_001` 主链路、快速连续滑动与 AHK 边界测试、`eng04_death_validation`、弹窗输入屏蔽、点击/缩放对齐和缓存版本确认均通过。 | R-008/R-009 代码批次已完成浏览器验收；两个测试入口均加载 `eng04_input_buffer_v1`，记录结果为 `PASS`。 |
 | `2026-05-01` | `STATUS` | 基于已归档的 ENG-04 × ENG-05 真实浏览器联合回归结果，正式将 ENG-04、ENG-05 与 LVL-01 收口为 `DONE`。 | `story_001` 主链路进入主分支基线；QA-01 在当时留给后续独立收口。 |
 | `2026-05-01` | `QA` | 通过 `docs/features/qa01_story1_feel_validation_closeout.md` 收口 QA-01：真实浏览器回归覆盖四向滑行与 `100ms` 输入缓冲；输入路径核查和 ENG-03 时序预算覆盖 `<50ms` 响应目标，最坏约 `44ms`。 | QA-01 现标记为 `DONE`；本次收口明确未新增高速摄像机或基线设备逐帧测量。 |
+| `2026-05-06` | `OPS` | 收口 OPS-01：GitHub Pages 可玩 URL、桌面 smoke、Android 真机按钮命中、普通滑动、连续不离屏滑动、多触点干扰、长按后再滑和主链路 smoke 均通过。 | OPS-01 标记为 `DONE`，`v0.1.1` 标记为 `DONE`；最终移动端输入基线采用竞品初始距离阈值 `0.03 / 0.16`、`SWIPE_TIME_SECONDS = 1.0` 和 `activeTouchId` 主触点 ID 跟踪。 |
 
 
 
