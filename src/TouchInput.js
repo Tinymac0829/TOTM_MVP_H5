@@ -3,6 +3,16 @@ const NORMAL_DPI_FACTOR = 0.128;
 const SWIPE_TIME_SECONDS = 1.0;
 const MIN_VALID_DPI = 100;
 const MAX_VALID_DPI = 1000;
+const DEBUG_INPUT_PARAM = "debugInput";
+const DEBUG_INPUT_LOG_LIMIT = 500;
+
+function shouldEnableDebugInput() {
+  try {
+    return new URLSearchParams(window.location.search).get(DEBUG_INPUT_PARAM) === "1";
+  } catch {
+    return false;
+  }
+}
 
 function getTouchPosition(touch) {
   return {
@@ -44,6 +54,13 @@ export default class TouchInput {
     this.startX = 0;
     this.startY = 0;
     this.detectedDirection = null;
+    this.debugEnabled = shouldEnableDebugInput();
+    this.debugLog = [];
+
+    if (this.debugEnabled) {
+      window.__totmInputLog = this.debugLog;
+      window.__totmInputState = () => this.createDebugSnapshot("manual");
+    }
 
     this.boundOnTouchStart = this.onTouchStart.bind(this);
     this.boundOnTouchMove = this.onTouchMove.bind(this);
@@ -55,11 +72,41 @@ export default class TouchInput {
     this.canvas.addEventListener("touchcancel", this.boundOnTouchEnd);
   }
 
+  createDebugSnapshot(eventName, details = {}) {
+    return {
+      t: Number(performance.now().toFixed(1)),
+      event: eventName,
+      tracking: this.tracking,
+      swipeTimeout: Number(this.swipeTimeout.toFixed(3)),
+      swipeTime: this.swipeTime,
+      swipeThreshold: Number(this.swipeThreshold.toFixed(2)),
+      startX: Number(this.startX.toFixed(1)),
+      startY: Number(this.startY.toFixed(1)),
+      detectedDirection: this.detectedDirection,
+      ...details,
+    };
+  }
+
+  pushDebugLog(eventName, details = {}) {
+    if (!this.debugEnabled) {
+      return;
+    }
+
+    this.debugLog.push(this.createDebugSnapshot(eventName, details));
+
+    if (this.debugLog.length > DEBUG_INPUT_LOG_LIMIT) {
+      this.debugLog.splice(0, this.debugLog.length - DEBUG_INPUT_LOG_LIMIT);
+    }
+  }
+
   onTouchStart(event) {
     event.preventDefault();
 
     const touch = event.touches[0];
     if (!touch) {
+      this.pushDebugLog("touchstart:no-touch", {
+        touches: event.touches.length,
+      });
       return;
     }
 
@@ -69,17 +116,28 @@ export default class TouchInput {
     this.swipeTimeout = this.swipeTime;
     this.detectedDirection = null;
     this.tracking = true;
+    this.pushDebugLog("touchstart", {
+      touches: event.touches.length,
+      x: Number(position.x.toFixed(1)),
+      y: Number(position.y.toFixed(1)),
+    });
   }
 
   onTouchMove(event) {
     event.preventDefault();
 
     if (!this.tracking) {
+      this.pushDebugLog("touchmove:not-tracking", {
+        touches: event.touches.length,
+      });
       return;
     }
 
     const touch = event.touches[0];
     if (!touch) {
+      this.pushDebugLog("touchmove:no-touch", {
+        touches: event.touches.length,
+      });
       return;
     }
 
@@ -88,23 +146,49 @@ export default class TouchInput {
       this.startX = position.x;
       this.startY = position.y;
       this.swipeTimeout = this.swipeTime;
+      this.pushDebugLog("touchmove:timeout-reset", {
+        touches: event.touches.length,
+        x: Number(position.x.toFixed(1)),
+        y: Number(position.y.toFixed(1)),
+      });
       return;
     }
 
     const position = getTouchPosition(touch);
     const dx = position.x - this.startX;
     const dy = position.y - this.startY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
 
-    if (Math.abs(dx) <= this.swipeThreshold && Math.abs(dy) <= this.swipeThreshold) {
+    if (absDx <= this.swipeThreshold && absDy <= this.swipeThreshold) {
+      this.pushDebugLog("touchmove:below-threshold", {
+        touches: event.touches.length,
+        x: Number(position.x.toFixed(1)),
+        y: Number(position.y.toFixed(1)),
+        dx: Number(dx.toFixed(1)),
+        dy: Number(dy.toFixed(1)),
+        absDx: Number(absDx.toFixed(1)),
+        absDy: Number(absDy.toFixed(1)),
+      });
       return;
     }
 
-    if (Math.abs(dx) > Math.abs(dy)) {
+    if (absDx > absDy) {
       this.detectedDirection = dx > 0 ? "right" : "left";
     } else {
       this.detectedDirection = dy > 0 ? "down" : "up";
     }
 
+    this.pushDebugLog("touchmove:direction", {
+      touches: event.touches.length,
+      x: Number(position.x.toFixed(1)),
+      y: Number(position.y.toFixed(1)),
+      dx: Number(dx.toFixed(1)),
+      dy: Number(dy.toFixed(1)),
+      absDx: Number(absDx.toFixed(1)),
+      absDy: Number(absDy.toFixed(1)),
+      direction: this.detectedDirection,
+    });
     this.startX = position.x;
     this.startY = position.y;
   }
@@ -119,16 +203,27 @@ export default class TouchInput {
   }
 
   onTouchEnd() {
+    this.pushDebugLog("touchend", {
+      wasTracking: this.tracking,
+    });
     this.tracking = false;
   }
 
   getDirection() {
     const direction = this.detectedDirection;
     this.detectedDirection = null;
+    if (direction) {
+      this.pushDebugLog("getDirection", {
+        direction,
+      });
+    }
     return direction;
   }
 
   reset() {
+    this.pushDebugLog("reset", {
+      wasTracking: this.tracking,
+    });
     this.tracking = false;
     this.detectedDirection = null;
     this.swipeTimeout = this.swipeTime;

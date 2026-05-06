@@ -376,3 +376,35 @@ if (swipeTimeout <= 0) {
 - 连续不离屏滑动是否继续 `PASS`。
 - 页面不滚动、不缩放、不丢 Canvas 焦点是否继续 `PASS`。
 - 主链路 smoke 是否继续 `PASS`。
+
+## 15. 输入采集失效排查日志
+
+Android 真机复验中仍偶现“手指持续按在屏幕上操作一段时间后，后续滑动不再被采集”的问题。现有 `[Player]` 日志只能确认玩家控制器是否收到方向，不能确认 `TouchInput` 原始事件流和内部状态。
+
+本轮新增一个仅调试参数启用的输入环形日志：
+
+```text
+?debugInput=1
+```
+
+启用后，`TouchInput` 会把最近一段输入状态写入：
+
+```javascript
+window.__totmInputLog
+```
+
+复现卡死后，在 Android Chrome 远程 DevTools Console 执行：
+
+```javascript
+copy(window.__totmInputLog)
+```
+
+重点观察字段：
+
+- `touchstart / touchmove / touchend / touchcancel` 是否继续出现。
+- `tracking` 是否被意外置为 `false`。
+- `swipeTimeout` 是否在超时后恢复到 `swipeTime`。
+- `dx / dy` 是否达到当前 `swipeThreshold`。
+- 方向是否已经由 `TouchInput` 产出，但没有进入 `[Player]` 日志。
+
+该日志只在 URL 参数明确启用时写入，默认玩法路径不输出输入明细。
