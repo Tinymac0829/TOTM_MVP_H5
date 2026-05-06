@@ -21,6 +21,21 @@ function getTouchPosition(touch) {
   };
 }
 
+function findTouchByIdentifier(touches, identifier) {
+  for (let index = 0; index < touches.length; index += 1) {
+    const touch = touches[index];
+    if (touch.identifier === identifier) {
+      return touch;
+    }
+  }
+
+  return null;
+}
+
+function getTouchListLength(touches) {
+  return touches?.length ?? 0;
+}
+
 function resolveScreenDpi() {
   const dpi = window.screen?.deviceXDPI
     ?? window.screen?.logicalXDPI
@@ -51,6 +66,7 @@ export default class TouchInput {
     this.swipeTime = SWIPE_TIME_SECONDS;
     this.swipeTimeout = this.swipeTime;
     this.tracking = false;
+    this.activeTouchId = null;
     this.startX = 0;
     this.startY = 0;
     this.detectedDirection = null;
@@ -65,11 +81,12 @@ export default class TouchInput {
     this.boundOnTouchStart = this.onTouchStart.bind(this);
     this.boundOnTouchMove = this.onTouchMove.bind(this);
     this.boundOnTouchEnd = this.onTouchEnd.bind(this);
+    this.boundOnTouchCancel = this.onTouchCancel.bind(this);
 
     this.canvas.addEventListener("touchstart", this.boundOnTouchStart, { passive: false });
     this.canvas.addEventListener("touchmove", this.boundOnTouchMove, { passive: false });
     this.canvas.addEventListener("touchend", this.boundOnTouchEnd);
-    this.canvas.addEventListener("touchcancel", this.boundOnTouchEnd);
+    this.canvas.addEventListener("touchcancel", this.boundOnTouchCancel);
   }
 
   createDebugSnapshot(eventName, details = {}) {
@@ -80,6 +97,7 @@ export default class TouchInput {
       swipeTimeout: Number(this.swipeTimeout.toFixed(3)),
       swipeTime: this.swipeTime,
       swipeThreshold: Number(this.swipeThreshold.toFixed(2)),
+      activeTouchId: this.activeTouchId,
       startX: Number(this.startX.toFixed(1)),
       startY: Number(this.startY.toFixed(1)),
       detectedDirection: this.detectedDirection,
@@ -102,15 +120,25 @@ export default class TouchInput {
   onTouchStart(event) {
     event.preventDefault();
 
-    const touch = event.touches[0];
+    if (this.tracking) {
+      this.pushDebugLog("touchstart:already-tracking", {
+        touches: event.touches.length,
+        changedTouches: getTouchListLength(event.changedTouches),
+      });
+      return;
+    }
+
+    const touch = event.changedTouches[0] ?? event.touches[0];
     if (!touch) {
       this.pushDebugLog("touchstart:no-touch", {
         touches: event.touches.length,
+        changedTouches: getTouchListLength(event.changedTouches),
       });
       return;
     }
 
     const position = getTouchPosition(touch);
+    this.activeTouchId = touch.identifier;
     this.startX = position.x;
     this.startY = position.y;
     this.swipeTimeout = this.swipeTime;
@@ -118,6 +146,8 @@ export default class TouchInput {
     this.tracking = true;
     this.pushDebugLog("touchstart", {
       touches: event.touches.length,
+      changedTouches: getTouchListLength(event.changedTouches),
+      touchId: touch.identifier,
       x: Number(position.x.toFixed(1)),
       y: Number(position.y.toFixed(1)),
     });
@@ -129,14 +159,16 @@ export default class TouchInput {
     if (!this.tracking) {
       this.pushDebugLog("touchmove:not-tracking", {
         touches: event.touches.length,
+        changedTouches: getTouchListLength(event.changedTouches),
       });
       return;
     }
 
-    const touch = event.touches[0];
+    const touch = findTouchByIdentifier(event.touches, this.activeTouchId);
     if (!touch) {
-      this.pushDebugLog("touchmove:no-touch", {
+      this.pushDebugLog("touchmove:active-touch-missing", {
         touches: event.touches.length,
+        changedTouches: getTouchListLength(event.changedTouches),
       });
       return;
     }
@@ -148,6 +180,8 @@ export default class TouchInput {
       this.swipeTimeout = this.swipeTime;
       this.pushDebugLog("touchmove:timeout-reset", {
         touches: event.touches.length,
+        changedTouches: getTouchListLength(event.changedTouches),
+        touchId: touch.identifier,
         x: Number(position.x.toFixed(1)),
         y: Number(position.y.toFixed(1)),
       });
@@ -163,6 +197,8 @@ export default class TouchInput {
     if (absDx <= this.swipeThreshold && absDy <= this.swipeThreshold) {
       this.pushDebugLog("touchmove:below-threshold", {
         touches: event.touches.length,
+        changedTouches: getTouchListLength(event.changedTouches),
+        touchId: touch.identifier,
         x: Number(position.x.toFixed(1)),
         y: Number(position.y.toFixed(1)),
         dx: Number(dx.toFixed(1)),
@@ -181,6 +217,8 @@ export default class TouchInput {
 
     this.pushDebugLog("touchmove:direction", {
       touches: event.touches.length,
+      changedTouches: getTouchListLength(event.changedTouches),
+      touchId: touch.identifier,
       x: Number(position.x.toFixed(1)),
       y: Number(position.y.toFixed(1)),
       dx: Number(dx.toFixed(1)),
@@ -202,11 +240,29 @@ export default class TouchInput {
     this.swipeTimeout = Math.max(0, this.swipeTimeout - elapsed);
   }
 
-  onTouchEnd() {
-    this.pushDebugLog("touchend", {
+  finishActiveTouch(event, eventName) {
+    const endedActiveTouch = findTouchByIdentifier(event.changedTouches, this.activeTouchId);
+    this.pushDebugLog(eventName, {
+      touches: event.touches.length,
+      changedTouches: getTouchListLength(event.changedTouches),
       wasTracking: this.tracking,
+      endedActiveTouch: Boolean(endedActiveTouch),
     });
+
+    if (!endedActiveTouch) {
+      return;
+    }
+
     this.tracking = false;
+    this.activeTouchId = null;
+  }
+
+  onTouchEnd(event) {
+    this.finishActiveTouch(event, "touchend");
+  }
+
+  onTouchCancel(event) {
+    this.finishActiveTouch(event, "touchcancel");
   }
 
   getDirection() {
@@ -225,6 +281,7 @@ export default class TouchInput {
       wasTracking: this.tracking,
     });
     this.tracking = false;
+    this.activeTouchId = null;
     this.detectedDirection = null;
     this.swipeTimeout = this.swipeTime;
   }

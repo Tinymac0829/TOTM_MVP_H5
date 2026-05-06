@@ -408,3 +408,54 @@ copy(window.__totmInputLog)
 - 方向是否已经由 `TouchInput` 产出，但没有进入 `[Player]` 日志。
 
 该日志只在 URL 参数明确启用时写入，默认玩法路径不输出输入明细。
+
+## 16. 主触点 ID 跟踪补齐方案
+
+`2026-05-06` Android 真机复验中，`?debugInput=1` 导出的 `debugInput=1.json` 进一步确认输入采集失效不是浏览器停止派发触摸事件，而是 MVP 当前 `TouchInput` 没有跟踪主触点身份，导致非主触点结束时也会清掉整体 tracking 状态。
+
+日志证据：
+
+- 日志共 `500` 条。
+- `touchmove:not-tracking` 共 `465` 条。
+- `touches=2` 共 `32` 条，说明复现场景中出现过多触点。
+- 索引 `25` 出现 `touchend`，`wasTracking=true`，随后索引 `26` 起持续出现 `touchmove:not-tracking`，且 `touches=1`。
+- 索引 `419` 再次出现 `touchstart`，`touches=2`；索引 `426` 出现 `touchend`，`wasTracking=true`；索引 `427` 起再次进入 `touchmove:not-tracking`，且 `touches=1`。
+
+上述事件流说明：Android Chrome 仍在持续派发单触点 `touchmove`，但 MVP 已经把 `tracking` 置为 `false`，因此后续滑动全部被丢弃。
+
+竞品逆向报告 `8.5a` 已确认 `GameplayScreen.ProcessTouchScreenInput` 并不把任意触点结束都视为当前手势结束，而是使用 `touchId / fingerId` 保护触摸生命周期：
+
+```csharp
+// Moved
+if (touch.fingerId != this.touchId)
+    return None;
+
+// Began
+this.touchId = touch.fingerId;
+
+// Ended / Cancelled
+if (touch.fingerId != this.touchId)
+    return;
+this.touchId = -1;
+```
+
+MVP 当前缺口：
+
+- `touchstart` 只读取 `event.touches[0]`，没有记录 `touch.identifier`。
+- `touchmove` 只读取 `event.touches[0]`，没有在当前触点列表里查找已绑定主触点。
+- `touchend` 和 `touchcancel` 共用结束处理，且没有检查 `changedTouches` 是否包含主触点。
+- 任意非主触点结束都可能把 `tracking` 清为 `false`，造成仍在屏幕上的主触点后续移动被全部丢弃。
+
+本轮修正方向：
+
+- `touchstart` 记录 `activeTouchId = touch.identifier`。
+- `touchmove` 只处理 `event.touches` 中 `identifier` 匹配 `activeTouchId` 的触点；找不到时记录调试日志并返回，不清掉 tracking。
+- `touchend` / `touchcancel` 只在 `changedTouches` 包含 `activeTouchId` 时结束 tracking。
+- 调试日志区分 `touchend` 与 `touchcancel`，并记录 `touches`、`changedTouches`、`activeTouchId`。
+- 保留第五轮距离阈值 `0.024 / 0.128` 和 `SWIPE_TIME_SECONDS = 1.0`，本轮只修正主触点生命周期。
+
+工程复盘：
+
+前序实现中已经读到逆向报告 `8.5a` 的 `fingerId != touchId` 检查，但工程判断过早收窄到距离阈值和 `swipeTimeout` 时间窗口，没有把 `touchId / fingerId` 视为触摸状态机的同等级不变量。这导致 MVP 虽然补齐了滑动距离和时间窗口，却仍保留了 `event.touches[0]` 与任意 `touchend` 清 tracking 的脆弱实现。
+
+正确的工程判断应是：只要竞品移动端状态机存在 `touchId / fingerId` 身份匹配，而 MVP 要支持 Android 真机持续滑动，就必须核查并补齐主触点身份绑定。该机制不是可选手感细节，而是防止多触点事件破坏单指手势生命周期的正确性条件。
