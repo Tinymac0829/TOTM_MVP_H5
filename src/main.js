@@ -66,8 +66,9 @@ const DEFAULT_STAGE_ID = "story_001";
 const VALIDATION_STAGE_ID = "eng04_death_validation";
 const STORY_2_STAGE_ID = "story_002";
 const availableStageIds = new Set([DEFAULT_STAGE_ID, STORY_2_STAGE_ID, VALIDATION_STAGE_ID]);
+let pendingStageId = null;
 
-function getRequestedStageId() {
+function getRequestedStageId({ announceFallback = true } = {}) {
   const params = new URLSearchParams(window.location.search);
   const requestedStageId = params.get("stage");
 
@@ -79,24 +80,28 @@ function getRequestedStageId() {
     return requestedStageId;
   }
 
-  hud.setStatusMessage(`关卡 ${requestedStageId} 尚未接入，当前回到 Story 1。`);
+  if (announceFallback) {
+    hud.setStatusMessage(`关卡 ${requestedStageId} 尚未接入，当前回到 Story 1。`);
+  }
+
   return DEFAULT_STAGE_ID;
 }
 
-function getHudViewModel() {
-  const nextStageId = gameState.getNextStageId();
-  const hasPlayableNextStage = availableStageIds.has(nextStageId);
+function getDisplayedStageId() {
+  return pendingStageId ?? gameState.currentStageId ?? getRequestedStageId({ announceFallback: false });
+}
 
+function getHudViewModel() {
   return {
     gameState: gameState.getState(),
-    currentStageId: gameState.currentStageId,
+    currentStageId: getDisplayedStageId(),
     loadingText: "加载中...",
     menuTitle: "TOTM MVP",
     menuSubtitle: "滑动角色，直到撞墙停下。",
     menuActionLabel: "开始游戏",
     menuAction: "start_game",
-    completeActionLabel: hasPlayableNextStage ? "下一关" : "重复游玩",
-    completeAction: hasPlayableNextStage ? "next_stage" : "replay_stage",
+    completeActionLabel: "下一关",
+    completeAction: "next_stage",
     statusMessage: hud.viewModel?.statusMessage ?? "",
   };
 }
@@ -209,8 +214,15 @@ async function loadStageById(stageId) {
 
   hud.dismiss();
   hud.setStatusMessage("");
+  pendingStageId = stageId;
   gameState.setState("loading");
-  const result = await stageLoader.loadAndStart(stageId);
+
+  let result;
+  try {
+    result = await stageLoader.loadAndStart(stageId);
+  } finally {
+    pendingStageId = null;
+  }
 
   if (!result.success) {
     hud.setStatusMessage(`关卡加载失败：${result.error}`);
