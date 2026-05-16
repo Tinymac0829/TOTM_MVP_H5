@@ -3,7 +3,7 @@
 **Date**: 2026-05-06  
 **Workspace**: `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev`  
 **Branch**: `master`  
-**Latest pushed commit**: `a3429da fix: correct Story 2 stage layout data for LVL-02`
+**Latest stable commit**: `3450d66 fix: finalize Story 2 HUD flow and handoff notes for LVL-02`
 
 ## Current State
 
@@ -12,10 +12,9 @@
 - `LVL-02` is still `IN_PROGRESS`.
 - `v0.2.0` is still `IN_PROGRESS`.
 - `story_002` layout data has been corrected, committed, and pushed in `a3429da`.
+- Story 2 HUD/fallback flow and this handoff note have been committed and pushed in `3450d66`.
 - Story 2 layout has passed manual validation for gameplay configuration.
-- Remaining local changes are not committed yet:
-  - `docs/features/lvl02_story2_card.md`
-  - `src/main.js`
+- At the stable handoff point `3450d66`, no Story 2 implementation or feature-card changes were pending.
 
 ## Story 2 Current Data
 
@@ -55,7 +54,7 @@ Failed before local fix:
 - `?stage=story_002` entered Story 2, but menu/loading text could still show Story 1 for the same stale-state reason.
 - Story 2 clear showed `重复游玩` and replayed Story 2 because the complete action became `replay_stage` when `story_003` was not available.
 
-## Local Uncommitted Fixes
+## Fixes Included In Latest Stable Commit
 
 ### `docs/features/lvl02_story2_card.md`
 
@@ -71,7 +70,7 @@ Updated the feature card to match the approved Story 2 layout:
 
 ### `src/main.js`
 
-Local code fix applied:
+Code fix applied:
 
 - Adds `pendingStageId` so loading/menu HUD can show the intended target stage before `StageLoader` finishes.
 - `getDisplayedStageId()` now prefers `pendingStageId`, then `gameState.currentStageId`, then URL/default stage.
@@ -94,17 +93,6 @@ Local code fix applied:
 - `git diff --check` passed, with only LF/CRLF warnings for:
   - `docs/features/lvl02_story2_card.md`
   - `src/main.js`
-
-## Git Status At Handoff
-
-Expected local changes:
-
-```text
- M docs/features/lvl02_story2_card.md
- M src/main.js
-```
-
-No Git commit has been made for these local fixes in this conversation.
 
 ## Next Manual Revalidation
 
