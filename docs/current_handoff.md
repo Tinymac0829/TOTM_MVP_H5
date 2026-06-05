@@ -3,7 +3,7 @@
 **Date**: 2026-06-05
 **Workspace**: `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev`  
 **Branch**: `master`  
-**Latest stable baseline**: `4cdee2d docs: expand MVP requirements and record debug panel status`
+**Latest stable baseline**: `2ebab5b tools: add stage editor and JSON formatter`
 
 ## Current State
 
@@ -19,6 +19,7 @@
 - LVL-02/QA-02/v0.2.0 closeout documentation has been committed in `4aa3a3c docs: close LVL-02 and QA-02`.
 - Requirement-list follow-up has been committed in `4cdee2d`: `R-023` covers Story camera/mobile viewport readability, and `R-024` covers mobile touch swipe feel plus active-touch lifecycle.
 - `docs/tech/pm02_debug_panel_tech.md` now records that the full DebugPanel is not implemented; only the OPS-01 `?debugInput=1` input log exists in `src/TouchInput.js`.
+- Stage authoring tools have been committed and pushed in `2ebab5b`: `tools/stage_tile_editor.html` and `tools/format_stage_json.mjs`.
 
 ## Story 2 Current Data
 
@@ -125,8 +126,14 @@ Code fix applied:
 - `docs/tech/pm02_debug_panel_tech.md` is a design/spec document for the full DebugPanel; do not assume F1-F8 panel behavior exists in code.
 - Current implemented debug support is limited to the OPS-01 `debugInput` input log in `src/TouchInput.js`.
 
+## Tracked Tools
+
+- `tools/stage_tile_editor.html`: browser-based stage tile editor for authoring and reviewing Story stage layouts. It preserves imported JSON `id` as the initial source of truth, syncs tab renames back to the current stage id, exports JSON, and can save review HTML.
+- `tools/format_stage_json.mjs`: Node CLI formatter/checker for TOTM stage JSON. Usage: `node tools/format_stage_json.mjs <input.json> <output.json>`.
+
 ## Next Major Action
 
-- Use `4cdee2d` as the latest stable tracked documentation baseline.
+- Use `2ebab5b` as the latest stable tracked baseline.
 - Before starting `LVL-03`, run a read-only precheck against the updated requirement list, Story 3 planning/design docs, stage data conventions, and StageLoader/main flow entry points.
+- Use the tracked stage authoring tools when preparing or reviewing Story 3 stage JSON.
 - Keep the full DebugPanel out of LVL-03 scope unless it is explicitly promoted from development aid to an implementation task.
