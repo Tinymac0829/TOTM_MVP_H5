@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>TOTM Stage Tile Editor</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a2e; color: #eee; font-family: 'Segoe UI', monospace; user-select: none; }
+
+/* Top bar */
+.topbar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: #16213e; border-bottom: 1px solid #333; flex-wrap: wrap; }
+.topbar label { font-size: 13px; color: #aaa; }
+.topbar input[type=number] { width: 50px; background: #222; color: #fff; border: 1px solid #555; padding: 2px 6px; border-radius: 3px; }
+.topbar button { background: #0f3460; color: #fff; border: 1px solid #555; padding: 4px 12px; border-radius: 3px; cursor: pointer; font-size: 13px; }
+.topbar button:hover { background: #1a5276; }
+.topbar button.danger { background: #6b1a1a; }
+.topbar button.danger:hover { background: #8b2a2a; }
+.topbar button.primary { background: #1b6b3a; }
+.topbar button.primary:hover { background: #2a8b4a; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; padding: 0 16px; background: #16213e; }
+.tab { padding: 8px 20px; cursor: pointer; font-size: 14px; color: #888; border-bottom: 2px solid transparent; }
+.tab:hover { color: #ccc; }
+.tab.active { color: #fff; border-bottom-color: #3399ff; }
+
+/* Palette */
+.palette { display: flex; gap: 6px; padding: 10px 16px; background: #111; border-bottom: 1px solid #333; align-items: center; flex-wrap: wrap; }
+.palette-item { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 4px; cursor: pointer; border: 2px solid transparent; font-size: 12px; }
+.palette-item:hover { border-color: #666; }
+.palette-item.selected { border-color: #3399ff; background: rgba(51,153,255,0.15); }
+.palette-swatch { width: 24px; height: 24px; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+
+/* Main area */
+.main { display: flex; padding: 16px; gap: 16px; }
+
+/* Canvas area */
+.canvas-wrap { position: relative; overflow: auto; flex: 1; }
+.canvas-wrap canvas { cursor: crosshair; }
+
+/* Info panel */
+.info-panel { width: 260px; flex-shrink: 0; }
+.info-panel h3 { font-size: 14px; margin-bottom: 8px; color: #aaa; }
+.info-box { background: #111; border: 1px solid #333; border-radius: 4px; padding: 10px; margin-bottom: 12px; font-size: 12px; line-height: 1.8; }
+.info-box .ok { color: #00cc66; }
+.info-box .err { color: #ff3366; }
+
+/* Bg image controls */
+.bg-controls { padding: 8px 16px; background: #111; border-bottom: 1px solid #333; display: flex; gap: 12px; align-items: center; font-size: 13px; }
+.bg-controls input[type=range] { width: 100px; }
+.bg-controls label { color: #aaa; }
+
+/* Export area */
+#exportArea { width: 100%; height: 200px; background: #0a0a0a; color: #0f0; border: 1px solid #333; font-family: monospace; font-size: 11px; padding: 8px; resize: vertical; }
+
+/* Tooltip */
+.tooltip { position: fixed; background: rgba(0,0,0,0.85); color: #fff; padding: 4px 8px; border-radius: 3px; font-size: 11px; pointer-events: none; z-index: 999; display: none; }
+</style>
+</head>
+<body>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="topbar">
+  <label>宽: <input type="number" id="inputW" value="20" min="3" max="30"></label>
+  <label>高: <input type="number" id="inputH" value="20" min="3" max="50"></label>
+  <button onclick="resizeGrid()">调整尺寸</button>
+  <button class="danger" onclick="clearGrid()">清空</button>
+  <button onclick="fillBorder()">填充边界墙</button>
+  <button class="primary" onclick="exportJSON()">导出 JSON</button>
+  <button onclick="copyJSON()">复制到剪贴板</button>
+  <button onclick="importJSON()">导入 JSON</button>
+  <button onclick="undo()">撤销 (Ctrl+Z)</button>
+  <button onclick="redo()">重做 (Ctrl+R)</button>
+  <button class="primary" onclick="saveReviewHTML()">保存 Review HTML</button>
+</div>
+
+<div class="palette" id="palette"></div>
+
+<div class="bg-controls">
+  <label>底图: <input type="file" id="bgFile" accept="image/*"></label>
+  <label>透明度: <input type="range" id="bgOpacity" min="0" max="100" value="40"></label>
+  <label><input type="checkbox" id="bgShow" checked> 显示底图</label>
+  <label>偏移X: <input type="number" id="bgOffX" value="0" style="width:50px"></label>
+  <label>偏移Y: <input type="number" id="bgOffY" value="0" style="width:50px"></label>
+  <label>缩放: <input type="range" id="bgScale" min="50" max="200" value="100"><input type="number" id="bgScaleNum" value="100" min="50" max="200" style="width:50px;background:#222;color:#fff;border:1px solid #555;padding:2px 4px;border-radius:3px;margin-left:4px;">%</label>
+</div>
+
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="info-panel">
+    <h3>关卡信息</h3>
+    <div class="info-box" id="infoBox"></div>
+    <h3>导出数据</h3>
+    <textarea id="exportArea" readonly></textarea>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const TILE_SIZE = 36;
+const TILE_DEFS = [
+  { id: 0, name: 'Empty',  key: '0', color: '#2a2a2a', label: '', textColor: '#666' },
+  { id: 1, name: 'Wall',   key: '1', color: '#4a4a6a', label: 'W', textColor: '#8888aa' },
+  { id: 2, name: 'Enter',  key: '2', color: '#00cc66', label: 'E', textColor: '#fff' },
+  { id: 3, name: 'Exit',   key: '3', color: '#3399ff', label: 'X', textColor: '#fff' },
+  { id: 4, name: 'Dot',    key: '4', color: '#2a2a2a', label: '·', textColor: '#fff', dot: true },
+  { id: 5, name: 'Coin',   key: '5', color: '#2a2a2a', label: '$', textColor: '#ffd700' },
+  { id: 6, name: 'Star',   key: '6', color: '#2a2a2a', label: '★', textColor: '#ffcc00' },
+  { id: 7, name: 'Spikes', key: '7', color: '#cc0033', label: '^', textColor: '#ff6688' },
+];
+
+// State
+let stages = [];
+let currentStage = 0;
+let currentTile = 1; // Wall by default
+let isDrawing = false;
+let lastDrawn = null;
+
+// Undo/Redo system
+const MAX_HISTORY = 50;
+let undoStacks = [];
+let redoStacks = [];
+
+function makeStageIdFromName(name) {
+  const match = String(name || '').match(/story\s*(\d+)/i);
+  return match
+    ? 'story_' + match[1]
+    : String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'story';
+}
+
+function makeStageNameFromId(id, fallbackName = '') {
+  const match = String(id || '').match(/^story_(\d+)$/i);
+  if (match) return 'Story ' + match[1];
+  return fallbackName || id || 'Story';
+}
+
+function resolveStageIdentity(stage) {
+  const id = String(stage.id || '').trim() || makeStageIdFromName(stage.name);
+  return {
+    id,
+    name: makeStageNameFromId(id, stage.name),
+  };
+}
+
+function setStageDisplayName(stage, name) {
+  const displayName = String(name || '').trim() || 'Story';
+  stage.name = displayName;
+  stage.id = makeStageIdFromName(displayName);
+}
+
+function saveSnapshot() {
+  const s = stages[currentStage];
+  const snapshot = s.tiles.map(row => [...row]);
+  const stack = undoStacks[currentStage];
+  stack.push(snapshot);
+  if (stack.length > MAX_HISTORY) stack.shift();
+  redoStacks[currentStage] = [];
+}
+
+function undo() {
+  const stack = undoStacks[currentStage];
+  if (stack.length === 0) return;
+  const s = stages[currentStage];
+  redoStacks[currentStage].push(s.tiles.map(row => [...row]));
+  s.tiles = stack.pop();
+  render(); updateInfo();
+}
+
+function redo() {
+  const stack = redoStacks[currentStage];
+  if (stack.length === 0) return;
+  const s = stages[currentStage];
+  undoStacks[currentStage].push(s.tiles.map(row => [...row]));
+  s.tiles = stack.pop();
+  render(); updateInfo();
+}
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+// Tabs
+function renderTabs() {
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = '';
+  stages.forEach((s, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (i === currentStage ? ' active' : '');
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = s.name;
+    input.style.cssText = 'background:transparent;border:none;color:inherit;font:inherit;padding:0;width:100px;outline:none;';
+    input.onclick = (e) => { e.stopPropagation(); };
+    input.onchange = () => { setStageDisplayName(s, input.value); input.value = s.name; autoSave(); updateInfo(); };
+    input.onblur = () => { setStageDisplayName(s, input.value); input.value = s.name; autoSave(); updateInfo(); };
+
+    const closeBtn = document.createElement('span');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = 'margin-left:6px;cursor:pointer;font-size:18px;color:#888;';
+    closeBtn.onmouseover = () => { closeBtn.style.color = '#ff6666'; };
+    closeBtn.onmouseout = () => { closeBtn.style.color = '#888'; };
+    closeBtn.onclick = (e) => { e.stopPropagation(); deleteStage(i); };
+
+    tab.appendChild(input);
+    tab.appendChild(closeBtn);
+    tab.onclick = () => { switchStage(i); };
+    tabsEl.appendChild(tab);
+  });
+  // Add stage button
+  const addTab = document.createElement('div');
+  addTab.className = 'tab';
+  addTab.textContent = '+ 新关卡';
+  addTab.onclick = addStage;
+  tabsEl.appendChild(addTab);
+}
+
+function deleteStage(i) {
+  if (stages.length === 1) {
+    alert('至少需要保留一个关卡');
+    return;
+  }
+  if (!confirm(`确定删除关卡 "${stages[i].name}"？`)) return;
+
+  stages.splice(i, 1);
+  undoStacks.splice(i, 1);
+  redoStacks.splice(i, 1);
+
+  if (currentStage >= stages.length) currentStage = stages.length - 1;
+  if (currentStage < 0) currentStage = 0;
+
+  renderTabs();
+  loadBgSettings();
+  document.getElementById('inputW').value = stages[currentStage].w;
+  document.getElementById('inputH').value = stages[currentStage].h;
+  render();
+  updateInfo();
+  autoSave();
+}
+
+function switchStage(i) {
+  // Save bg settings
+  saveBgSettings();
+  currentStage = i;
+  loadBgSettings();
+  document.getElementById('inputW').value = stages[i].w;
+  document.getElementById('inputH').value = stages[i].h;
+  renderTabs();
+  render();
+  updateInfo();
+}
+
+function saveBgSettings() {
+  const s = stages[currentStage];
+  s.bgOffX = parseInt(document.getElementById('bgOffX').value) || 0;
+  s.bgOffY = parseInt(document.getElementById('bgOffY').value) || 0;
+  s.bgScale = parseInt(document.getElementById('bgScale').value) || 100;
+}
+
+function loadBgSettings() {
+  const s = stages[currentStage];
+  document.getElementById('bgOffX').value = s.bgOffX;
+  document.getElementById('bgOffY').value = s.bgOffY;
+  document.getElementById('bgScale').value = s.bgScale;
+  document.getElementById('bgScaleNum').value = s.bgScale;
+}
+
+function addStage() {
+  const idx = stages.length + 1;
+  const id = `story_${String(idx).padStart(3,'0')}`;
+  stages.push({
+    name: `Story ${String(idx).padStart(3,'0')}`,
+    id,
+    w: 20, h: 20,
+    tiles: Array.from({length:20}, () => Array(20).fill(0)),
+    bgImg: null, bgOffX: 0, bgOffY: 0, bgScale: 100
+  });
+  undoStacks.push([]);
+  redoStacks.push([]);
+  switchStage(stages.length - 1);
+}
+
+// Palette
+function renderPalette() {
+  const pal = document.getElementById('palette');
+  pal.innerHTML = '<span style="color:#888;font-size:12px;margin-right:8px;">画笔:</span>';
+  TILE_DEFS.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'palette-item' + (currentTile === t.id ? ' selected' : '');
+    item.innerHTML = `<div class="palette-swatch" style="background:${t.color};color:${t.textColor};font-size:14px;">${t.label}</div><span>${t.name} [${t.key}]</span>`;
+    item.onclick = () => { currentTile = t.id; renderPalette(); };
+    pal.appendChild(item);
+  });
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  const key = e.key;
+  if ((e.ctrlKey || e.metaKey) && key === 'z') { e.preventDefault(); undo(); return; }
+  if ((e.ctrlKey || e.metaKey) && key === 'r') { e.preventDefault(); redo(); return; }
+  if (key >= '0' && key <= '7') {
+    currentTile = parseInt(key);
+    renderPalette();
+  }
+});
+
+// Grid operations
+function resizeGrid() {
+  saveSnapshot();
+  const s = stages[currentStage];
+  const newW = Math.max(3, Math.min(30, parseInt(document.getElementById('inputW').value) || 13));
+  const newH = Math.max(3, Math.min(50, parseInt(document.getElementById('inputH').value) || 17));
+  const newTiles = [];
+  for (let z = 0; z < newH; z++) {
+    newTiles[z] = [];
+    for (let x = 0; x < newW; x++) {
+      newTiles[z][x] = (z < s.h && x < s.w) ? s.tiles[z][x] : 0;
+    }
+  }
+  s.w = newW; s.h = newH; s.tiles = newTiles;
+  render(); updateInfo(); autoSave();
+}
+
+function clearGrid() {
+  if (!confirm('确定清空当前关卡？')) return;
+  saveSnapshot();
+  const s = stages[currentStage];
+  for (let z = 0; z < s.h; z++)
+    for (let x = 0; x < s.w; x++)
+      s.tiles[z][x] = 0;
+  render(); updateInfo(); autoSave();
+}
+
+function fillBorder() {
+  saveSnapshot();
+  const s = stages[currentStage];
+  for (let x = 0; x < s.w; x++) { s.tiles[0][x] = 1; s.tiles[s.h-1][x] = 1; }
+  for (let z = 0; z < s.h; z++) { s.tiles[z][0] = 1; s.tiles[z][s.w-1] = 1; }
+  render(); updateInfo(); autoSave();
+}
+
+// Background image
+document.getElementById('bgFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => { stages[currentStage].bgImg = img; render(); };
+  img.src = URL.createObjectURL(file);
+});
+
+['bgOpacity','bgShow','bgOffX','bgOffY','bgScale'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    if (id === 'bgScale') document.getElementById('bgScaleNum').value = document.getElementById('bgScale').value;
+    render();
+  });
+});
+document.getElementById('bgScaleNum').addEventListener('input', () => {
+  let v = parseInt(document.getElementById('bgScaleNum').value) || 100;
+  v = Math.max(50, Math.min(200, v));
+  document.getElementById('bgScale').value = v;
+  render();
+});
+
+// Render
+function render() {
+  const s = stages[currentStage];
+  const cw = s.w * TILE_SIZE;
+  const ch = s.h * TILE_SIZE;
+  canvas.width = cw + 30;  // extra for row labels
+  canvas.height = ch + 20; // extra for col labels
+
+  const ox = 30; // offset for row labels
+  const oy = 16; // offset for col labels
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background image
+  if (s.bgImg && document.getElementById('bgShow').checked) {
+    const opacity = parseInt(document.getElementById('bgOpacity').value) / 100;
+    const offX = parseInt(document.getElementById('bgOffX').value) || 0;
+    const offY = parseInt(document.getElementById('bgOffY').value) || 0;
+    const scale = (parseInt(document.getElementById('bgScale').value) || 100) / 100;
+    ctx.globalAlpha = opacity;
+    ctx.drawImage(s.bgImg, ox + offX, oy + offY, s.bgImg.width * scale, s.bgImg.height * scale);
+    ctx.globalAlpha = 1;
+  }
+
+  // Column labels
+  ctx.fillStyle = '#666';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+  for (let x = 0; x < s.w; x++) {
+    ctx.fillText(x, ox + x * TILE_SIZE + TILE_SIZE/2, 12);
+  }
+
+  // Tiles
+  for (let z = 0; z < s.h; z++) {
+    // Row label
+    ctx.fillStyle = '#666';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(z, ox - 4, oy + z * TILE_SIZE + TILE_SIZE/2 + 3);
+
+    for (let x = 0; x < s.w; x++) {
+      const t = s.tiles[z][x];
+      const def = TILE_DEFS[t];
+      const px = ox + x * TILE_SIZE;
+      const py = oy + z * TILE_SIZE;
+
+      // Cell background
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = def.color;
+      ctx.fillRect(px, py, TILE_SIZE - 1, TILE_SIZE - 1);
+      ctx.globalAlpha = 1;
+
+      // Dot circle
+      if (def.dot) {
+        ctx.beginPath();
+        ctx.arc(px + TILE_SIZE/2, py + TILE_SIZE/2, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+      }
+      // Coin circle
+      else if (t === 5) {
+        ctx.beginPath();
+        ctx.arc(px + TILE_SIZE/2, py + TILE_SIZE/2, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffd700';
+        ctx.fill();
+        ctx.strokeStyle = '#cc9900';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      // Star
+      else if (t === 6) {
+        drawStar(ctx, px + TILE_SIZE/2, py + TILE_SIZE/2, 5, 10, 5);
+      }
+      // Spikes
+      else if (t === 7) {
+        ctx.fillStyle = '#ff6688';
+        const cx = px + TILE_SIZE/2, cy = py + TILE_SIZE/2;
+        // Draw X shape
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 10); ctx.lineTo(cx + 3, cy - 3);
+        ctx.lineTo(cx + 10, cy); ctx.lineTo(cx + 3, cy + 3);
+        ctx.lineTo(cx, cy + 10); ctx.lineTo(cx - 3, cy + 3);
+        ctx.lineTo(cx - 10, cy); ctx.lineTo(cx - 3, cy - 3);
+        ctx.closePath(); ctx.fill();
+      }
+      // Enter / Exit label
+      else if (t === 2 || t === 3) {
+        ctx.fillStyle = def.textColor;
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(def.label, px + TILE_SIZE/2, py + TILE_SIZE/2 + 5);
+      }
+      // Wall label
+      else if (t === 1) {
+        // subtle pattern
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 5, TILE_SIZE - 5);
+      }
+
+      // Grid line
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(px, py, TILE_SIZE - 1, TILE_SIZE - 1);
+    }
+  }
+}
+
+function drawStar(ctx, cx, cy, spikes, outerR, innerR) {
+  let rot = Math.PI / 2 * 3;
+  const step = Math.PI / spikes;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - outerR);
+  for (let i = 0; i < spikes; i++) {
+    ctx.lineTo(cx + Math.cos(rot) * outerR, cy + Math.sin(rot) * outerR);
+    rot += step;
+    ctx.lineTo(cx + Math.cos(rot) * innerR, cy + Math.sin(rot) * innerR);
+    rot += step;
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#ffcc00';
+  ctx.fill();
+}
+
+// Mouse interaction
+function getGridPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const x = Math.floor((mx - 30) / TILE_SIZE);
+  const z = Math.floor((my - 16) / TILE_SIZE);
+  const s = stages[currentStage];
+  if (x >= 0 && x < s.w && z >= 0 && z < s.h) return { x, z };
+  return null;
+}
+
+function paintTile(e) {
+  const pos = getGridPos(e);
+  if (!pos) return;
+  if (lastDrawn && lastDrawn.x === pos.x && lastDrawn.z === pos.z) return;
+  lastDrawn = pos;
+  stages[currentStage].tiles[pos.z][pos.x] = currentTile;
+  render();
+  updateInfo();
+}
+
+canvas.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  isDrawing = true;
+  lastDrawn = null;
+  saveSnapshot();
+  paintTile(e);
+});
+canvas.addEventListener('mousemove', e => {
+  // Tooltip
+  const pos = getGridPos(e);
+  if (pos) {
+    const t = stages[currentStage].tiles[pos.z][pos.x];
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY + 12) + 'px';
+    tooltip.textContent = `(${pos.x}, ${pos.z}) = ${TILE_DEFS[t].name}`;
+  } else {
+    tooltip.style.display = 'none';
+  }
+  if (isDrawing) paintTile(e);
+});
+canvas.addEventListener('mouseup', () => { isDrawing = false; lastDrawn = null; autoSave(); });
+canvas.addEventListener('mouseleave', () => { isDrawing = false; lastDrawn = null; tooltip.style.display = 'none'; autoSave(); });
+
+// Right click to pick tile
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const pos = getGridPos(e);
+  if (pos) {
+    currentTile = stages[currentStage].tiles[pos.z][pos.x];
+    renderPalette();
+  }
+});
+
+// Info
+function updateInfo() {
+  const s = stages[currentStage];
+  let counts = { empty:0, wall:0, enter:0, exit:0, dot:0, coin:0, star:0, spikes:0 };
+  let enterPos = null, exitPos = null;
+  for (let z = 0; z < s.h; z++) {
+    for (let x = 0; x < s.w; x++) {
+      const t = s.tiles[z][x];
+      if (t===0) counts.empty++;
+      if (t===1) counts.wall++;
+      if (t===2) { counts.enter++; enterPos = {x,z}; }
+      if (t===3) { counts.exit++; exitPos = {x,z}; }
+      if (t===4) counts.dot++;
+      if (t===5) counts.coin++;
+      if (t===6) counts.star++;
+      if (t===7) counts.spikes++;
+    }
+  }
+
+  const box = document.getElementById('infoBox');
+  const identity = resolveStageIdentity(s);
+  let html = `<b>${identity.name}</b> (${identity.id})<br>`;
+  html += `尺寸: ${s.w} x ${s.h}<br>`;
+  html += `Enter: ${enterPos ? `(${enterPos.x}, ${enterPos.z})` : '<span class="err">未设置</span>'} [${counts.enter === 1 ? '<span class="ok">✓</span>' : '<span class="err">数量:'+counts.enter+'</span>'}]<br>`;
+  html += `Exit: ${exitPos ? `(${exitPos.x}, ${exitPos.z})` : '<span class="err">未设置</span>'} [${counts.exit === 1 ? '<span class="ok">✓</span>' : '<span class="err">数量:'+counts.exit+'</span>'}]<br>`;
+  html += `<br>`;
+  html += `Dots: ${counts.dot}<br>`;
+  html += `Coins: ${counts.coin}<br>`;
+  html += `Stars: ${counts.star}<br>`;
+  html += `Spikes: ${counts.spikes}<br>`;
+  html += `Walls: ${counts.wall}<br>`;
+  html += `Empty: ${counts.empty}<br>`;
+  box.innerHTML = html;
+}
+
+// Export
+function exportJSON() {
+  const s = stages[currentStage];
+  let enterPos = {x:0,z:0}, exitPos = {x:0,z:0};
+  let dotCount=0, coinCount=0, starCount=0;
+  for (let z = 0; z < s.h; z++) {
+    for (let x = 0; x < s.w; x++) {
+      const t = s.tiles[z][x];
+      if (t===2) enterPos = {x,z};
+      if (t===3) exitPos = {x,z};
+      if (t===4) dotCount++;
+      if (t===5) coinCount++;
+      if (t===6) starCount++;
+    }
+  }
+
+  const identity = resolveStageIdentity(s);
+
+  const data = {
+    id: identity.id,
+    version: 1,
+    width: s.w,
+    height: s.h,
+    enter: enterPos,
+    exit: exitPos,
+    tiles: s.tiles,
+    meta: {
+      name: identity.name,
+      stars_total: starCount,
+      dots_total: dotCount,
+      coins_total: coinCount
+    }
+  };
+
+  const json = JSON.stringify(data, null, 2);
+  document.getElementById('exportArea').value = json;
+  return json;
+}
+
+function copyJSON() {
+  const json = exportJSON();
+  navigator.clipboard.writeText(json).then(() => {
+    alert('已复制到剪贴板');
+  });
+}
+
+function importJSON() {
+  const input = prompt('粘贴 JSON 数据:');
+  if (!input) return;
+  try {
+    const data = JSON.parse(input);
+    const s = stages[currentStage];
+    if (data.id) {
+      s.id = String(data.id).trim();
+      s.name = makeStageNameFromId(s.id, data.meta?.name || s.name);
+    } else if (data.meta && data.meta.name) {
+      s.name = data.meta.name;
+      s.id = makeStageIdFromName(s.name);
+    }
+    s.w = data.width || 13;
+    s.h = data.height || 17;
+    s.tiles = data.tiles;
+    document.getElementById('inputW').value = s.w;
+    document.getElementById('inputH').value = s.h;
+    renderTabs();
+    render();
+    updateInfo();
+    autoSave();
+  } catch(e) {
+    alert('JSON 解析失败: ' + e.message);
+  }
+}
+
+// Save as review HTML
+function saveReviewHTML() {
+  const s = stages[currentStage];
+  const identity = resolveStageIdentity(s);
+  const fileName = `${identity.id}_tilemap_review.html`;
+
+  // Compute counts and positions
+  let enterPos = null, exitPos = null;
+  let counts = {dots:0, coins:0, stars:0, spikes:0};
+  for (let z = 0; z < s.h; z++) {
+    for (let x = 0; x < s.w; x++) {
+      const t = s.tiles[z][x];
+      if (t===2) enterPos = {x,z};
+      if (t===3) exitPos = {x,z};
+      if (t===4) counts.dots++;
+      if (t===5) counts.coins++;
+      if (t===6) counts.stars++;
+      if (t===7) counts.spikes++;
+    }
+  }
+
+  const stageData = {
+    name: `${identity.id} (${identity.name})`,
+    id: identity.id,
+    width: s.w,
+    height: s.h,
+    enter: enterPos || {x:0,z:0},
+    exit: exitPos || {x:0,z:0},
+    counts: counts,
+    tiles: s.tiles
+  };
+
+  const html = `<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>TOTM ${s.name} Tile Map</title>
+<style>
+  body { background: #1a1a2e; color: #fff; font-family: monospace; padding: 20px; }
+  h2 { margin-top: 40px; }
+  .stage { display: inline-block; vertical-align: top; }
+  .grid { display: grid; gap: 1px; background: #333; border: 2px solid #555; }
+  .cell {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: bold; color: #fff;
+  }
+  .t0 { background: #2a2a2a; }
+  .t1 { background: #4a4a6a; }
+  .t2 { background: #00cc66; }
+  .t3 { background: #3399ff; }
+  .t4 { background: #2a2a2a; }
+  .t4::after { content: ''; width: 8px; height: 8px; background: #ffffff; border-radius: 50%; }
+  .t5 { background: #2a2a2a; }
+  .t5::after { content: ''; width: 14px; height: 14px; background: #ffd700; border-radius: 50%; }
+  .t6 { background: #2a2a2a; }
+  .t6::after { content: ''; width: 16px; height: 16px; background: #ffcc00; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+  .t7 { background: #cc0033; }
+  .t7::after { content: ''; width: 16px; height: 16px; clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%); background: #ff3366; }
+  .legend { display: flex; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid #555; }
+  .row-label { width: 28px; height: 32px; display: flex; align-items: center; justify-content: flex-end; padding-right: 4px; font-size: 9px; color: #888; }
+  .col-labels { display: flex; margin-left: 32px; }
+  .col-label { width: 33px; text-align: center; font-size: 9px; color: #888; }
+  .stage-row { display: flex; }
+  .row-labels { display: flex; flex-direction: column; gap: 1px; margin-top: 2px; }
+  .info { background: #222; padding: 12px; border-radius: 4px; margin: 8px 0; font-size: 13px; }
+  .info span { margin-right: 20px; }
+</style>
+</head>
+<body>
+<h1>TOTM — ${s.name} Tile Map (校对用)</h1>
+<div class="legend">
+  <div class="legend-item"><div class="legend-swatch t1"></div> Wall</div>
+  <div class="legend-item"><div class="legend-swatch t0"></div> Empty</div>
+  <div class="legend-item"><div class="legend-swatch t4"></div> Dot</div>
+  <div class="legend-item"><div class="legend-swatch t5"></div> Coin</div>
+  <div class="legend-item"><div class="legend-swatch t6"></div> Star</div>
+  <div class="legend-item"><div class="legend-swatch t7"></div> Spikes</div>
+  <div class="legend-item"><div class="legend-swatch t2"></div> Enter</div>
+  <div class="legend-item"><div class="legend-swatch t3"></div> Exit</div>
+</div>
+<script>
+const stage = ${JSON.stringify(stageData)};
+const tileNames = ['Empty','Wall','Enter','Exit','Dot','Coin','Star','Spikes'];
+
+const section = document.createElement('div');
+section.className = 'stage';
+
+const h2 = document.createElement('h2');
+h2.textContent = stage.name;
+section.appendChild(h2);
+
+const info = document.createElement('div');
+info.className = 'info';
+info.innerHTML =
+  '<span>Size: '+stage.width+'x'+stage.height+'</span>' +
+  '<span>Enter: ('+stage.enter.x+', '+stage.enter.z+')</span>' +
+  '<span>Exit: ('+stage.exit.x+', '+stage.exit.z+')</span><br>' +
+  '<span>Dots: '+stage.counts.dots+'</span>' +
+  '<span>Coins: '+stage.counts.coins+'</span>' +
+  '<span>Stars: '+stage.counts.stars+'</span>' +
+  '<span>Spikes: '+stage.counts.spikes+'</span>';
+section.appendChild(info);
+
+const colLabels = document.createElement('div');
+colLabels.className = 'col-labels';
+for (let x = 0; x < stage.width; x++) {
+  const lbl = document.createElement('div');
+  lbl.className = 'col-label';
+  lbl.textContent = x;
+  colLabels.appendChild(lbl);
+}
+section.appendChild(colLabels);
+
+const stageRow = document.createElement('div');
+stageRow.className = 'stage-row';
+const rowLabels = document.createElement('div');
+rowLabels.className = 'row-labels';
+const grid = document.createElement('div');
+grid.className = 'grid';
+grid.style.gridTemplateColumns = 'repeat('+stage.width+', 32px)';
+
+for (let z = 0; z < stage.height; z++) {
+  const rl = document.createElement('div');
+  rl.className = 'row-label';
+  rl.textContent = z;
+  rowLabels.appendChild(rl);
+  for (let x = 0; x < stage.width; x++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell t'+stage.tiles[z][x];
+    cell.title = '('+x+', '+z+') = '+tileNames[stage.tiles[z][x]];
+    grid.appendChild(cell);
+  }
+}
+stageRow.appendChild(rowLabels);
+stageRow.appendChild(grid);
+section.appendChild(stageRow);
+document.body.appendChild(section);
+<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], {type: 'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// LocalStorage persistence
+const STORAGE_KEY = 'totm_editor_stages';
+
+function autoSave() {
+  const data = stages.map(s => ({ name: s.name, id: s.id, w: s.w, h: s.h, tiles: s.tiles, bgOffX: s.bgOffX, bgOffY: s.bgOffY, bgScale: s.bgScale }));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data) || data.length === 0) return false;
+    stages = data.map(d => ({ ...d, bgImg: null }));
+    undoStacks = stages.map(() => []);
+    redoStacks = stages.map(() => []);
+    return true;
+  } catch(e) { return false; }
+}
+
+// Init
+const loaded = loadFromStorage();
+if (!loaded) {
+  addStage();
+} else {
+  renderTabs();
+  renderPalette();
+  loadBgSettings();
+  render();
+  updateInfo();
+}
+</script>
+</body>
+</html>
