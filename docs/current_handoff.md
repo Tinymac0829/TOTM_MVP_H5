@@ -1,20 +1,21 @@
 # LVL-02 Handoff
 
-**Date**: 2026-05-06  
+**Date**: 2026-06-05
 **Workspace**: `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev`  
 **Branch**: `master`  
-**Latest stable commit**: `3450d66 fix: finalize Story 2 HUD flow and handoff notes for LVL-02`
+**Latest stable baseline before closeout docs**: `a535fc9 docs: split stable handoff from local workspace snapshot`
 
 ## Current State
 
 - `OPS-01` is closed and pushed.
 - `v0.1.1` is `DONE`.
-- `LVL-02` is still `IN_PROGRESS`.
-- `v0.2.0` is still `IN_PROGRESS`.
+- `LVL-02` is `DONE`.
+- `QA-02` is `DONE`.
+- `v0.2.0` is `DONE`.
 - `story_002` layout data has been corrected, committed, and pushed in `a3429da`.
 - Story 2 HUD/fallback flow and this handoff note have been committed and pushed in `3450d66`.
 - Story 2 layout has passed manual validation for gameplay configuration.
-- At the stable handoff point `3450d66`, no Story 2 implementation or feature-card changes were pending.
+- Final Android-device validation through the GitHub Pages public URL passed on `2026-06-05`.
 
 ## Story 2 Current Data
 
@@ -39,22 +40,33 @@ Validation status:
 - HUD count sync passed manual validation with Dot `64`, Coin `3`, Star `3`.
 - `Empty(0)` remains passable by ENG-02 frozen semantics.
 - Story 2 `Empty(0)` behavior has passed manual validation for the corrected layout.
+- GitHub Pages validation on Android device passed for default Story 1 startup, Story 1 -> Story 2 transition, `?stage=story_002` direct entry, Story 2 collection counts, Spikes death/fail restart, and Story 2 clear fallback to Story 1.
 
-## Manual Validation Results So Far
+## Final Validation Results
+
+Environment:
+
+- Android device browser.
+- GitHub Pages public URL: `https://tinymac0829.github.io/TOTM_MVP_H5/`.
+- Story 2 direct-entry URL: `https://tinymac0829.github.io/TOTM_MVP_H5/?stage=story_002`.
 
 Passed:
 
 - Default entry without URL params starts Story 1.
-- Story 2 spawn point, exit clear, Spikes death, fail restart, HUD count sync.
-- `Empty(0)` passability around Story 2 spawn matches the corrected layout expectation.
+- Story 1 clear button shows `下一关`, and clicking it loads Story 2.
+- Story 1 -> Story 2 loading/HUD/menu text no longer remains on Story 1.
+- `?stage=story_002` enters Story 2 directly, with Story 2 menu/loading/HUD text and correct spawn point.
+- Story 2 Dot `64`, Coin `3`, Star `3`, Spikes `10`, and HUD/collection sync passed.
+- Story 2 Enter -> Exit path, Spikes death, fail restart, and `Empty(0)` passability passed.
+- Story 2 clear button shows `下一关`; because `story_003` is not integrated, clicking it falls back to Story 1.
 
-Failed before local fix:
+Conclusion:
 
-- Story 1 clear -> next-stage transition loaded Story 2, but the loading overlay could show Story 1 because HUD used stale `gameState.currentStageId`.
-- `?stage=story_002` entered Story 2, but menu/loading text could still show Story 1 for the same stale-state reason.
-- Story 2 clear showed `重复游玩` and replayed Story 2 because the complete action became `replay_stage` when `story_003` was not available.
+- `LVL-02` can be marked `DONE`.
+- `QA-02` can be marked `DONE` by the same Story 1-2 regression evidence.
+- `v0.2.0` can be marked `DONE`.
 
-## Fixes Included In Latest Stable Commit
+## Fixes Included Before Final Validation
 
 ### `docs/features/lvl02_story2_card.md`
 
@@ -94,24 +106,17 @@ Code fix applied:
   - `docs/features/lvl02_story2_card.md`
   - `src/main.js`
 
-## Next Manual Revalidation
+## Closeout Documents Updated
 
-Run browser/device validation for the fixed FAIL items:
+- `docs/features/lvl02_story2_card.md`
+- `docs/mvp_execution_plan.md`
+- `docs/mvp_execution_plan_zh.md`
+- `docs/worktree_registry.md`
+- `docs/worktree_registry_zh.md`
+- `docs/mvp_requirement_list.md`
+- `docs/mvp_requirement_list_zh.md`
 
-1. Start with no URL params.
-2. Clear Story 1.
-3. Confirm Story 1 clear button shows `下一关`.
-4. Click it and confirm loading overlay displays Story 2, not Story 1.
-5. Open with `?stage=story_002`.
-6. Confirm menu/loading text displays Story 2.
-7. Clear Story 2.
-8. Confirm complete popup button shows `下一关`.
-9. Click it.
-10. Confirm `story_003` not being integrated falls back to Story 1.
+## Next Major Action
 
-If these pass, the likely next steps are:
-
-- update `docs/mvp_execution_plan.md`
-- update `docs/mvp_execution_plan_zh.md`
-- consider marking LVL-02 complete only after the final browser/manual validation is recorded
-- then commit and push the remaining local changes when approved
+- Commit the LVL-02/QA-02/v0.2.0 closeout documentation when approved.
+- Start `LVL-03` after the closeout commit is pushed or otherwise accepted as the next baseline.

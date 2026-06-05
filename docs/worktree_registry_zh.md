@@ -73,6 +73,7 @@
 | `2026-05-01` | `STATUS` | 基于已归档的联合真实浏览器回归结果，正式将 `ENG-04` 与 `ENG-05` 标记为 `DONE`。 | 当时任务台账已与主分支基线同步；`LVL-01` 在执行计划中收口，`QA-01` 留给后续独立收口。 |
 | `2026-05-01` | `QA` | 已在 `docs/features/` 下新增主分支 QA-01 文档化收口记录，并在执行计划中将 QA-01 标记为 `DONE`。 | 本次没有创建 QA-01 专属 worktree；收口依据为既有真实浏览器回归证据、输入路径代码核查与 ENG-03 时序预算。 |
 | `2026-05-06` | `OPS` | OPS-01 已完成主分支收口：GitHub Pages 可玩 URL、桌面 smoke、Android 真机按钮命中、普通滑动、连续不离屏滑动、多触点干扰、长按后再滑与主链路 smoke 均通过。 | OPS-01 现标记为 `DONE`；最终移动端输入基线为 `0.03 / 0.16` 距离阈值、`SWIPE_TIME_SECONDS = 1.0` 时间窗口和 `activeTouchId` 主触点 ID 跟踪。 |
+| `2026-06-05` | `VALIDATION` | LVL-02 与 QA-02 已在主分支完成收口：通过 GitHub Pages 公网入口在 Android 真机完成验收，Story 1 启动、Story 1 -> Story 2 跳转、`?stage=story_002` 直进、Story 2 收集计数、Spikes 死亡/失败重开和 Story 2 通关 fallback 回 Story 1 均通过。 | `LVL-02`、`QA-02` 与 `v0.2.0` 现标记为 `DONE`；本次没有创建 QA-02 专属 worktree。 |
 
 
 
