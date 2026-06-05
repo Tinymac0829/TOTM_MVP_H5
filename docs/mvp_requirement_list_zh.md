@@ -41,6 +41,8 @@
 | R-020 | FROZEN | Deployment | MVP 必须可以通过 URL 在设备浏览器访问。 | 默认采用 GitHub Pages 作为跨设备访问方案。 |
 | R-021 | FROZEN | Rules | 项目内文件与文件夹名称必须全英文。 | 允许字符范围受项目命名规则约束。 |
 | R-022 | FROZEN | Scope Decision | Lava 不属于当前 `Story 1-3` MVP 验收必需项。 | 原版早期 Story 内容不依赖 Lava。相关数值仅作为后续范围参考。 |
+| R-023 | FROZEN | Camera | Story 相机与移动端 viewport 处理必须在 Android 竖屏设备上保持可玩区域清晰可读。 | Story/Lava 相机使用逆向确认的 `clamp(dt * 10, 0, 1)` 跟随玩家，Story MVP 不做地图边界 clamp；canvas backing size、CSS viewport、Renderer viewport 与 HUD 命中测试必须使用同一有效 viewport。 |
+| R-024 | FROZEN | Input | 移动端触摸输入必须保留已验证的滑动手感与单主触点生命周期。 | 包含最短滑动距离、`swipeTime = 1.0s`、手指不离屏连续滑动，以及 active touch 身份绑定，避免无关触点取消或劫持当前滑动；本地 `debugInput` 日志可用于设备验收，但不得影响默认玩家体验。 |
 
 ## 来源说明
 
@@ -54,3 +56,8 @@
 |---|---|---|---|
 | `2026-04-06` | `INIT` | 创建了 MVP 第一版原子化需求清单。 | 项目文档结构开始区分需求层与任务层。 |
 | `2026-04-06` | `REFINE` | 补充了关卡数据、瓦片子集、部署与 Lava 范围决策需求。 | 需求边界与实际 MVP 实现路径更加一致。 |
+| `2026-04-28` | `BASELINE` | 修正 `R-009` 速度单位：源速度为 `5.0 world units/s`，单格尺寸为 `0.12 world units/tile`，tile-grid 等效速度约 `41.67 tiles/s`。 | 撤回此前 `8.0 tiles/s` 结论；实现和验收已由 `2026-05-01` ENG-04 代码与验收记录覆盖。 |
+| `2026-04-29` | `DESIGN` | 将 `R-009` 实现方案从最小派生速度修正升级为三层坐标域：Tile 拓扑坐标负责关卡/碰撞/事件，World 运动坐标负责玩家连续位移和速度，Screen/Design 像素负责渲染和 HUD。 | 统一坐标模块、`PlayerController`、`Renderer` 与真实浏览器回归要求已由 `2026-05-01` ENG-04 代码与验收记录覆盖。 |
+| `2026-04-30` | `BASELINE` | 修正 `R-008` 输入缓冲窗口：逆向复核确认 `_nextSwipeTimeout = 0.1f`，即 100ms；此前 `0.02s/20ms` 记录为错误沿用。 | ENG-04、ENG-03、PM-02 与联合验收口径已同步为 100ms；快速连续滑动、缓冲过期和单缓冲覆盖已在 `2026-05-01` 回归中复验。 |
+| `2026-05-01` | `CODE` | 已在 ENG-04 实现当前 `R-008` 与 `R-009` 基线：`CoordinateSystem` 新增 half-tile/center API 且保留 origin 语义；`PlayerController` 使用 100ms 缓冲并在 `update(deltaTime)` 中倒计时；模块缓存 query 使用 `eng04_input_buffer_v1`。 | 移动、收集、死亡、通关、快速连击、缓冲过期、单缓冲覆盖、弹窗输入屏蔽、点击/缩放和缓存版本确认的自动检查与真实浏览器回归均已通过。 |
+| `2026-05-06` | `OPS` | OPS-01 逆向复核与 Android 真机验证暴露出 Story 相机/viewport 与移动端触摸输入手感的 MVP 需求缺口，因此新增 `R-023` 和 `R-024`。 | 需求覆盖补齐 Story 相机 viewport 一致性、逆向确认的相机跟随语义、最短滑动距离、`swipeTime = 1.0s`、不离屏连续滑动、active touch 身份绑定，以及用于验收的可选本地输入 debug 日志。 |
