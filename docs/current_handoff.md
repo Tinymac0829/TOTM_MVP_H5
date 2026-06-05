@@ -3,7 +3,7 @@
 **Date**: 2026-06-05
 **Workspace**: `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev`  
 **Branch**: `master`  
-**Latest stable baseline before closeout docs**: `a535fc9 docs: split stable handoff from local workspace snapshot`
+**Latest stable baseline**: `4cdee2d docs: expand MVP requirements and record debug panel status`
 
 ## Current State
 
@@ -16,6 +16,9 @@
 - Story 2 HUD/fallback flow and this handoff note have been committed and pushed in `3450d66`.
 - Story 2 layout has passed manual validation for gameplay configuration.
 - Final Android-device validation through the GitHub Pages public URL passed on `2026-06-05`.
+- LVL-02/QA-02/v0.2.0 closeout documentation has been committed in `4aa3a3c docs: close LVL-02 and QA-02`.
+- Requirement-list follow-up has been committed in `4cdee2d`: `R-023` covers Story camera/mobile viewport readability, and `R-024` covers mobile touch swipe feel plus active-touch lifecycle.
+- `docs/tech/pm02_debug_panel_tech.md` now records that the full DebugPanel is not implemented; only the OPS-01 `?debugInput=1` input log exists in `src/TouchInput.js`.
 
 ## Story 2 Current Data
 
@@ -116,7 +119,14 @@ Code fix applied:
 - `docs/mvp_requirement_list.md`
 - `docs/mvp_requirement_list_zh.md`
 
+## Stable Documentation Follow-up
+
+- `docs/mvp_requirement_list.md` and `docs/mvp_requirement_list_zh.md` restore the `2026-04-28` through `2026-05-01` R-008/R-009 history records and add `R-023`/`R-024`.
+- `docs/tech/pm02_debug_panel_tech.md` is a design/spec document for the full DebugPanel; do not assume F1-F8 panel behavior exists in code.
+- Current implemented debug support is limited to the OPS-01 `debugInput` input log in `src/TouchInput.js`.
+
 ## Next Major Action
 
-- Commit the LVL-02/QA-02/v0.2.0 closeout documentation when approved.
-- Start `LVL-03` after the closeout commit is pushed or otherwise accepted as the next baseline.
+- Use `4cdee2d` as the latest stable tracked documentation baseline.
+- Before starting `LVL-03`, run a read-only precheck against the updated requirement list, Story 3 planning/design docs, stage data conventions, and StageLoader/main flow entry points.
+- Keep the full DebugPanel out of LVL-03 scope unless it is explicitly promoted from development aid to an implementation task.
