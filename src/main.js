@@ -65,7 +65,8 @@ const stageLoader = new StageLoader({
 const DEFAULT_STAGE_ID = "story_001";
 const VALIDATION_STAGE_ID = "eng04_death_validation";
 const STORY_2_STAGE_ID = "story_002";
-const availableStageIds = new Set([DEFAULT_STAGE_ID, STORY_2_STAGE_ID, VALIDATION_STAGE_ID]);
+const STORY_3_STAGE_ID = "story_003";
+const availableStageIds = new Set([DEFAULT_STAGE_ID, STORY_2_STAGE_ID, STORY_3_STAGE_ID, VALIDATION_STAGE_ID]);
 let pendingStageId = null;
 
 function getRequestedStageId({ announceFallback = true } = {}) {
