@@ -2,8 +2,8 @@
 
 **文档类型**：L2 技术方案文档  
 **创建日期**：2026-04-17  
-**最后更新**：2026-04-17  
-**状态**：初稿  
+**最后更新**：2026-06-08  
+**状态**：已实现并通过 ENG-04/ENG-05 真实浏览器回归；Story 1-3 循环流转已由 LVL-02/LVL-03 后续接入覆盖  
 **依赖**：PM-02 核心运行时设计文档（HUD 2.3.7、GameState 2.4）  
 **覆盖需求**：R-012（开始→失败/通关闭环）、R-013（重复游玩）、R-014（失败后 2s 内可重开）、R-015（UI 不遮挡可玩区）
 
@@ -77,7 +77,7 @@ PM-02 中已定义了 HUD 的基础布局和 GameState 状态机。本文档在�
 | `playing` | `paused_complete` | `PlayerController` 到达 Exit | 显示通关弹窗，暂停 fixedUpdate |
 | `paused_fail` | `loading` | 玩家点击"重新开始" | 调用 `StageLoader.loadAndStart(currentStageId)` |
 | `paused_complete` | `loading` | 玩家点击"下一关" | 调用 `StageLoader.loadAndStart(nextStageId)` |
-| `paused_complete` | `menu` | 最后一关通关后点击"下一关" | 显示主菜单（MVP 可简化为重新开始 story_001） |
+| `paused_complete` | `loading` | Story 3 通关后点击"下一关" | MVP 简化为循环加载 `story_001` |
 
 ### 3.4 GameState 实现
 
@@ -575,6 +575,7 @@ update(dt) {
 | 日期 | 变更类型 | 变更内容 | 影响范围 |
 |------|---------|---------|---------|
 | 2026-04-17 | INIT | 创建初稿 | 全文档 |
+| 2026-06-08 | DOC_FIX | 同步当前实现状态：ENG-05 已通过真实浏览器回归，Story 3 后点击"下一关"循环加载 `story_001`，不再描述为返回主菜单 | 状态、状态转换规则、边界条件、测试矩阵 |
 
 ---
 

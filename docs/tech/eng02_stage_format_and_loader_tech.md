@@ -2,8 +2,8 @@
 
 **文档类型**：L2 技术方案文档  
 **创建日期**：2026-04-17  
-**最后更新**：2026-04-20  
-**状态**：已更新（基于 LVL-01/02/03 实际数据修正）  
+**最后更新**：2026-06-08  
+**状态**：已更新（基于 LVL-01/02/03 实际数据与 Story 3 接入状态修正）  
 **依赖**：PM-02 核心运行时设计文档（GridMap 2.3.2、StageLoader 2.3.8）  
 **覆盖需求**：R-010（JSON 网格格式）、R-011（瓦片与碰撞子集）
 
@@ -580,14 +580,14 @@ MVP 阶段不实现预加载。原因：
 |------|---------|---------|
 | JSON 文件不存在（404） | `load()` 抛出 HTTP 错误，`loadAndStart` 返回 `{success: false}` | 单元测试 mock fetch |
 | JSON 格式错误（非法 JSON） | `response.json()` 抛出 SyntaxError | 单元测试 |
-| 校验失败（width != 13） | `validateStageData` 返回 errors，`load()` 抛出 | 单元测试 |
+| 校验失败（宽高非法或 tiles 尺寸不匹配） | `validateStageData` 返回 errors，`load()` 抛出 | 单元测试 |
 | 网络超时 | fetch 超时由浏览器处理，Promise reject | 集成测试 |
 | tiles 中包含未知瓦片值（如 8） | 校验阶段拒绝加载 | 单元测试 |
 | enter/exit 坐标指向错误瓦片 | 校验阶段拒绝加载 | 单元测试 |
 | meta 字段缺失 | 加载器不依赖 meta，正常运行 | 单元测试 |
 | meta 计数与实际不一致 | 打印警告，以实际 tiles 统计为准 | 单元测试 |
 | 重开时缓存数据被意外修改 | 深拷贝机制保证缓存不被污染 | 单元测试 |
-| 最后一关通关后点击下一关 | `nextStage()` 检测到无下一关，返回主菜单 | 集成测试 |
+| Story 3 通关后点击下一关 | `GameState.getNextStageId()` 返回 `story_001`，StageLoader 加载第一关 | 集成测试 |
 
 ## 10. 调试支持
 
@@ -603,7 +603,7 @@ console.warn('[StageLoader] story_001: meta.dots_total (10) != actual (12)');
 
 // 加载失败
 console.error('[StageLoader] Failed to load stage story_001: HTTP 404: stages/story_001.json');
-console.error('[StageLoader] Failed to load stage story_001: Validation failed: width must be 13, got 15');
+console.error('[StageLoader] Failed to load stage story_001: Validation failed: tiles[0] length is 15, expected 17');
 ```
 
 ### 10.2 调试面板扩展
@@ -634,7 +634,8 @@ Cache: 2 stages
 |---------|------|---------|--------|
 | 合法关卡数据 | 完整合法 JSON | `valid: true, errors: []` | 校验通过 |
 | version 不为 1 | `version: 2` | `valid: false` | 版本校验 |
-| width 不为 13 | `width: 15` | `valid: false` | 宽度校验 |
+| width 非正整数 | `width: 0` | `valid: false` | 宽度校验 |
+| tiles 行宽不匹配 width | `width: 17` 但某行长度为 `15` | `valid: false` | 行宽校验 |
 | tiles 行数不匹配 | `height: 5` 但 tiles 只有 3 行 | `valid: false` | 行数校验 |
 | 行长度不匹配 | 某行只有 10 个元素 | `valid: false` | 列数校验 |
 | 非法瓦片值 | `tiles[0][0] = 99` | `valid: false` | 瓦片值范围 |
@@ -655,7 +656,7 @@ Cache: 2 stages
 | 首次加载 | 调用 `loadAndStart('story_001')` | 关卡正常显示，玩家在出生点 |
 | 重开关卡 | 收集几个 Dot 后重开 | 所有 Dot 恢复，玩家回到出生点 |
 | 切换关卡 | 通关后点击下一关 | 新关卡加载，HUD 重置 |
-| 最后一关通关 | 通关 story_003 后点击下一关 | 返回主菜单 |
+| 最后一关通关 | 通关 story_003 后点击下一关 | 循环回 story_001 |
 | 加载失败 | 请求不存在的关卡 ID | 显示错误提示，不崩溃 |
 | 缓存命中 | 重开同一关卡 | 不触发 fetch，从缓存加载 |
 
@@ -687,6 +688,7 @@ Cache: 2 stages
 |------|---------|---------|---------|
 | 2026-04-17 | INIT | 创建初稿 | 全文档 |
 | 2026-04-20 | FIX | 基于 LVL-01/02/03 实际数据修正：移除 width===13 硬编码，移除边界墙校验，更新示例 JSON，关卡支持不规则形状 | 设计约束、字段定义、校验规则、校验实现、示例 |
+| 2026-06-08 | DOC_FIX | 清理 `width===13`、`width must be 13` 与最后一关返回主菜单的残留旧口径；同步当前 Story 3 后循环回 `story_001` 的实现 | 边界条件、调试日志示例、测试矩阵 |
 
 ---
 

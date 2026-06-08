@@ -125,31 +125,62 @@ const MAX_HISTORY = 50;
 let undoStacks = [];
 let redoStacks = [];
 
-function makeStageIdFromName(name) {
-  const match = String(name || '').match(/story\s*(\d+)/i);
-  return match
-    ? 'story_' + match[1]
-    : String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'story';
+function normalizeStageId(rawId) {
+  return String(rawId || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'story';
 }
 
-function makeStageNameFromId(id, fallbackName = '') {
-  const match = String(id || '').match(/^story_(\d+)$/i);
-  if (match) return 'Story ' + match[1];
-  return fallbackName || id || 'Story';
+function makeStageIdFromTag(tagText) {
+  const value = String(tagText || '').trim();
+  const storyMatch = value.match(/^story[\s_]*(\d+)/i);
+  if (storyMatch) return `story_${storyMatch[1]}`;
+  return normalizeStageId(value);
 }
 
-function resolveStageIdentity(stage) {
-  const id = String(stage.id || '').trim() || makeStageIdFromName(stage.name);
+function makeStageTagFromId(id) {
+  return normalizeStageId(id).replace(/_/g, ' ');
+}
+
+function parseStoryId(id) {
+  return normalizeStageId(id).match(/^story_?(\d+)$/i);
+}
+
+function makeStageNameFromId(id) {
+  const normalizedId = normalizeStageId(id);
+  const storyMatch = parseStoryId(normalizedId);
+  if (storyMatch) {
+    const number = String(Number(storyMatch[1]));
+    return `Story ${number}`;
+  }
+  return normalizedId.replace(/_/g, ' ');
+}
+
+function getStageIdValidation(id) {
+  const normalizedId = normalizeStageId(id);
+  const storyMatch = parseStoryId(normalizedId);
   return {
-    id,
-    name: makeStageNameFromId(id, stage.name),
+    isStory: normalizedId.slice(0, 5) === 'story',
+    hasThreeDigitNumber: Boolean(storyMatch && /^\d{3}$/.test(storyMatch[1])),
   };
 }
 
-function setStageDisplayName(stage, name) {
-  const displayName = String(name || '').trim() || 'Story';
-  stage.name = displayName;
-  stage.id = makeStageIdFromName(displayName);
+function resolveStageIdentity(stage) {
+  const id = normalizeStageId(stage.id || makeStageIdFromTag(stage.name));
+  return {
+    id,
+    tag: makeStageTagFromId(id),
+    name: makeStageNameFromId(id),
+    validation: getStageIdValidation(id),
+  };
+}
+
+function setStageId(stage, id) {
+  stage.id = normalizeStageId(id);
+  stage.name = makeStageTagFromId(stage.id);
+}
+
+function setStageTag(stage, tagText) {
+  stage.id = makeStageIdFromTag(tagText);
+  stage.name = makeStageTagFromId(stage.id);
 }
 
 function saveSnapshot() {
@@ -193,11 +224,12 @@ function renderTabs() {
 
     const input = document.createElement('input');
     input.type = 'text';
-    input.value = s.name;
+    const identity = resolveStageIdentity(s);
+    input.value = identity.tag;
     input.style.cssText = 'background:transparent;border:none;color:inherit;font:inherit;padding:0;width:100px;outline:none;';
     input.onclick = (e) => { e.stopPropagation(); };
-    input.onchange = () => { setStageDisplayName(s, input.value); input.value = s.name; autoSave(); updateInfo(); };
-    input.onblur = () => { setStageDisplayName(s, input.value); input.value = s.name; autoSave(); updateInfo(); };
+    input.onchange = () => { setStageTag(s, input.value); input.value = resolveStageIdentity(s).tag; autoSave(); updateInfo(); };
+    input.onblur = () => { setStageTag(s, input.value); input.value = resolveStageIdentity(s).tag; autoSave(); updateInfo(); };
 
     const closeBtn = document.createElement('span');
     closeBtn.textContent = '×';
@@ -273,7 +305,7 @@ function addStage() {
   const idx = stages.length + 1;
   const id = `story_${String(idx).padStart(3,'0')}`;
   stages.push({
-    name: `Story ${String(idx).padStart(3,'0')}`,
+    name: makeStageTagFromId(id),
     id,
     w: 20, h: 20,
     tiles: Array.from({length:20}, () => Array(20).fill(0)),
@@ -566,7 +598,11 @@ function updateInfo() {
 
   const box = document.getElementById('infoBox');
   const identity = resolveStageIdentity(s);
+  const storyCheck = identity.validation.isStory ? '<span class="ok">✓</span>' : '<span class="err">✗ 需以 Story 开头</span>';
+  const numberCheck = identity.validation.hasThreeDigitNumber ? '<span class="ok">✓</span>' : '<span class="err">✗ Story 编号需为三位数字</span>';
   let html = `<b>${identity.name}</b> (${identity.id})<br>`;
+  html += `Story 前缀: ${storyCheck}<br>`;
+  html += `三位编号: ${numberCheck}<br>`;
   html += `尺寸: ${s.w} x ${s.h}<br>`;
   html += `Enter: ${enterPos ? `(${enterPos.x}, ${enterPos.z})` : '<span class="err">未设置</span>'} [${counts.enter === 1 ? '<span class="ok">✓</span>' : '<span class="err">数量:'+counts.enter+'</span>'}]<br>`;
   html += `Exit: ${exitPos ? `(${exitPos.x}, ${exitPos.z})` : '<span class="err">未设置</span>'} [${counts.exit === 1 ? '<span class="ok">✓</span>' : '<span class="err">数量:'+counts.exit+'</span>'}]<br>`;
@@ -633,11 +669,9 @@ function importJSON() {
     const data = JSON.parse(input);
     const s = stages[currentStage];
     if (data.id) {
-      s.id = String(data.id).trim();
-      s.name = makeStageNameFromId(s.id, data.meta?.name || s.name);
+      setStageId(s, data.id);
     } else if (data.meta && data.meta.name) {
-      s.name = data.meta.name;
-      s.id = makeStageIdFromName(s.name);
+      setStageTag(s, data.meta.name);
     }
     s.w = data.width || 13;
     s.h = data.height || 17;
@@ -675,7 +709,7 @@ function saveReviewHTML() {
   }
 
   const stageData = {
-    name: `${identity.id} (${identity.name})`,
+    name: `${identity.id}(${identity.name})`,
     id: identity.id,
     width: s.w,
     height: s.h,
@@ -689,7 +723,7 @@ function saveReviewHTML() {
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>TOTM ${s.name} Tile Map</title>
+<title>TOTM ${identity.id}(${identity.name}) Tile Map</title>
 <style>
   body { background: #1a1a2e; color: #fff; font-family: monospace; padding: 20px; }
   h2 { margin-top: 40px; }
@@ -725,7 +759,7 @@ function saveReviewHTML() {
 </style>
 </head>
 <body>
-<h1>TOTM — ${s.name} Tile Map (校对用)</h1>
+<h1>TOTM — ${identity.id}(${identity.name}) Tile Map (校对用)</h1>
 <div class="legend">
   <div class="legend-item"><div class="legend-swatch t1"></div> Wall</div>
   <div class="legend-item"><div class="legend-swatch t0"></div> Empty</div>

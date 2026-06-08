@@ -3,8 +3,8 @@
 **文档类型**：L3 设计文档（策划案 + 技术方案）  
 **任务 ID**：PM-02  
 **创建日期**：2026-04-16  
-**最后更新**：2026-05-01
-**状态**：坐标域与输入缓冲运行时基线已实现并通过 ENG-04 回归
+**最后更新**：2026-06-08
+**状态**：坐标域、输入缓冲、主触点 ID 跟踪与 Story 1-3 循环运行时基线已实现；Story 3 已通过本地浏览器与 GitHub Pages 验收
 **来源**：基于逆向报告中冻结的原版 Tomb of the Mask v1.25.0 运行时规则
 
 ---
@@ -84,7 +84,8 @@ MVP 阶段支持的瓦片类型：
 | 单格尺寸 `TileSize` | 0.12 | world units/tile | 用于在 Tile 拓扑坐标与 World 运动坐标之间换算 |
 | 玩家 tile-grid 等效速度 | 41.6667 | tiles/s | `_runSpeed / TileSize`，仅作为显示和验收派生值 |
 | 输入缓冲窗口 | 0.1 | 秒 | 100ms，源自 `_nextSwipeTimeout = 0.1f` |
-| 滑动识别阈值 | 0.3 | 归一化距离 | 触摸滑动超过此距离才算有效 |
+| 滑动识别阈值 | DPI 有效时 `dpi * 0.16`，否则 Canvas 客户区宽度 `* 0.03` | CSS pixel | 触摸滑动超过此像素距离才算有效 |
+| 滑动识别时间窗口 | 1.0 | 秒 | 手指按下后超过此窗口会重置起点 |
 | Tile 拓扑尺寸 | 1.0 | tile index | 关卡 JSON、碰撞和事件判定的离散拓扑单位 |
 | World 单格尺寸 | 0.12 | world units/tile | 玩家连续运动距离换算单位 |
 | 固定步长 | 0.02 | 秒 | 50Hz，保证跨设备手感一致 |
@@ -329,6 +330,9 @@ class InputManager {
 ```
 
 **TouchInput（触屏滑动）**：
+
+> 当前实现已由 ENG-03/OPS-01 后续修正覆盖：`src/TouchInput.js` 使用 `activeTouchId = touch.identifier` 绑定主触点，按 DPI/Canvas 宽度派生像素阈值，使用 `SWIPE_TIME_SECONDS = 1.0` 处理滑动时间窗口。下方伪代码保留为早期接口示意，不再作为多指触摸和阈值参数的实现依据；精确口径以 `docs/tech/eng03_input_foundation_tech.md` 为准。
+
 ```javascript
 class TouchInput {
   constructor() {
@@ -879,7 +883,7 @@ class StageLoader {
 Loading → Menu → Playing ──→ Paused (fail) → Playing (restart)
                     │                          ↑
                     └──→ Paused (complete) → Playing (next stage)
-                                           → Menu (最后一关通关后)
+                                           → Loading → Playing (Story 3 后循环回 Story 1)
 ```
 
 ```javascript
@@ -923,7 +927,7 @@ class GameState {
 - Menu → Playing：点击"开始游戏"
 - Playing → Paused：玩家死亡 / 通关 / 点击暂停
 - Paused → Playing：点击"重新开始" / "下一关"
-- Paused → Menu：最后一关通关后
+- PausedComplete → Loading → Playing：点击"下一关"加载下一关；Story 3 后循环回 Story 1
 
 ### 2.5 调试方案
 
@@ -1066,7 +1070,7 @@ MVP 完成后，以下升级均为增量操作，不需要重写现有代码：
 | 玩家在边界外 | `getTile` 返回 `TileType.Wall` |
 | 输入缓冲过期 | `bufferTimer` ≤ 0 时清空 `bufferedDirection` |
 | 移动中再次输入同方向 | 覆盖缓冲，重置 `bufferTimer` |
-| 关卡数据加载失败 | 显示错误提示，返回主菜单 |
+| 关卡数据加载失败 | 显示错误提示，返回可恢复状态 |
 | 帧率过低 | 累加器最多执行 5 次 fixedUpdate |
 | 玩家卡在墙里 | 调试模式打印警告，强制传送到 Enter |
 
@@ -1093,7 +1097,7 @@ MVP 完成后，以下升级均为增量操作，不需要重写现有代码：
 | 风险 | 影响 | 替代方案 |
 |------|------|---------|
 | Canvas 渲染性能不足 | FPS < 55 | 降低瓦片尺寸、离屏 Canvas、按颜色分批绘制 |
-| 触屏滑动识别不准 | 误触、方向错误 | 调整 swipeThreshold、增加方向锁定 |
+| 触屏滑动识别不准 | 误触、方向错误 | 调整 DPI/宽度阈值因子、主触点 ID 处理或方向锁定 |
 | 输入缓冲窗口仍误用 20ms | 连续滑动丢失，偏离逆向确认的 100ms 预输入窗口 | 改为 0.1s，并在 `update(deltaTime)` 中递减 |
 | 固定步长累加器卡顿 | 帧率过低时卡死 | 限制最大执行次数（已实现） |
 | 关卡数据格式变化 | 加载失败 | 增加版本号校验 |
@@ -1110,6 +1114,7 @@ MVP 完成后，以下升级均为增量操作，不需要重写现有代码：
 | 2026-04-30 | BASELINE | 修正输入缓冲窗口为 `0.1s/100ms`，并明确缓冲计时在 `update(deltaTime)` 中递减、玩家位移仍在 `fixedUpdate` 中执行；空间定位采用 C 方案，新增 center API 但不切换现有 origin 主语义 | 输入、PlayerController、CoordinateSystem、ENG-04/ENG-05 回归 | 已批准批次 1-3 文档更新 |
 | 2026-05-01 | CODE | ENG-04 已完成运行时相关实现：`CoordinateSystem` 提供 half-tile/center API 并保留 origin 语义，`PlayerController.update(deltaTime)` 负责 100ms 输入缓冲倒计时，`fixedUpdate()` 继续负责位移，入口模块 query 更新为 `eng04_input_buffer_v1` | GameLoop、PlayerController、CoordinateSystem、模块缓存版本 | 已批准并完成 |
 | 2026-05-01 | VALIDATION | ENG-04/ENG-05 真实浏览器回归通过，覆盖 `story_001`、`eng04_death_validation`、快速连续滑动、AHK 边界测试、弹窗输入屏蔽、点击/缩放和缓存版本确认 | 运行时循环、输入缓冲、移动/事件时序、HUD 状态流 | 已验收通过 |
+| 2026-06-08 | DOC_FIX | 同步当前运行时事实：TouchInput 主触点 ID/DPI 阈值/1s 滑动窗口已由后续 OPS-01 修正；Story 1-3 已接入并按 `story_001 -> story_002 -> story_003 -> story_001` 循环 | 数值基线、输入层说明、状态流、边界条件、风险 | 已批准连续分批文档更新 |
 | 2026-05-02 | BASELINE | 根据逆向 1.6 节修正相机设计：Story/Lava 使用 `clamp(dt * 10, 0, 1)` 跟随玩家且不做地图边界 clamp；`cameraLerpSpeed` 仅属于 Arcade/Boss 开局渐变；移动端 viewport / canvas / HUD / Renderer 必须统一可视口径 | Renderer、Camera、HUD 点击命中、OPS-01 Android 阻断 | 已批准本批文档更新 |
 
 ---

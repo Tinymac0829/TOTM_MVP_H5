@@ -3,8 +3,8 @@
 **文档类型**：L2 技术方案文档  
 **任务 ID**：ENG-03  
 **创建日期**：2026-04-21  
-**最后更新**：2026-05-01
-**状态**：输入缓冲基线已随 ENG-04 回归通过  
+**最后更新**：2026-06-08
+**状态**：输入缓冲基线与主触点 ID 跟踪已实现并通过真机/浏览器回归  
 **依赖**：PM-02 核心运行时设计文档（InputManager 2.3.3、PlayerController 2.3.4）  
 **覆盖需求**：R-006（触屏滑动与键盘输入）、R-008（输入缓冲窗口 0.1s）
 
@@ -25,7 +25,7 @@ PM-02 中已定义了 InputManager / TouchInput / KeyboardInput 的接口级设�
 ## 2. 模块边界
 
 **本文档覆盖**：
-- 触屏滑动识别完整算法（归一化坐标、阈值、方向判定、防误触）
+- 触屏滑动识别完整算法（像素坐标、DPI/宽度派生阈值、主触点 ID、方向判定、防误触）
 - 键盘输入按键映射与状态管理
 - 两种输入源的合并策略与优先级
 - 输入与游戏状态的交互规则
@@ -43,7 +43,7 @@ PM-02 中已定义了 InputManager / TouchInput / KeyboardInput 的接口级设�
 ### 3.1 数据流
 
 ```
-触屏事件 (touchstart/touchmove/touchend)
+触屏事件 (touchstart/touchmove/touchend/touchcancel)
     ↓
   TouchInput  ──→  detectedDirection
                           ↓
@@ -87,35 +87,50 @@ InputManager.update() 在主循环的 update(dt) 阶段被调用（非 fixedUpda
 
 **核心思路**：在 touchmove 阶段实时检测滑动距离，超过阈值时立即识别方向并消费触摸。不等 touchend，保证最低延迟。
 
-**归一化坐标**：触摸坐标除以 Canvas 尺寸，转为 [0, 1] 范围。这样滑动阈值在不同分辨率下行为一致。
+**坐标与阈值口径**：当前实现使用浏览器触摸事件的 `clientX/clientY` 像素坐标，不再使用 `clientX / canvas.width` 的归一化坐标。滑动阈值在初始化时由设备 DPI 或 Canvas 客户区宽度派生：
 
 ```
-归一化 x = touch.clientX / canvas.width
-归一化 y = touch.clientY / canvas.height
+if (dpi <= 100 || dpi >= 1000):
+  swipeThreshold = canvasClientWidth * 0.03
+else:
+  swipeThreshold = dpi * 0.16
 ```
+
+触摸手势还带有 `SWIPE_TIME_SECONDS = 1.0` 的时间窗口：手指按下后超过 1 秒仍未形成有效滑动时，下一次 `touchmove` 会重置起点并重新开启时间窗口。
 
 ### 4.2 完整流程
 
 ```
 touchstart:
-  记录起始点 (normalizedX, normalizedY, timestamp)
+  if (tracking) return
+  从 changedTouches[0] 或 touches[0] 取得新触点
+  记录 activeTouchId = touch.identifier
+  记录起始点 (clientX, clientY)
+  重置 swipeTimeout = 1.0s
   标记 tracking = true
 
 touchmove:
   if (!tracking) return
-  计算 dx = currentNormalizedX - startNormalizedX
-  计算 dy = currentNormalizedY - startNormalizedY
-  计算 distance = max(|dx|, |dy|)
-  if (distance >= swipeThreshold):
+  在 event.touches 中查找 identifier == activeTouchId 的触点
+  if (找不到主触点) return
+  if (swipeTimeout <= 0):
+    以当前触点重置起点和 swipeTimeout
+    return
+  计算 dx = currentClientX - startClientX
+  计算 dy = currentClientY - startClientY
+  if (max(|dx|, |dy|) > swipeThreshold):
     if (|dx| > |dy|):
       direction = dx > 0 ? 'right' : 'left'
     else:
       direction = dy > 0 ? 'down' : 'up'
     detectedDirection = direction
-    tracking = false    // 消费这次触摸，后续 move 事件忽略
+    将当前触点位置作为新的起点
 
-touchend:
-  tracking = false      // 清理状态
+update(dt):
+  if (tracking) swipeTimeout = max(0, swipeTimeout - dt)
+
+touchend / touchcancel:
+  只有 changedTouches 包含 activeTouchId 时才结束 tracking
 ```
 
 ### 4.3 关键设计决策
@@ -123,9 +138,12 @@ touchend:
 | 决策 | 选择 | 原因 |
 |------|------|------|
 | 识别时机 | touchmove 阶段（不等 touchend） | 减少输入延迟，原版也是滑动过程中即触发 |
-| 坐标归一化 | clientX / canvas.width | 不同分辨率下阈值行为一致 |
+| 坐标口径 | clientX / clientY 像素坐标 | 与浏览器 TouchEvent 和当前实现一致 |
+| 阈值口径 | DPI 有效时 `dpi * 0.16`，否则 `canvasClientWidth * 0.03` | 对 Android 真机和桌面浏览器更稳定 |
 | 方向判定 | 比较 \|dx\| vs \|dy\|，取绝对值大的轴 | 简单可靠，原版使用相同策略 |
-| 单次消费 | 识别后立即设 tracking = false | 一次触摸只产出一个方向，防止连续触发 |
+| 主触点绑定 | 使用 `activeTouchId = touch.identifier` | 非主触点结束不应打断当前手势 |
+| 连续滑动 | 识别方向后更新起点，保持 tracking | 支持手指不离屏的连续方向输入 |
+| 时间窗口 | `SWIPE_TIME_SECONDS = 1.0` | 超时后重置起点，避免慢拖误判 |
 | preventDefault | touchstart 和 touchmove 都调用 | 阻止浏览器默认滚动和缩放行为 |
 
 ### 4.4 防误触设计
@@ -142,7 +160,7 @@ touchend:
 | 点击（无滑动） | 不产出方向 | distance < swipeThreshold 时不触发 |
 | 斜向滑动 | 取主轴方向 | \|dx\| vs \|dy\| 比较，严格大于才判定 |
 | 弹窗期间滑动 | 屏蔽 | InputManager.update() 检查游戏状态，非 playing 时不采集 |
-| 多指触摸 | 只处理第一根手指 | 始终使用 e.touches[0] |
+| 多指触摸 | 只处理当前主触点 | `touchmove` 按 `activeTouchId` 查找，非主触点结束不清空 tracking |
 
 ### 4.5 完整实现
 
@@ -151,22 +169,31 @@ class TouchInput {
   constructor(canvas) {
     this.canvas = canvas;
     this.tracking = false;
+    this.activeTouchId = null;
     this.startX = 0;
     this.startY = 0;
     this.detectedDirection = null;
-    this.swipeThreshold = 0.3;
+    this.swipeThreshold = resolveSwipeThreshold(canvas);
+    this.swipeTime = 1.0;
+    this.swipeTimeout = this.swipeTime;
 
     canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
     canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
     canvas.addEventListener('touchend', this.onTouchEnd.bind(this));
-    canvas.addEventListener('touchcancel', this.onTouchEnd.bind(this));
+    canvas.addEventListener('touchcancel', this.onTouchCancel.bind(this));
   }
 
   onTouchStart(e) {
     e.preventDefault();
-    const touch = e.touches[0];
-    this.startX = touch.clientX / this.canvas.width;
-    this.startY = touch.clientY / this.canvas.height;
+    if (this.tracking) return;
+
+    const touch = e.changedTouches[0] || e.touches[0];
+    if (!touch) return;
+
+    this.activeTouchId = touch.identifier;
+    this.startX = touch.clientX;
+    this.startY = touch.clientY;
+    this.swipeTimeout = this.swipeTime;
     this.tracking = true;
   }
 
@@ -174,9 +201,18 @@ class TouchInput {
     e.preventDefault();
     if (!this.tracking) return;
 
-    const touch = e.touches[0];
-    const dx = touch.clientX / this.canvas.width - this.startX;
-    const dy = touch.clientY / this.canvas.height - this.startY;
+    const touch = findTouchByIdentifier(e.touches, this.activeTouchId);
+    if (!touch) return;
+
+    if (this.swipeTimeout <= 0) {
+      this.startX = touch.clientX;
+      this.startY = touch.clientY;
+      this.swipeTimeout = this.swipeTime;
+      return;
+    }
+
+    const dx = touch.clientX - this.startX;
+    const dy = touch.clientY - this.startY;
 
     if (Math.abs(dx) > this.swipeThreshold || Math.abs(dy) > this.swipeThreshold) {
       if (Math.abs(dx) > Math.abs(dy)) {
@@ -184,12 +220,25 @@ class TouchInput {
       } else {
         this.detectedDirection = dy > 0 ? 'down' : 'up';
       }
-      this.tracking = false;
+      this.startX = touch.clientX;
+      this.startY = touch.clientY;
+    }
+  }
+
+  update(deltaTime = 0) {
+    if (this.tracking) {
+      this.swipeTimeout = Math.max(0, this.swipeTimeout - Math.max(deltaTime, 0));
     }
   }
 
   onTouchEnd(e) {
+    if (!findTouchByIdentifier(e.changedTouches, this.activeTouchId)) return;
     this.tracking = false;
+    this.activeTouchId = null;
+  }
+
+  onTouchCancel(e) {
+    this.onTouchEnd(e);
   }
 
   getDirection() {
@@ -200,18 +249,20 @@ class TouchInput {
 
   reset() {
     this.tracking = false;
+    this.activeTouchId = null;
     this.detectedDirection = null;
+    this.swipeTimeout = this.swipeTime;
   }
 }
 ```
 
 ### 4.6 与 PM-02 接口的差异说明
 
-PM-02 中 TouchInput 的 onTouchStart 记录了 `time: performance.now()`，本方案移除了该字段。原因：
-- 当前设计在 touchmove 阶段即时识别，不需要基于时间的超时判定
-- 如果后续需要区分"快速滑动"和"慢速拖拽"，可以重新加入时间戳
+PM-02 中 TouchInput 的 onTouchStart 只记录触摸起点，未建模主触点身份和滑动时间窗口。当前实现补齐了两个差异：
+- 使用 `activeTouchId` 绑定当前手势生命周期，避免非主触点结束导致输入采集中断。
+- 使用 `swipeTimeout` 和 `SWIPE_TIME_SECONDS = 1.0` 限制单次滑动判定窗口，超时后重置起点。
 
-新增了 `touchcancel` 事件监听和 `reset()` 方法，用于状态清理。
+新增了 `touchcancel` 事件监听和 `reset()` 方法，用于状态清理；`touchend` 与 `touchcancel` 都必须先确认 `changedTouches` 包含主触点。
 
 ## 5. KeyboardInput 详细设计
 
@@ -339,12 +390,13 @@ class InputManager {
     this.enabled = true;
   }
 
-  update() {
+  update(deltaTime = 0) {
     if (!this.enabled) {
       this.currentDirection = null;
       return;
     }
 
+    this.touchInput.update(deltaTime);
     let dir = this.touchInput.getDirection();
     if (!dir) {
       dir = this.keyboardInput.getDirection();
@@ -461,14 +513,16 @@ PlayerController.fixedUpdate():
 
 | 参数 | 值 | 来源 | 说明 |
 |------|-----|------|------|
-| `swipeThreshold` | 0.3（归一化距离） | PM-02 TouchInput | 滑动识别最小距离，低于此值视为点击 |
+| `swipeThreshold` | DPI 有效时 `dpi * 0.16`；DPI 无效时 `canvasClientWidth * 0.03` | OPS-01 / 逆向报告 8.5 系列回归 | 滑动识别最小像素距离，低于此值视为点击或慢拖 |
+| `swipeTime` | 1.0s | OPS-01 / 逆向报告 8.5a | 单次滑动判定时间窗口，超时后重置起点 |
+| `activeTouchId` | 当前主触点 `touch.identifier` | OPS-01 Android 真机回归 | 多指触摸时保护主触点生命周期 |
 | `bufferDuration` | 0.1s (100ms) | R-008 / 逆向报告 | 输入缓冲窗口，约 5 个 fixedUpdate 步长，按 update(dt) 递减 |
 | `runSpeedWorldUnitsPerSecond` | 5.0 world units/s | PM-02 PlayerController / R-009 | 玩家连续位移主速度；`41.6667 tiles/s` 仅作为由 `TileSize = 0.12 world units/tile` 派生出的显示/验收换算值 |
 | `fixedDeltaTime` | 0.02s (20ms) | PM-02 GameLoop | 固定步长，PlayerController 消费输入的频率 |
 | Canvas 逻辑尺寸 | 1080×1920 | PM-02 Renderer | 归一化坐标的基准 |
 
 **参数调优说明**：
-- `swipeThreshold = 0.3` 意味着手指需要滑过屏幕宽度的 30% 才触发。如果测试中发现误触率高，可以增大到 0.35；如果觉得不够灵敏，可以减小到 0.25。
+- 当前 `swipeThreshold` 已从归一化比例改为像素阈值，优先使用 DPI；当浏览器 DPI 明显不可信时，退回到 Canvas 客户区宽度的 3%。
 - 这些参数在 MVP 阶段硬编码，后续可提取为配置。
 
 ## 10. 边界条件
@@ -476,18 +530,20 @@ PlayerController.fixedUpdate():
 | 场景 | 预期行为 | 处理方式 |
 |------|---------|---------|
 | 触屏和键盘同帧输入 | 触屏方向被采用，键盘方向被丢弃 | InputManager.update() 中触屏优先 |
-| 多指触摸 | 只处理第一根手指 | 始终使用 e.touches[0] |
+| 多指触摸 | 只处理已绑定的主触点 | `activeTouchId` 匹配 `touch.identifier` |
 | 斜向 45° 滑动 | 取 \|dx\| 和 \|dy\| 中较大的轴 | 严格大于才判定，相等时取垂直轴（dy） |
 | 触摸后不移动直接抬起 | 不产出方向 | distance < swipeThreshold |
-| 快速连续两次滑动 | 第一次被识别，第二次需要新的 touchstart | tracking = false 后需重新触发 touchstart |
+| 手指不离屏连续滑动 | 每次超过阈值都可产出方向 | 识别后更新起点并保持 tracking |
+| 非主触点结束 | 不影响当前滑动 | `changedTouches` 不含 `activeTouchId` 时不清 tracking |
+| 滑动时间窗口超时 | 重置起点并重新开启 1.0s 窗口 | `swipeTimeout <= 0` 时不产出方向 |
 | 多个方向键同时按下 | 取最后按下的键 | keydown 覆盖 pendingDirection |
 | 按住方向键不松开 | 只触发一次方向命令 | keyStates 防重复 |
 | 松开后再按同一个键 | 触发新的方向命令 | keyup 重置 keyStates |
 | 弹窗显示瞬间正在滑动 | 滑动被忽略 | setEnabled(false) 清空所有状态 |
 | 弹窗关闭后立即滑动 | 正常响应 | setEnabled(true) 恢复采集 |
 | 死亡瞬间有缓冲方向 | 缓冲被清空 | PlayerController.reset() |
-| Canvas 尺寸动态变化 | 归一化坐标自动适应 | 每次 touchmove 都重新除以 canvas.width/height |
-| touchcancel 事件 | 清理触摸状态 | 与 touchend 相同处理 |
+| Canvas 尺寸动态变化 | 后续新建 TouchInput 或阈值重算时适应 | 阈值初始化时读取 Canvas 客户区宽度 |
+| touchcancel 事件 | 只在取消主触点时清理触摸状态 | 与 touchend 共用主触点检查 |
 | 浏览器默认滚动/缩放 | 被阻止 | touchstart/touchmove 调用 preventDefault |
 
 ## 11. 测试矩阵
@@ -496,11 +552,15 @@ PlayerController.fixedUpdate():
 
 | 测试用例 | 输入 | 预期输出 | 验证点 |
 |---------|------|---------|--------|
-| 右滑识别 | touchstart(0.5, 0.5) → touchmove(0.85, 0.5) | `detectedDirection === 'right'` | 水平滑动方向正确 |
-| 上滑识别 | touchstart(0.5, 0.5) → touchmove(0.5, 0.15) | `detectedDirection === 'up'` | 垂直滑动方向正确 |
-| 短距离不触发 | touchstart(0.5, 0.5) → touchmove(0.6, 0.5) | `detectedDirection === null` | 阈值过滤有效 |
-| 斜向滑动取主轴 | touchstart(0.5, 0.5) → touchmove(0.85, 0.75) | `detectedDirection === 'right'` | dx > dy 时取水平 |
-| 单次消费 | 识别后再次 touchmove | `detectedDirection` 不变 | tracking = false 生效 |
+| 右滑识别 | touchstart(500, 500) → touchmove(560, 500) 且超过阈值 | `detectedDirection === 'right'` | 水平滑动方向正确 |
+| 上滑识别 | touchstart(500, 500) → touchmove(500, 440) 且超过阈值 | `detectedDirection === 'up'` | 垂直滑动方向正确 |
+| 短距离不触发 | touchstart 后移动距离低于 `swipeThreshold` | `detectedDirection === null` | 阈值过滤有效 |
+| 斜向滑动取主轴 | `absDx > absDy` | `detectedDirection === 'right'` 或 `'left'` | dx > dy 时取水平 |
+| 连续滑动 | 识别一次后同一主触点继续移动 | 可再次产出方向 | 起点更新且 tracking 保持 |
+| 主触点 move 匹配 | event.touches 中包含 activeTouchId | 正常计算方向 | 主触点身份有效 |
+| 非主触点 end | changedTouches 不含 activeTouchId | tracking 保持 true | 多指结束不误清 |
+| 主触点 end/cancel | changedTouches 包含 activeTouchId | tracking=false, activeTouchId=null | 生命周期清理 |
+| 滑动时间窗口超时 | swipeTimeout <= 0 后 touchmove | 重置起点，不产出方向 | 1.0s 窗口有效 |
 | getDirection 消费后清空 | 调用 getDirection() 两次 | 第一次返回方向，第二次返回 null | 消费语义正确 |
 | 键盘方向键映射 | keydown ArrowUp | `pendingDirection === 'up'` | 映射正确 |
 | WASD 映射 | keydown 'w' | `pendingDirection === 'up'` | WASD 支持 |
@@ -525,7 +585,8 @@ PlayerController.fixedUpdate():
 | 弹窗关闭后输入 | 点击重新开始后立即滑动 | 角色正常响应 |
 | 快速连续输入 | 移动中快速滑动另一方向 | 缓冲生效，停下后立即转向 |
 | 死亡后重开输入 | 死亡 → 重新开始 → 立即滑动 | 角色正常响应，无残留方向 |
-| 多设备触屏 | 不同分辨率设备上滑动 | 滑动灵敏度一致（归一化坐标） |
+| 多设备触屏 | 不同分辨率和 DPI 设备上滑动 | 滑动阈值与 Android 真机验收口径一致 |
+| 多指触摸 | 主触点按住时增加/移除第二触点 | 主触点后续滑动仍被采集 |
 | 页面不滚动 | 在 Canvas 上滑动 | 页面不发生滚动或缩放 |
 
 ## 12. 性能约束
@@ -548,9 +609,10 @@ PlayerController.fixedUpdate():
 
 | 风险 | 影响 | 替代方案 |
 |------|------|---------|
-| swipeThreshold 在小屏设备上过大 | 需要滑动很远才触发 | 根据设备 DPI 动态调整阈值（非 MVP） |
-| 归一化坐标在非正方形 Canvas 上行为不一致 | 水平和垂直方向灵敏度不同 | 改用像素距离 + DPI 归一化（非 MVP） |
+| swipeThreshold 在特定设备上过大或过小 | 误触或需要滑动很远才触发 | 调整 DPI 因子或宽度 fallback 因子 |
+| 浏览器报告的 DPI 不可信 | 阈值明显偏离体感 | 使用 `canvasClientWidth * 0.03` fallback |
 | touchmove 事件频率在低端安卓设备上较低 | 快速滑动可能漏检 | 降低 swipeThreshold 或在 touchend 补充检测 |
+| 主触点 ID 未正确维护 | 多指触摸后输入采集中断 | `activeTouchId` 与 `changedTouches` 单元/真机回归覆盖 |
 | 浏览器 passive event listener 警告 | 控制台警告（不影响功能） | 已在 addEventListener 中设置 `{ passive: false }` |
 | 键盘输入在移动端虚拟键盘上不可用 | 移动端无法使用键盘操作 | 移动端只依赖触屏，键盘仅用于 PC 调试 |
 | 同时使用触屏和键盘时体验不一致 | 触屏方向覆盖键盘方向 | 实际场景中不会同时使用两种输入 |
@@ -565,6 +627,7 @@ PlayerController.fixedUpdate():
 | 2026-04-29 | DESIGN | 同步 R-009 三层坐标域方案，将输入文档中的玩家速度参数从 `moveSpeed tiles/s` 改为 world-units 主口径说明 | 9. 关键参数汇总 |
 | 2026-04-30 | BASELINE | 修正 R-008 输入缓冲窗口为 `0.1s/100ms`，并明确缓冲倒计时由 `update(dt)` 递减、移动仍由 `fixedUpdate` 执行 | 8. 输入缓冲机制、9. 关键参数汇总 |
 | 2026-05-01 | VALIDATION | ENG-04 已完成 100ms 输入缓冲代码实现与真实浏览器回归；快速连续滑动、AHK 边界测试、缓冲过期和单缓冲覆盖语义均为 `PASS` | 8. 输入缓冲机制、12. 性能要求、ENG-04 联动 |
+| 2026-06-08 | DOC_FIX | 同步 OPS-01 后续 TouchInput 实现：DPI/宽度派生像素阈值、`SWIPE_TIME_SECONDS = 1.0`、`activeTouchId` 主触点绑定、非主触点结束不清 tracking | 4. TouchInput 详细设计、9. 关键参数汇总、10. 边界条件、11. 测试矩阵 |
 
 ---
 
