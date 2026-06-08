@@ -82,9 +82,9 @@
 | LVL-01 | DONE | `R-010,R-011,R-012,R-017` | Integrate `Story 1` | The `story_001` main path was completed in the `2026-05-01` ENG-04 × ENG-05 real-browser regression: startup, sliding, collection/HUD, clear, replay, click/resize, and cache-version confirmation |
 | QA-01 | DONE | `R-006,R-007,R-008,R-009,R-017` | Finish `Story 1` feel validation | Closed by `docs/features/qa01_story1_feel_validation_closeout.md`: four-direction sliding and `100ms` buffering passed `2026-05-01` real-browser regression; `<50ms` response is closed by input-path code review and the documented `44ms` engineering budget, not by high-speed-camera measurement |
 | OPS-01 | DONE | `R-020` | Set up GitHub Pages deployment | GitHub Pages URL opens the current playable build; desktop and Android-device smoke passed; mobile touch swipe, continuous no-lift swiping, multi-touch interference, long-hold-then-swipe, and the main smoke path are all validated as `PASS`; final input baseline is `0.03 / 0.16` distance thresholds, `SWIPE_TIME_SECONDS = 1.0`, and `activeTouchId` primary-touch tracking |
-| LVL-02 | DONE | `R-010,R-011,R-012,R-018` | Integrate `Story 2` | Closed by the `2026-06-05` Android-device GitHub Pages validation: Story 2 is fully playable, Story 1 -> Story 2 transition works, and Story 2 clear falls back to Story 1 while `story_003` is not integrated |
+| LVL-02 | DONE | `R-010,R-011,R-012,R-018` | Integrate `Story 2` | Closed by the `2026-06-05` Android-device GitHub Pages validation: Story 2 is fully playable, Story 1 -> Story 2 transition works, and the then-current Story 2 clear fallback behavior was validated before Story 3 integration |
 | QA-02 | DONE | `R-017,R-018` | Finish `Story 1-2` regression pass | Closed by the same `2026-06-05` Android-device GitHub Pages validation; shared feel, HUD/loading/menu state flow, fail restart, collection sync, and fallback behavior stay consistent across Story 1-2 |
-| LVL-03 | TODO | `R-010,R-011,R-012,R-019` | Integrate `Story 3` | Stage is fully playable and closes the first MVP stage set |
+| LVL-03 | DONE | `R-010,R-011,R-012,R-019` | Integrate `Story 3` | Closed by Story 3 local-browser and GitHub Pages validation: `story_003` loads, HUD counts sync, Enter -> Exit clear works, Spikes death/fail restart works, and Story 3 clear loops back to Story 1 |
 | QA-03 | TODO | `R-017,R-018,R-019` | Finish `Story 1-3` regression pass | All three stages are replayable and stable |
 | PERF-01 | TODO | `R-016` | Run Android performance pass | Mid-range Android browser stays near target FPS |
 | REL-01 | TODO | `R-001,R-016,R-017,R-018,R-019,R-020` | Prepare MVP freeze candidate | `v0.3.1` contains fixes only and no scope expansion |
@@ -103,7 +103,7 @@
 | `v0.1.0` | DONE | `PM-02, ENG-01, ENG-02, ENG-03` | Design + foundation | Technical design doc exists, stage-data path is defined, and runnable framework exists. PM-02, ENG-01, ENG-02, and ENG-03 are complete |
 | `v0.1.1` | DONE | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | Core feel + `Story 1` + URL access | ENG-04, ENG-05, LVL-01, QA-01, and OPS-01 are all closed; the `Story 1` main path, online URL access, desktop smoke, and Android input smoke are `PASS` |
 | `v0.2.0` | DONE | `LVL-02, QA-02` | `Story 2` | Story 1-2 are both playable and regression checked on Android device through the GitHub Pages public URL |
-| `v0.3.0` | TODO | `LVL-03, QA-03` | `Story 3` | `Story 1-3` all playable and replayable |
+| `v0.3.0` | IN_PROGRESS | `LVL-03, QA-03` | `Story 3` | LVL-03 is complete; close `v0.3.0` after the formal QA-03 Story 1-3 regression pass |
 | `v0.3.1` | TODO | `PERF-01, REL-01` | Stabilization | Fixes only, no new feature scope |
 
 ## Schedule
@@ -115,7 +115,7 @@
 | `2026-04-22` to `2026-04-25` | `v0.1.0` (coding phase) | Project skeleton (ENG-01), runtime foundation (ENG-02), input layer (ENG-03) |
 | `2026-04-26` to `2026-05-01` | `v0.1.1` | Core movement feel (ENG-04), minimal gameplay UI (ENG-05), `Story 1` integration (LVL-01), feel validation (QA-01), deployment (OPS-01), and R-008/R-009 regression closeout |
 | `2026-05-06` to `2026-06-05` | `v0.2.0` | `Story 2` integration (LVL-02), regression pass (QA-02) |
-| `2026-05-04` to `2026-05-06` | `v0.3.0` | `Story 3` integration (LVL-03), regression pass (QA-03) |
+| `2026-06-06` to `2026-06-08` | `v0.3.0` | `Story 3` integration (LVL-03), Story 3 validation record, and stage-editor naming sync; formal QA-03 regression remains pending |
 | `2026-05-07` to `2026-05-09` | `v0.3.1` | Performance pass (PERF-01), freeze candidate (REL-01) |
 
 ## Open Items
@@ -160,6 +160,8 @@
 | `2026-05-06` | `OPS` | Closed OPS-01: the GitHub Pages playable URL, desktop smoke, Android-device button hit testing, ordinary swiping, continuous no-lift swiping, multi-touch interference, long-hold-then-swipe, and the main smoke path all passed. | OPS-01 is marked `DONE`, and `v0.1.1` is marked `DONE`; the final mobile input baseline uses the competitor-original `0.03 / 0.16` distance thresholds, `SWIPE_TIME_SECONDS = 1.0`, and `activeTouchId` primary-touch tracking. |
 | `2026-05-06` | `STATUS` | LVL-02 moved to `IN_PROGRESS`; Story 2 integration is now active, starting with baseline-status sync and stage-integration documentation. | `v0.2.0` is now in progress; the next implementation step is adding `story_002` stage data and regressing that Story 1 does not regress. |
 | `2026-06-05` | `VALIDATION` | Closed LVL-02 and QA-02 with Android-device validation through the GitHub Pages public URL. Default Story 1 startup, Story 1 -> Story 2 transition, `?stage=story_002` direct entry, Story 2 collection counts, Spikes death/fail restart, `Empty(0)` passability, and Story 2 clear fallback to Story 1 all passed. | LVL-02 and QA-02 are marked `DONE`; `v0.2.0` is marked `DONE`. |
+| `2026-06-06` | `CODE` | Added the formal Story 3 stage data and enabled runtime loading in `a21b7f8`: `stages/story_003.json` is present and `src/main.js` allows `story_003`. | LVL-03 entered the master-branch implementation baseline, and Story 2 clear fallback is no longer the current end-of-stage behavior. |
+| `2026-06-08` | `DOC` | Synced Story 3 feature documentation and stage-editor naming behavior in `81c73f5`. The Story 3 card records local-browser and GitHub Pages validation, while the editor now derives display names from ids with leading-zero trimming for info/export/review output. | LVL-03 is marked `DONE`; `v0.3.0` remains `IN_PROGRESS` until the formal QA-03 Story 1-3 regression pass is closed. |
 
 
 

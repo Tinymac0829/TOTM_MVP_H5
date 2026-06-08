@@ -139,7 +139,7 @@ Story 2 引入 Spikes（死亡概念），教玩家"观察再行动"。关卡形
 - 将 `story_002` 加入运行时可用关卡集合。
 - `StageLoader.STAGE_ORDER` 已包含 `story_002`，本轮无需调整。
 - Story 1 通关弹窗在 Story 2 可用后应显示“下一关”，并加载 `story_002`。
-- Story 2 通关后由于 `story_003` 暂未接入，当前仍按既有 fallback 回到 Story 1。
+- Story 2 通关后在当时 `story_003` 尚未接入的基线中，按既有 fallback 回到 Story 1；该记录为 2026-05-06 接入期历史口径，Story 3 后续已接入。
 
 本记录只表示代码接入已开始，不等同于 LVL-02 最终收口。最终收口仍需完成上方验收标准，并由 QA-02 覆盖 Story 1-2 共享手感与状态流回归。
 
@@ -178,7 +178,7 @@ Story 2 引入 Spikes（死亡概念），教玩家"观察再行动"。关卡形
 - Story 2 Dot `64`、Coin `3`、Star `3`、Spikes `10` 与 HUD/收集同步均通过。
 - Enter 到 Exit 可达；Spikes 可从出生点到达并触发死亡；失败后重开仍在 Story 2。
 - `Empty(0)` 按 ENG-02 冻结语义保持可通行，未发现隐形阻挡或错误碰撞。
-- Story 2 通关弹窗按钮语义为“下一关”；点击后因 `story_003` 尚未接入，按现有 fallback 回到 Story 1。
+- Story 2 通关弹窗按钮语义为“下一关”；在本次 2026-06-05 验收时，由于 `story_003` 尚未接入，点击后按当时 fallback 回到 Story 1。该行为为 LVL-02 历史验收记录，不代表 Story 3 接入后的当前关卡流转状态。
 
 结论：
 
