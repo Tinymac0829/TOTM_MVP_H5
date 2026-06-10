@@ -301,6 +301,10 @@ function loadBgSettings() {
   document.getElementById('bgScaleNum').value = s.bgScale;
 }
 
+function clearExportArea() {
+  document.getElementById('exportArea').value = '';
+}
+
 function addStage() {
   const idx = stages.length + 1;
   const id = `story_${String(idx).padStart(3,'0')}`;
@@ -314,6 +318,7 @@ function addStage() {
   undoStacks.push([]);
   redoStacks.push([]);
   switchStage(stages.length - 1);
+  clearExportArea();
 }
 
 // Palette
@@ -870,6 +875,7 @@ if (!loaded) {
   loadBgSettings();
   render();
   updateInfo();
+  clearExportArea();
 }
 </script>
 </body>
