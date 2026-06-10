@@ -75,6 +75,7 @@
 | `2026-05-06` | `OPS` | OPS-01 已完成主分支收口：GitHub Pages 可玩 URL、桌面 smoke、Android 真机按钮命中、普通滑动、连续不离屏滑动、多触点干扰、长按后再滑与主链路 smoke 均通过。 | OPS-01 现标记为 `DONE`；最终移动端输入基线为 `0.03 / 0.16` 距离阈值、`SWIPE_TIME_SECONDS = 1.0` 时间窗口和 `activeTouchId` 主触点 ID 跟踪。 |
 | `2026-06-05` | `VALIDATION` | LVL-02 与 QA-02 已在主分支完成收口：通过 GitHub Pages 公网入口在 Android 真机完成验收，Story 1 启动、Story 1 -> Story 2 跳转、`?stage=story_002` 直进、Story 2 收集计数、Spikes 死亡/失败重开和 Story 2 通关 fallback 回 Story 1 均通过。 | `LVL-02`、`QA-02` 与 `v0.2.0` 现标记为 `DONE`；本次没有创建 QA-02 专属 worktree。 |
 | `2026-06-08` | `STATUS` | Story 3 接入与 stage editor 命名文档已在主分支通过 `a21b7f8` 和 `81c73f5` 完成同步。`story_003` 已可加载，Story 3 验收记录已落文档，editor 的 info/export/review 展示名现已按 id 派生并去除数字前导零。 | `LVL-03` 现标记为 `DONE`；`v0.3.0` 仍等待 QA-03 全 Story 1-3 正式回归收口。本次没有创建 LVL-03 专属 worktree。 |
+| `2026-06-11` | `DOC` | 新增 `docs/tech/format_stage_json_tech.md`，并完成 `tools/format_stage_json.mjs` 的格式化器验收：usage、格式化、warning 和输出形状检查均已通过。 | `format_stage_json` 现有一份稳定技术说明和一轮已记录的验证结果；本次没有创建专属 worktree。 |
 
 
 
