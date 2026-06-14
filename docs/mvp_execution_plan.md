@@ -85,7 +85,7 @@
 | LVL-02 | DONE | `R-010,R-011,R-012,R-018` | Integrate `Story 2` | Closed by the `2026-06-05` Android-device GitHub Pages validation: Story 2 is fully playable, Story 1 -> Story 2 transition works, and the then-current Story 2 clear fallback behavior was validated before Story 3 integration |
 | QA-02 | DONE | `R-017,R-018` | Finish `Story 1-2` regression pass | Closed by the same `2026-06-05` Android-device GitHub Pages validation; shared feel, HUD/loading/menu state flow, fail restart, collection sync, and fallback behavior stay consistent across Story 1-2 |
 | LVL-03 | DONE | `R-010,R-011,R-012,R-019` | Integrate `Story 3` | Closed by Story 3 local-browser and GitHub Pages validation: `story_003` loads, HUD counts sync, Enter -> Exit clear works, Spikes death/fail restart works, and Story 3 clear loops back to Story 1 |
-| QA-03 | TODO | `R-017,R-018,R-019` | Finish `Story 1-3` regression pass | All three stages are replayable and stable |
+| QA-03 | DONE | `R-017,R-018,R-019` | Finish `Story 1-3` regression pass | Closed by `docs/features/qa03_story1_3_regression_closeout.md`: local browser automation confirmed default Story 1 startup, direct Story 1-3 entries, Story 1 -> Story 2 -> Story 3 -> Story 1 clear progression, Story 2/3 fail restart, and stable collection/event flow |
 | PERF-01 | TODO | `R-016` | Run Android performance pass | Mid-range Android browser stays near target FPS |
 | REL-01 | TODO | `R-001,R-016,R-017,R-018,R-019,R-020` | Prepare MVP freeze candidate | `v0.3.1` contains fixes only and no scope expansion |
 
@@ -103,7 +103,7 @@
 | `v0.1.0` | DONE | `PM-02, ENG-01, ENG-02, ENG-03` | Design + foundation | Technical design doc exists, stage-data path is defined, and runnable framework exists. PM-02, ENG-01, ENG-02, and ENG-03 are complete |
 | `v0.1.1` | DONE | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | Core feel + `Story 1` + URL access | ENG-04, ENG-05, LVL-01, QA-01, and OPS-01 are all closed; the `Story 1` main path, online URL access, desktop smoke, and Android input smoke are `PASS` |
 | `v0.2.0` | DONE | `LVL-02, QA-02` | `Story 2` | Story 1-2 are both playable and regression checked on Android device through the GitHub Pages public URL |
-| `v0.3.0` | IN_PROGRESS | `LVL-03, QA-03` | `Story 3` | LVL-03 is complete; close `v0.3.0` after the formal QA-03 Story 1-3 regression pass |
+| `v0.3.0` | DONE | `LVL-03, QA-03` | `Story 3` | LVL-03 and QA-03 are complete; Story 1-3 local browser regression passed |
 | `v0.3.1` | TODO | `PERF-01, REL-01` | Stabilization | Fixes only, no new feature scope |
 
 ## Schedule
@@ -116,6 +116,7 @@
 | `2026-04-26` to `2026-05-01` | `v0.1.1` | Core movement feel (ENG-04), minimal gameplay UI (ENG-05), `Story 1` integration (LVL-01), feel validation (QA-01), deployment (OPS-01), and R-008/R-009 regression closeout |
 | `2026-05-06` to `2026-06-05` | `v0.2.0` | `Story 2` integration (LVL-02), regression pass (QA-02) |
 | `2026-06-06` to `2026-06-08` | `v0.3.0` | `Story 3` integration (LVL-03), Story 3 validation record, and stage-editor naming sync; formal QA-03 regression remains pending |
+| `2026-06-14` | `v0.3.0` | QA-03 Story 1-3 local browser regression closeout; `v0.3.0` marked `DONE` |
 | `2026-05-07` to `2026-05-09` | `v0.3.1` | Performance pass (PERF-01), freeze candidate (REL-01) |
 
 ## Open Items
@@ -162,6 +163,7 @@
 | `2026-06-05` | `VALIDATION` | Closed LVL-02 and QA-02 with Android-device validation through the GitHub Pages public URL. Default Story 1 startup, Story 1 -> Story 2 transition, `?stage=story_002` direct entry, Story 2 collection counts, Spikes death/fail restart, `Empty(0)` passability, and Story 2 clear fallback to Story 1 all passed. | LVL-02 and QA-02 are marked `DONE`; `v0.2.0` is marked `DONE`. |
 | `2026-06-06` | `CODE` | Added the formal Story 3 stage data and enabled runtime loading in `a21b7f8`: `stages/story_003.json` is present and `src/main.js` allows `story_003`. | LVL-03 entered the master-branch implementation baseline, and Story 2 clear fallback is no longer the current end-of-stage behavior. |
 | `2026-06-08` | `DOC` | Synced Story 3 feature documentation and stage-editor naming behavior in `81c73f5`. The Story 3 card records local-browser and GitHub Pages validation, while the editor now derives display names from ids with leading-zero trimming for info/export/review output. | LVL-03 is marked `DONE`; `v0.3.0` remains `IN_PROGRESS` until the formal QA-03 Story 1-3 regression pass is closed. |
+| `2026-06-14` | `QA` | Closed QA-03 with local browser automation and supporting stage-data validation. Default Story 1 startup, direct Story 1-3 entries, Story 1 -> Story 2 -> Story 3 -> Story 1 progression, Story 2/3 Spikes fail restart, and collection/event flow all passed. | QA-03 is marked `DONE`; `v0.3.0` is now `DONE`. This pass did not rerun Android-device or GitHub Pages manual validation. |
 
 
 

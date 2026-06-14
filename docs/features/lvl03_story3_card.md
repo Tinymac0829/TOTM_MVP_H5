@@ -1,11 +1,11 @@
 # LVL-03 功能卡：Story 3 接入
 
-**文档类型**：L1 功能卡  
-**任务 ID**：LVL-03  
-**创建日期**：2026-04-20  
-**最后更新**：2026-06-08  
-**状态**：已接入并通过 Story 3 本地浏览器与 GitHub Pages 验收；QA-03 全三关回归待确认  
-**来源**：原版 Tomb of the Mask v1.25.0 Story 3 关卡截图 + 设计思路总结 + 用户手动还原 + `stages/story_003.json` 正式数据  
+**文档类型**：L1 功能卡
+**任务 ID**：LVL-03
+**创建日期**：2026-04-20
+**最后更新**：2026-06-14
+**状态**：DONE（Story 3 已接入；QA-03 全 Story 1-3 回归已通过）
+**来源**：原版 Tomb of the Mask v1.25.0 Story 3 关卡截图 + 设计思路总结 + 用户手动还原 + `stages/story_003.json` 正式数据
 **覆盖需求**：R-019（Story 3 必须完整可玩，完成首组 MVP 内容闭环）
 
 ---
@@ -139,7 +139,7 @@ Story 3 综合前两关技能，关卡为横向展开的不规则迷宫，路径
 - [x] 外围 Empty(0) 区域不可进入
 - [x] 本地浏览器 Story 3 直接入口验收通过
 - [x] GitHub Pages Story 3 加载与玩法验收通过
-- [ ] Story 1-2 体验不受影响（QA-03 全三关回归待确认）
+- [x] Story 1-2 体验不受影响（QA-03 全三关回归已通过）
 - [ ] 关卡布局与原版截图一致（正式交付前可继续人工复核）
 
 ## 当前实现状态
@@ -149,7 +149,32 @@ Story 3 综合前两关技能，关卡为横向展开的不规则迷宫，路径
 - `StageLoader.STAGE_ORDER` 为 `story_001 -> story_002 -> story_003`。
 - `GameState.getNextStageId()` 当前按 `story_001 -> story_002 -> story_003 -> story_001` 循环。
 - Story 3 已完成本地浏览器与 GitHub Pages 验收：直接入口、出生点、HUD 计数、Enter -> Exit 通关、Spikes 死亡/失败重开、Story 3 通关回 Story 1 均通过。
-- QA-03 全 Story 1-3 回归和 v0.3.0 正式收口状态仍需单独确认。
+- QA-03 全 Story 1-3 本地浏览器自动化回归已通过，`v0.3.0` 可正式收口。
+
+## 2026-06-14 QA-03 回归记录
+
+验收环境：
+
+- 本地临时 HTTP 服务，仓库根目录作为静态资源根。
+- 系统 Microsoft Edge headless 浏览器，由 Playwright 驱动。
+- 本轮未重新执行 Android 真机或 GitHub Pages 人工验收。
+
+验收结果：`PASS`。
+
+覆盖范围：
+
+- 默认入口从 Story 1 开始。
+- `?stage=story_001`、`?stage=story_002`、`?stage=story_003` 均可直进。
+- Story 1 通关后进入 Story 2。
+- Story 2 通关后进入 Story 3。
+- Story 3 通关后循环回 Story 1。
+- Story 2 / Story 3 可触发 Spikes 死亡并通过失败弹窗重开当前关。
+- 三关通关路线均有收集事件，页面级回归未观察到脚本错误。
+
+结论：
+
+- `QA-03` 可标记为 `DONE`。
+- `v0.3.0` 可随 `LVL-03` 与 `QA-03` 标记为 `DONE`。
 
 ## 风险
 
