@@ -34,7 +34,7 @@
 | R-013 | FROZEN | Flow | Cleared stages must be replayable freely. | Replay is required for testing and feel iteration. |
 | R-014 | FROZEN | Flow | Restart must be available within `2s` after failure. | No stamina cost or equivalent retry tax in MVP. |
 | R-015 | FROZEN | UI | UI must not cover the core playable area in `1080x1920`. | Gameplay readability takes priority over decoration. |
-| R-016 | FROZEN | Performance | Target performance is `>=55 FPS` on mid-range Android devices. | Performance pass is required before MVP stabilization. |
+| R-016 | WAIVED_FOR_MVP_FREEZE | Performance | Target performance is `>=55 FPS` on mid-range Android devices. | Original target remains documented, but the dedicated mid-range Android FPS pass is waived as a release-blocking requirement for this H5 MVP freeze. This is not a performance PASS claim. |
 | R-017 | FROZEN | Content | `Story 1` must be fully playable. | Includes fail, clear, restart, and replay loop. |
 | R-018 | FROZEN | Content | `Story 2` must be fully playable. | Must not regress `Story 1` behavior. |
 | R-019 | FROZEN | Content | `Story 3` must be fully playable. | Must close the first MVP content set. |

@@ -34,7 +34,7 @@
 | R-013 | FROZEN | Flow | 已通关关卡必须支持自由重复游玩。 | 这是测试与手感迭代所必需的。 |
 | R-014 | FROZEN | Flow | 失败后 `2s` 内必须可以重开。 | MVP 中不允许体力消耗或等价重试成本。 |
 | R-015 | FROZEN | UI | `1080x1920` 下 UI 不得遮挡核心可玩区域。 | 玩法可读性优先于装饰性 UI。 |
-| R-016 | FROZEN | Performance | 性能目标为中端安卓设备 `>=55 FPS`。 | 在 MVP 收口前必须完成性能验证。 |
+| R-016 | WAIVED_FOR_MVP_FREEZE | Performance | 性能目标为中端安卓设备 `>=55 FPS`。 | 原始性能目标保留文档记录，但本次 H5 MVP freeze 中豁免中端安卓 FPS 专项测试为非阻塞要求；这不代表性能验收 PASS。 |
 | R-017 | FROZEN | Content | `Story 1` 必须完整可玩。 | 包含失败、通关、重开、重复游玩闭环。 |
 | R-018 | FROZEN | Content | `Story 2` 必须完整可玩。 | 且不能回退 `Story 1` 体验。 |
 | R-019 | FROZEN | Content | `Story 3` 必须完整可玩。 | 用于完成首组 MVP 内容闭环。 |

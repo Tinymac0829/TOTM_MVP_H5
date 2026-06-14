@@ -20,6 +20,7 @@
 - `TODO` = not started
 - `IN_PROGRESS` = currently active
 - `DONE` = completed
+- `SKIPPED` = explicitly waived or descoped, not validated as passed
 - `BLOCKED` = cannot proceed yet
 - `FROZEN` = decided and locked
 
@@ -66,7 +67,7 @@
 - `FROZEN` Restart available within `2s`
 - `FROZEN` No stamina cost on restart in MVP
 - `FROZEN` UI must not cover the core play area in `1080x1920`
-- `FROZEN` Target performance: `>=55 FPS` on mid-range Android devices
+- `FROZEN` Target performance: `>=55 FPS` on mid-range Android devices; waived as release-blocking scope for this MVP freeze in PERF-01
 
 ## Master TODO
 
@@ -86,8 +87,8 @@
 | QA-02 | DONE | `R-017,R-018` | Finish `Story 1-2` regression pass | Closed by the same `2026-06-05` Android-device GitHub Pages validation; shared feel, HUD/loading/menu state flow, fail restart, collection sync, and fallback behavior stay consistent across Story 1-2 |
 | LVL-03 | DONE | `R-010,R-011,R-012,R-019` | Integrate `Story 3` | Closed by Story 3 local-browser and GitHub Pages validation: `story_003` loads, HUD counts sync, Enter -> Exit clear works, Spikes death/fail restart works, and Story 3 clear loops back to Story 1 |
 | QA-03 | DONE | `R-017,R-018,R-019` | Finish `Story 1-3` regression pass | Closed by `docs/features/qa03_story1_3_regression_closeout.md`: local browser automation confirmed default Story 1 startup, direct Story 1-3 entries, Story 1 -> Story 2 -> Story 3 -> Story 1 clear progression, Story 2/3 fail restart, and stable collection/event flow |
-| PERF-01 | TODO | `R-016` | Run Android performance pass | Mid-range Android browser stays near target FPS |
-| REL-01 | TODO | `R-001,R-016,R-017,R-018,R-019,R-020` | Prepare MVP freeze candidate | `v0.3.1` contains fixes only and no scope expansion |
+| PERF-01 | SKIPPED | `R-016` | Run Android performance pass | Dedicated mid-range Android FPS pass was waived for H5 MVP scope; this is not a performance PASS claim |
+| REL-01 | DONE | `R-001,R-016,R-017,R-018,R-019,R-020` | Prepare MVP freeze candidate | Closed by `docs/features/rel01_mvp_freeze_candidate_closeout.md`; MVP scope is frozen to fixes/documentation/deployment follow-ups only |
 
 ## Deferred Scope Notes
 
@@ -104,7 +105,7 @@
 | `v0.1.1` | DONE | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | Core feel + `Story 1` + URL access | ENG-04, ENG-05, LVL-01, QA-01, and OPS-01 are all closed; the `Story 1` main path, online URL access, desktop smoke, and Android input smoke are `PASS` |
 | `v0.2.0` | DONE | `LVL-02, QA-02` | `Story 2` | Story 1-2 are both playable and regression checked on Android device through the GitHub Pages public URL |
 | `v0.3.0` | DONE | `LVL-03, QA-03` | `Story 3` | LVL-03 and QA-03 are complete; Story 1-3 local browser regression passed |
-| `v0.3.1` | TODO | `PERF-01, REL-01` | Stabilization | Fixes only, no new feature scope |
+| `v0.3.1` | DONE | `PERF-01, REL-01` | Stabilization | PERF-01 is skipped by scope decision; REL-01 establishes the MVP freeze candidate |
 
 ## Schedule
 
@@ -117,7 +118,8 @@
 | `2026-05-06` to `2026-06-05` | `v0.2.0` | `Story 2` integration (LVL-02), regression pass (QA-02) |
 | `2026-06-06` to `2026-06-08` | `v0.3.0` | `Story 3` integration (LVL-03), Story 3 validation record, and stage-editor naming sync; formal QA-03 regression remains pending |
 | `2026-06-14` | `v0.3.0` | QA-03 Story 1-3 local browser regression closeout; `v0.3.0` marked `DONE` |
-| `2026-05-07` to `2026-05-09` | `v0.3.1` | Performance pass (PERF-01), freeze candidate (REL-01) |
+| `2026-05-07` to `2026-05-09` | `v0.3.1` | Historical planned window for performance pass (PERF-01) and freeze candidate (REL-01) |
+| `2026-06-14` | `v0.3.1` | PERF-01 skipped by H5 MVP scope decision; REL-01 MVP freeze candidate closed |
 
 ## Open Items
 
@@ -164,6 +166,8 @@
 | `2026-06-06` | `CODE` | Added the formal Story 3 stage data and enabled runtime loading in `a21b7f8`: `stages/story_003.json` is present and `src/main.js` allows `story_003`. | LVL-03 entered the master-branch implementation baseline, and Story 2 clear fallback is no longer the current end-of-stage behavior. |
 | `2026-06-08` | `DOC` | Synced Story 3 feature documentation and stage-editor naming behavior in `81c73f5`. The Story 3 card records local-browser and GitHub Pages validation, while the editor now derives display names from ids with leading-zero trimming for info/export/review output. | LVL-03 is marked `DONE`; `v0.3.0` remains `IN_PROGRESS` until the formal QA-03 Story 1-3 regression pass is closed. |
 | `2026-06-14` | `QA` | Closed QA-03 with local browser automation and supporting stage-data validation. Default Story 1 startup, direct Story 1-3 entries, Story 1 -> Story 2 -> Story 3 -> Story 1 progression, Story 2/3 Spikes fail restart, and collection/event flow all passed. | QA-03 is marked `DONE`; `v0.3.0` is now `DONE`. This pass did not rerun Android-device or GitHub Pages manual validation. |
+| `2026-06-14` | `SCOPE` | Skipped PERF-01 as an H5 MVP scope decision. The dedicated mid-range Android FPS pass was not run and must not be represented as a performance PASS. | `PERF-01` is marked `SKIPPED`; `R-016` remains documented but waived as a release-blocking requirement for this MVP freeze. |
+| `2026-06-14` | `RELEASE` | Closed REL-01 with `docs/features/rel01_mvp_freeze_candidate_closeout.md`. The MVP freeze candidate is established after Story 1-3, QA-02, QA-03, and v0.3.0 closeout. | `REL-01` and `v0.3.1` are marked `DONE`; future work is limited to fixes, documentation corrections, deployment/compatibility fixes, or explicitly reopened scope. |
 
 
 

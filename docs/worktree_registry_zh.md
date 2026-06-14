@@ -77,6 +77,8 @@
 | `2026-06-08` | `STATUS` | Story 3 接入与 stage editor 命名文档已在主分支通过 `a21b7f8` 和 `81c73f5` 完成同步。`story_003` 已可加载，Story 3 验收记录已落文档，editor 的 info/export/review 展示名现已按 id 派生并去除数字前导零。 | `LVL-03` 现标记为 `DONE`；`v0.3.0` 仍等待 QA-03 全 Story 1-3 正式回归收口。本次没有创建 LVL-03 专属 worktree。 |
 | `2026-06-11` | `DOC` | 新增 `docs/tech/format_stage_json_tech.md`，并完成 `tools/format_stage_json.mjs` 的格式化器验收：usage、格式化、warning 和输出形状检查均已通过。 | `format_stage_json` 现有一份稳定技术说明和一轮已记录的验证结果；本次没有创建专属 worktree。 |
 | `2026-06-14` | `QA` | 已在主分支通过本地浏览器自动化与关卡数据校验收口 QA-03。默认 Story 1 启动、Story 1-3 直进入口、Story 1 -> Story 2 -> Story 3 -> Story 1 流转、Story 2/3 Spikes 失败重开、收集/事件流均通过。 | `QA-03` 与 `v0.3.0` 现标记为 `DONE`。本轮未重新执行 Android 真机或 GitHub Pages 人工验收；没有创建 QA-03 专属 worktree。 |
+| `2026-06-14` | `SCOPE` | 已按 H5 MVP 范围决策跳过 PERF-01；中端安卓 FPS 专项测试未执行，也不声明为性能 PASS。 | `PERF-01` 标记为 `SKIPPED`；`R-016` 在本次 MVP freeze 中豁免为非阻塞要求。没有创建 PERF-01 专属 worktree。 |
+| `2026-06-14` | `RELEASE` | 已在主分支通过 `docs/features/rel01_mvp_freeze_candidate_closeout.md` 收口 REL-01。Story 1-3、QA-02、QA-03 与 v0.3.0 收口后，MVP freeze candidate 已建立。 | `REL-01` 与 `v0.3.1` 标记为 `DONE`；后续 MVP 工作仅限修复、文档修正、部署/兼容性修复，或显式重开范围。没有创建 REL-01 专属 worktree。 |
 
 
 

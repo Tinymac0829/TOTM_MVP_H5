@@ -20,6 +20,7 @@
 - `TODO` = 未开始
 - `IN_PROGRESS` = 进行中
 - `DONE` = 已完成
+- `SKIPPED` = 已明确跳过或裁剪，不代表验收通过
 - `BLOCKED` = 被阻塞
 - `FROZEN` = 已冻结
 
@@ -66,7 +67,7 @@
 - `FROZEN` 失败后 `2s` 内可重开
 - `FROZEN` MVP 中重开不消耗体力
 - `FROZEN` `1080x1920` 下 UI 不得遮挡核心可玩区
-- `FROZEN` 性能目标：中端安卓设备 `>=55 FPS`
+- `FROZEN` 性能目标：中端安卓设备 `>=55 FPS`；本次 MVP freeze 中通过 PERF-01 决策豁免为非阻塞范围
 
 ## 主 TODO
 
@@ -86,8 +87,8 @@
 | QA-02 | DONE | `R-017,R-018` | 完成 `Story 1-2` 回归检查 | 已由同一轮 `2026-06-05` Android 真机 GitHub Pages 验收收口；Story 1-2 共享手感、HUD/loading/menu 状态流、失败重开、收集同步和 fallback 行为均保持一致 |
 | LVL-03 | DONE | `R-010,R-011,R-012,R-019` | 接入 `Story 3` | 已由 Story 3 本地浏览器与 GitHub Pages 验收收口：`story_003` 可加载，HUD 计数同步，Enter -> Exit 通关、Spikes 死亡/失败重开和 Story 3 通关回 Story 1 均通过 |
 | QA-03 | DONE | `R-017,R-018,R-019` | 完成 `Story 1-3` 回归检查 | 已由 `docs/features/qa03_story1_3_regression_closeout.md` 收口：本地浏览器自动化确认默认 Story 1 启动、Story 1-3 直进入口、Story 1 -> Story 2 -> Story 3 -> Story 1 通关流转、Story 2/3 失败重开与收集/事件流稳定 |
-| PERF-01 | TODO | `R-016` | 完成安卓性能检查 | 中端安卓浏览器接近目标帧率 |
-| REL-01 | TODO | `R-001,R-016,R-017,R-018,R-019,R-020` | 准备 MVP 冻结候选版 | `v0.3.1` 只包含修复，不再新增范围 |
+| PERF-01 | SKIPPED | `R-016` | 完成安卓性能检查 | H5 MVP 范围内已豁免中端安卓 FPS 专项测试；这不代表性能 PASS |
+| REL-01 | DONE | `R-001,R-016,R-017,R-018,R-019,R-020` | 准备 MVP 冻结候选版 | 已由 `docs/features/rel01_mvp_freeze_candidate_closeout.md` 收口；MVP 范围冻结为仅允许修复、文档和部署/兼容性跟进 |
 
 ## 延后范围说明
 
@@ -104,7 +105,7 @@
 | `v0.1.1` | DONE | `ENG-04, ENG-05, LVL-01, QA-01, OPS-01` | 核心手感 + `Story 1` + URL 访问 | ENG-04、ENG-05、LVL-01、QA-01 与 OPS-01 均已关闭；`Story 1` 主链路、线上 URL 访问、桌面 smoke 和 Android 真机输入 smoke 均为 `PASS` |
 | `v0.2.0` | DONE | `LVL-02, QA-02` | `Story 2` | Story 1-2 已通过 GitHub Pages 公网入口在 Android 真机上完成可玩性与回归检查 |
 | `v0.3.0` | DONE | `LVL-03, QA-03` | `Story 3` | LVL-03 与 QA-03 均已完成；Story 1-3 本地浏览器回归通过 |
-| `v0.3.1` | TODO | `PERF-01, REL-01` | 稳定收口 | 只修复问题，不再扩范围 |
+| `v0.3.1` | DONE | `PERF-01, REL-01` | 稳定收口 | PERF-01 已按范围决策跳过；REL-01 已建立 MVP freeze candidate |
 
 ## 排期
 
@@ -117,7 +118,8 @@
 | `2026-05-06` 到 `2026-06-05` | `v0.2.0` | `Story 2` 接入（LVL-02）、回归检查（QA-02） |
 | `2026-06-06` 到 `2026-06-08` | `v0.3.0` | `Story 3` 接入（LVL-03）、Story 3 验收记录与 stage editor 命名同步；QA-03 正式回归仍待完成 |
 | `2026-06-14` | `v0.3.0` | QA-03 Story 1-3 本地浏览器回归收口；`v0.3.0` 标记为 `DONE` |
-| `2026-05-07` 到 `2026-05-09` | `v0.3.1` | 性能检查（PERF-01）、冻结候选版（REL-01） |
+| `2026-05-07` 到 `2026-05-09` | `v0.3.1` | 历史计划窗口：性能检查（PERF-01）、冻结候选版（REL-01） |
+| `2026-06-14` | `v0.3.1` | PERF-01 按 H5 MVP 范围决策跳过；REL-01 MVP freeze candidate 收口 |
 
 ## 未决项
 
@@ -164,6 +166,8 @@
 | `2026-06-06` | `CODE` | 在 `a21b7f8` 中新增正式 Story 3 关卡数据并启用运行时加载：`stages/story_003.json` 已存在，`src/main.js` 已允许加载 `story_003`。 | LVL-03 进入主分支实现基线，Story 2 通关 fallback 不再是当前关卡末尾行为。 |
 | `2026-06-08` | `DOC` | 在 `81c73f5` 中同步 Story 3 功能文档和 stage editor 命名行为。Story 3 功能卡已记录本地浏览器与 GitHub Pages 验收；editor 已按 id 派生展示名，并在 info/export/review 输出中去除数字前导零。 | LVL-03 标记为 `DONE`；`v0.3.0` 保持 `IN_PROGRESS`，等待 QA-03 全 Story 1-3 正式回归收口。 |
 | `2026-06-14` | `QA` | 已通过本地浏览器自动化与关卡数据校验收口 QA-03。默认 Story 1 启动、Story 1-3 直进入口、Story 1 -> Story 2 -> Story 3 -> Story 1 流转、Story 2/3 Spikes 失败重开、收集/事件流均通过。 | QA-03 标记为 `DONE`；`v0.3.0` 标记为 `DONE`。本轮未重新执行 Android 真机或 GitHub Pages 人工验收。 |
+| `2026-06-14` | `SCOPE` | 已按 H5 MVP 范围决策跳过 PERF-01。中端安卓 FPS 专项测试未执行，不能表述为性能验收 PASS。 | `PERF-01` 标记为 `SKIPPED`；`R-016` 保留文档记录，但在本次 MVP freeze 中豁免为非阻塞要求。 |
+| `2026-06-14` | `RELEASE` | 已通过 `docs/features/rel01_mvp_freeze_candidate_closeout.md` 收口 REL-01。Story 1-3、QA-02、QA-03 与 v0.3.0 收口后，MVP freeze candidate 已建立。 | `REL-01` 与 `v0.3.1` 标记为 `DONE`；后续仅允许修复、文档修正、部署/兼容性修复，或显式重开范围。 |
 
 
 

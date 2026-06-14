@@ -15,6 +15,10 @@
 - `LVL-03` is `DONE`.
 - `QA-03` is `DONE`.
 - `v0.3.0` is `DONE`.
+- `PERF-01` is `SKIPPED`.
+- `REL-01` is `DONE`.
+- `v0.3.1` is `DONE`.
+- MVP freeze candidate is established.
 - Story 1-3 are integrated and run in the current MVP loop.
 - Full DebugPanel remains not implemented; only the OPS-01 `?debugInput=1` input log exists in `src/TouchInput.js`.
 
@@ -86,7 +90,9 @@ Passed:
 
 ## Closeout Documents
 
+- `docs/features/rel01_mvp_freeze_candidate_closeout.md`
 - `docs/features/qa03_story1_3_regression_closeout.md`
+- `docs/features/qa02_story1_2_regression_closeout.md`
 - `docs/features/lvl03_story3_card.md`
 - `docs/mvp_execution_plan.md`
 - `docs/mvp_execution_plan_zh.md`
@@ -95,6 +101,8 @@ Passed:
 
 ## Known Limits
 
+- PERF-01 was skipped by H5 MVP scope decision. The dedicated mid-range Android FPS pass was not run and must not be represented as a performance PASS.
+- `R-016` remains documented as the original performance target, but is waived as a release-blocking requirement for this MVP freeze.
 - QA-03 was a local browser automation closeout, not a fresh Android-device or GitHub Pages manual replay.
 - Story 2 and Story 3 full-collection completion was not required for QA-03; the pass targeted stage load/start/fail/clear/progression stability across Story 1-3.
 - `tools/stage_tile_editor.html` and `tools/format_stage_json.mjs` remain tracked support tools for stage authoring and formatting.
@@ -102,6 +110,8 @@ Passed:
 
 ## Next Major Action
 
-- Treat `v0.3.0` as closed after the QA-03 documentation commit.
+- Treat the MVP freeze candidate as established after the REL-01 documentation commit.
+- Future MVP work should be limited to bug fixes, documentation corrections, deployment or compatibility fixes, or explicitly reopened scope.
 - If a new milestone begins, start from the current `master` baseline and verify whether new feature documentation exists before code changes.
+- Use `docs/features/rel01_mvp_freeze_candidate_closeout.md` as the REL-01 evidence record.
 - Use `docs/features/qa03_story1_3_regression_closeout.md` as the QA-03 evidence record.
