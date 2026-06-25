@@ -89,6 +89,7 @@
 | QA-03 | DONE | `R-017,R-018,R-019` | 完成 `Story 1-3` 回归检查 | 已由 `docs/features/qa03_story1_3_regression_closeout.md` 收口：本地浏览器自动化确认默认 Story 1 启动、Story 1-3 直进入口、Story 1 -> Story 2 -> Story 3 -> Story 1 通关流转、Story 2/3 失败重开与收集/事件流稳定 |
 | PERF-01 | SKIPPED | `R-016` | 完成安卓性能检查 | H5 MVP 范围内已豁免中端安卓 FPS 专项测试；这不代表性能 PASS |
 | REL-01 | DONE | `R-001,R-016,R-017,R-018,R-019,R-020` | 准备 MVP 冻结候选版 | 已由 `docs/features/rel01_mvp_freeze_candidate_closeout.md` 收口；MVP 范围冻结为仅允许修复、文档和部署/兼容性跟进 |
+| LAND-01 | DONE | `R-017,R-018,R-019,R-020` | 横屏 MVP 适配实验 | 已由 `docs/features/land01_landscape_mvp_adaptation_closeout.md` 收口：`?orientation=landscape` 支持 Story 1-3 runtime 90 度旋转、横屏缩放、居中相机、桌面浏览器与手机浏览器验收；原竖屏 Story JSON 与 MVP freeze candidate 基线保持不变 |
 
 ## 延后范围说明
 
@@ -106,6 +107,7 @@
 | `v0.2.0` | DONE | `LVL-02, QA-02` | `Story 2` | Story 1-2 已通过 GitHub Pages 公网入口在 Android 真机上完成可玩性与回归检查 |
 | `v0.3.0` | DONE | `LVL-03, QA-03` | `Story 3` | LVL-03 与 QA-03 均已完成；Story 1-3 本地浏览器回归通过 |
 | `v0.3.1` | DONE | `PERF-01, REL-01` | 稳定收口 | PERF-01 已按范围决策跳过；REL-01 已建立 MVP freeze candidate |
+| `post-freeze-landscape` | DONE | `LAND-01` | 横屏适配实验 | `?orientation=landscape` 横屏模式已通过桌面浏览器、Headless Chrome 截图检查和手机浏览器验收；不改变原 portrait MVP freeze candidate 结论 |
 
 ## 排期
 
@@ -120,6 +122,7 @@
 | `2026-06-14` | `v0.3.0` | QA-03 Story 1-3 本地浏览器回归收口；`v0.3.0` 标记为 `DONE` |
 | `2026-05-07` 到 `2026-05-09` | `v0.3.1` | 历史计划窗口：性能检查（PERF-01）、冻结候选版（REL-01） |
 | `2026-06-14` | `v0.3.1` | PERF-01 按 H5 MVP 范围决策跳过；REL-01 MVP freeze candidate 收口 |
+| `2026-06-25` | `post-freeze-landscape` | LAND-01 横屏 MVP 适配实验：runtime 旋转 Story 1-3、横屏缩放、居中相机、桌面与手机浏览器验收 |
 
 ## 未决项
 
@@ -168,6 +171,7 @@
 | `2026-06-14` | `QA` | 已通过本地浏览器自动化与关卡数据校验收口 QA-03。默认 Story 1 启动、Story 1-3 直进入口、Story 1 -> Story 2 -> Story 3 -> Story 1 流转、Story 2/3 Spikes 失败重开、收集/事件流均通过。 | QA-03 标记为 `DONE`；`v0.3.0` 标记为 `DONE`。本轮未重新执行 Android 真机或 GitHub Pages 人工验收。 |
 | `2026-06-14` | `SCOPE` | 已按 H5 MVP 范围决策跳过 PERF-01。中端安卓 FPS 专项测试未执行，不能表述为性能验收 PASS。 | `PERF-01` 标记为 `SKIPPED`；`R-016` 保留文档记录，但在本次 MVP freeze 中豁免为非阻塞要求。 |
 | `2026-06-14` | `RELEASE` | 已通过 `docs/features/rel01_mvp_freeze_candidate_closeout.md` 收口 REL-01。Story 1-3、QA-02、QA-03 与 v0.3.0 收口后，MVP freeze candidate 已建立。 | `REL-01` 与 `v0.3.1` 标记为 `DONE`；后续仅允许修复、文档修正、部署/兼容性修复，或显式重开范围。 |
+| `2026-06-25` | `POST_FREEZE` | 已通过 `docs/features/land01_landscape_mvp_adaptation_closeout.md` 收口 LAND-01。`?orientation=landscape` 横屏适配模式使用 runtime 90 度旋转 Story 1-3，并保持原竖屏关卡 JSON 不变。 | `LAND-01` 标记为 `DONE`；桌面浏览器、手机浏览器与 Headless Chrome 截图检查均已完成，原 portrait MVP freeze candidate 状态不变。 |
 
 
 

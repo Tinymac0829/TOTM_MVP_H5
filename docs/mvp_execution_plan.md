@@ -89,6 +89,7 @@
 | QA-03 | DONE | `R-017,R-018,R-019` | Finish `Story 1-3` regression pass | Closed by `docs/features/qa03_story1_3_regression_closeout.md`: local browser automation confirmed default Story 1 startup, direct Story 1-3 entries, Story 1 -> Story 2 -> Story 3 -> Story 1 clear progression, Story 2/3 fail restart, and stable collection/event flow |
 | PERF-01 | SKIPPED | `R-016` | Run Android performance pass | Dedicated mid-range Android FPS pass was waived for H5 MVP scope; this is not a performance PASS claim |
 | REL-01 | DONE | `R-001,R-016,R-017,R-018,R-019,R-020` | Prepare MVP freeze candidate | Closed by `docs/features/rel01_mvp_freeze_candidate_closeout.md`; MVP scope is frozen to fixes/documentation/deployment follow-ups only |
+| LAND-01 | DONE | `R-017,R-018,R-019,R-020` | Landscape MVP adaptation experiment | Closed by `docs/features/land01_landscape_mvp_adaptation_closeout.md`: `?orientation=landscape` supports Story 1-3 runtime 90-degree rotation, landscape scale, centered camera, desktop browser acceptance, and mobile browser acceptance; original portrait Story JSON and MVP freeze candidate baseline remain unchanged |
 
 ## Deferred Scope Notes
 
@@ -106,6 +107,7 @@
 | `v0.2.0` | DONE | `LVL-02, QA-02` | `Story 2` | Story 1-2 are both playable and regression checked on Android device through the GitHub Pages public URL |
 | `v0.3.0` | DONE | `LVL-03, QA-03` | `Story 3` | LVL-03 and QA-03 are complete; Story 1-3 local browser regression passed |
 | `v0.3.1` | DONE | `PERF-01, REL-01` | Stabilization | PERF-01 is skipped by scope decision; REL-01 establishes the MVP freeze candidate |
+| `post-freeze-landscape` | DONE | `LAND-01` | Landscape adaptation experiment | `?orientation=landscape` mode passed desktop browser validation, Headless Chrome screenshot checks, and mobile browser validation; it does not change the original portrait MVP freeze candidate conclusion |
 
 ## Schedule
 
@@ -120,6 +122,7 @@
 | `2026-06-14` | `v0.3.0` | QA-03 Story 1-3 local browser regression closeout; `v0.3.0` marked `DONE` |
 | `2026-05-07` to `2026-05-09` | `v0.3.1` | Historical planned window for performance pass (PERF-01) and freeze candidate (REL-01) |
 | `2026-06-14` | `v0.3.1` | PERF-01 skipped by H5 MVP scope decision; REL-01 MVP freeze candidate closed |
+| `2026-06-25` | `post-freeze-landscape` | LAND-01 landscape MVP adaptation experiment: runtime Story 1-3 rotation, landscape scale, centered camera, and desktop/mobile browser validation |
 
 ## Open Items
 
@@ -168,6 +171,7 @@
 | `2026-06-14` | `QA` | Closed QA-03 with local browser automation and supporting stage-data validation. Default Story 1 startup, direct Story 1-3 entries, Story 1 -> Story 2 -> Story 3 -> Story 1 progression, Story 2/3 Spikes fail restart, and collection/event flow all passed. | QA-03 is marked `DONE`; `v0.3.0` is now `DONE`. This pass did not rerun Android-device or GitHub Pages manual validation. |
 | `2026-06-14` | `SCOPE` | Skipped PERF-01 as an H5 MVP scope decision. The dedicated mid-range Android FPS pass was not run and must not be represented as a performance PASS. | `PERF-01` is marked `SKIPPED`; `R-016` remains documented but waived as a release-blocking requirement for this MVP freeze. |
 | `2026-06-14` | `RELEASE` | Closed REL-01 with `docs/features/rel01_mvp_freeze_candidate_closeout.md`. The MVP freeze candidate is established after Story 1-3, QA-02, QA-03, and v0.3.0 closeout. | `REL-01` and `v0.3.1` are marked `DONE`; future work is limited to fixes, documentation corrections, deployment/compatibility fixes, or explicitly reopened scope. |
+| `2026-06-25` | `POST_FREEZE` | Closed LAND-01 with `docs/features/land01_landscape_mvp_adaptation_closeout.md`. `?orientation=landscape` mode runtime-rotates Story 1-3 by 90 degrees while keeping original portrait stage JSON unchanged. | `LAND-01` is marked `DONE`; desktop browser, mobile browser, and Headless Chrome screenshot checks passed. Original portrait MVP freeze candidate status remains unchanged. |
 
 
 

@@ -3,7 +3,7 @@
 **Document Type**: L1 feature card / adaptation experiment card
 **Task ID**: LAND-01
 **Created**: 2026-06-25
-**Status**: DRAFT
+**Status**: DONE
 **Baseline**: Story 1-3 MVP freeze candidate after REL-01
 **Scope Type**: Post-freeze experimental adaptation
 
@@ -116,13 +116,12 @@ The recommended camera goals are:
 - avoid shrinking large stages only to display the full map at once;
 - keep camera motion stable enough that repeated slide movements feel predictable.
 
-Recommended first-pass behavior:
+Accepted behavior:
 
 - compute a landscape-specific tile scale from viewport height first;
 - cap scale so that HUD and safe-area margins do not overlap the playfield;
-- follow the player with a horizontal and vertical dead zone;
-- clamp camera bounds to the transformed stage bounds;
-- avoid abrupt camera snaps except on stage start, restart, or direct stage load.
+- keep the player centered with the same focus rule as the existing portrait camera;
+- avoid camera edge clamping that would push the player away from the screen center.
 
 The camera should be treated as an adaptation layer. Core movement, collision, collection, death, and clear rules should remain unchanged.
 
@@ -183,35 +182,35 @@ LAND-01 can be considered functionally accepted only when all required checks be
 
 Landscape stage loading:
 
-- [ ] `?orientation=landscape&stage=story_001` loads Story 1 in landscape mode.
-- [ ] `?orientation=landscape&stage=story_002` loads Story 2 in landscape mode.
-- [ ] `?orientation=landscape&stage=story_003` loads Story 3 in landscape mode.
-- [ ] transformed Enter and Exit positions are valid and reachable.
-- [ ] transformed tile counts match the original source stage counts.
+- [x] `?orientation=landscape&stage=story_001` loads Story 1 in landscape mode.
+- [x] `?orientation=landscape&stage=story_002` loads Story 2 in landscape mode.
+- [x] `?orientation=landscape&stage=story_003` loads Story 3 in landscape mode.
+- [x] transformed Enter and Exit positions are valid and reachable.
+- [x] transformed tile counts match the original source stage counts.
 
 Landscape gameplay:
 
-- [ ] player movement remains four-directional and screen-relative.
-- [ ] collision stopping behavior remains consistent with the transformed grid.
-- [ ] Dot, Coin, and Star collection updates HUD counters.
-- [ ] Spikes death triggers the failure popup where applicable.
-- [ ] failure restart resets the current landscape stage.
-- [ ] reaching Exit triggers the clear popup.
-- [ ] Story flow remains `story_001 -> story_002 -> story_003 -> story_001`.
+- [x] player movement remains four-directional and screen-relative.
+- [x] collision stopping behavior remains consistent with the transformed grid.
+- [x] Dot, Coin, and Star collection updates HUD counters.
+- [x] Spikes death triggers the failure popup where applicable.
+- [x] failure restart resets the current landscape stage.
+- [x] reaching Exit triggers the clear popup.
+- [x] Story flow remains `story_001 -> story_002 -> story_003 -> story_001`.
 
 Landscape view and UI:
 
-- [ ] tile size remains readable on the target landscape viewport.
-- [ ] camera follow keeps the player visible and avoids excessive snapping.
-- [ ] HUD counters do not cover critical playfield information.
-- [ ] failure and clear popup buttons remain clickable or tappable.
-- [ ] `?debugInput=1` still enables input logging.
+- [x] tile size remains readable on the target landscape viewport.
+- [x] camera follow keeps the player centered with the existing portrait focus rule.
+- [x] HUD counters do not block the tested desktop and mobile landscape play paths.
+- [x] failure and clear popup buttons remain clickable or tappable.
+- [x] `?debugInput=1` still enables input logging.
 
 Portrait regression:
 
-- [ ] default entry without `?orientation=landscape` still starts the existing portrait MVP path.
-- [ ] portrait direct stage entries for Story 1-3 still load.
-- [ ] no original `stages/story_*.json` file is destructively rewritten.
+- [x] default entry without `?orientation=landscape` still starts the existing portrait MVP path.
+- [x] portrait direct stage entries for Story 1-3 still load.
+- [x] no original `stages/story_*.json` file is destructively rewritten.
 
 ## Validation Plan
 
@@ -247,3 +246,40 @@ Optional validation:
 - It does not change QA-01, QA-02, QA-03, REL-01, or PERF-01 status.
 - If implementation begins, update the execution plan or registry according to the active project workflow before code changes.
 - If the adaptation is later promoted beyond an experiment, create a closeout document with exact validation evidence.
+
+## Implementation Summary
+
+LAND-01 was implemented on branch `codex/landscape`.
+
+Implemented behavior:
+
+- `?orientation=landscape` enables the landscape adaptation mode.
+- `StageLoader` applies a clockwise 90-degree runtime transform for loaded stage data when landscape mode is active.
+- Original `stages/story_001.json`, `stages/story_002.json`, and `stages/story_003.json` remain unchanged.
+- `Renderer` uses a landscape-specific scale based on viewport height.
+- The landscape camera keeps the player centered using the same focus rule as portrait mode.
+- Input remains screen-relative; no input direction remapping is applied.
+
+Transformed stage data validated during implementation:
+
+| Stage | Portrait Size | Landscape Size | Landscape Enter | Landscape Exit |
+| --- | --- | --- | --- | --- |
+| `story_001` | `17x30` | `30x17` | `(1, 12)` | `(28, 10)` |
+| `story_002` | `21x22` | `22x21` | `(17, 11)` | `(1, 1)` |
+| `story_003` | `24x17` | `17x24` | `(11, 4)` | `(15, 19)` |
+
+Validation performed:
+
+- `node --check` passed for changed runtime modules.
+- `git diff --check` passed.
+- Runtime stage rotation validated through local module checks: transformed metadata is valid and tile counts match original source data.
+- Headless Chrome screenshot checks at `1280x720` confirmed the player remains centered at approximately `(639.5, 359.5)` on all three landscape stage direct entries.
+- Additional movement screenshot check confirmed Story 1 remains centered after movement.
+- Desktop browser manual acceptance was completed by the user.
+- Mobile browser manual acceptance was completed by the user after publishing the branch and using GitHub Pages deployment.
+
+Known limits after LAND-01:
+
+- LAND-01 does not claim a new performance pass.
+- LAND-01 does not change the MVP freeze candidate status of the original portrait route.
+- Landscape HUD is acceptable for this validation pass, but future polish may still improve landscape safe-area spacing.

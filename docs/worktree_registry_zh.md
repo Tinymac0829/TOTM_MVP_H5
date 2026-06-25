@@ -41,6 +41,7 @@
 | `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `DONE` | `2026-04-23` | 输入基础层已完成：`TouchInput`、`KeyboardInput`、`InputManager` 已接入 `main.js`，在 `playing` 状态下统一输出方向命令；稳定 session id 暂记为 `TBD`。 |
 | `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `DONE` | `2026-05-01` | `R-009` 三层坐标域实现和 `R-008` `0.1s/100ms` 输入缓冲已由 `2026-05-01` ENG-04 × ENG-05 真实浏览器联合回归正式收口。`CoordinateSystem`、`PlayerController`、`Renderer`、模块缓存 query、快速连续滑动、死亡/通关行为、点击/缩放对齐和缓存版本确认均已在加载 `eng04_input_buffer_v1` 时通过。 |
 | `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `DONE` | `2026-05-01` | 最小玩法 UI 与 ENG-04 集成链路已由 `2026-05-01` 真实浏览器回归正式收口。world-units 运动、Renderer 坐标适配、短距离过冲处理、`100ms` 输入缓冲、失败/通关弹窗、输入屏蔽、按钮可用时机、HUD 同步、点击/缩放和重复游玩 fallback 均复测为 `PASS`。 |
+| `LAND-01` | `codex/landscape` | `REPO_ROOT` | `TBD` | `DONE` | `2026-06-25` | 横屏 MVP 适配实验已在当前分支完成：`?orientation=landscape` runtime 旋转 Story 1-3，横屏缩放与居中相机已接入，桌面浏览器、手机浏览器和 Headless Chrome 截图检查均通过；原 portrait MVP freeze candidate 基线保持不变。 |
 
 ## 更新日志
 
@@ -79,6 +80,7 @@
 | `2026-06-14` | `QA` | 已在主分支通过本地浏览器自动化与关卡数据校验收口 QA-03。默认 Story 1 启动、Story 1-3 直进入口、Story 1 -> Story 2 -> Story 3 -> Story 1 流转、Story 2/3 Spikes 失败重开、收集/事件流均通过。 | `QA-03` 与 `v0.3.0` 现标记为 `DONE`。本轮未重新执行 Android 真机或 GitHub Pages 人工验收；没有创建 QA-03 专属 worktree。 |
 | `2026-06-14` | `SCOPE` | 已按 H5 MVP 范围决策跳过 PERF-01；中端安卓 FPS 专项测试未执行，也不声明为性能 PASS。 | `PERF-01` 标记为 `SKIPPED`；`R-016` 在本次 MVP freeze 中豁免为非阻塞要求。没有创建 PERF-01 专属 worktree。 |
 | `2026-06-14` | `RELEASE` | 已在主分支通过 `docs/features/rel01_mvp_freeze_candidate_closeout.md` 收口 REL-01。Story 1-3、QA-02、QA-03 与 v0.3.0 收口后，MVP freeze candidate 已建立。 | `REL-01` 与 `v0.3.1` 标记为 `DONE`；后续 MVP 工作仅限修复、文档修正、部署/兼容性修复，或显式重开范围。没有创建 REL-01 专属 worktree。 |
+| `2026-06-25` | `POST_FREEZE` | LAND-01 横屏 MVP 适配实验已在 `codex/landscape` 分支收口，并由 `docs/features/land01_landscape_mvp_adaptation_closeout.md` 记录验收。 | 本次在 `REPO_ROOT` 当前分支执行，没有创建 sibling worktree；原 Story 1-3 portrait MVP freeze candidate 仍是已保留基线。 |
 
 
 

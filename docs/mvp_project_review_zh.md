@@ -17,6 +17,7 @@ TOTM H5 MVP 当前可以视为功能闭环完成，并已进入 freeze candidate
 - 通关弹窗、下一关流转、Story 3 后循环回 Story 1。
 - GitHub Pages 可访问与历史 Android 真机 smoke / Story 1-2 验收。
 - QA-01、QA-02、QA-03、REL-01 文档化收口。
+- LAND-01 横屏 MVP 适配实验：`?orientation=landscape` 支持 Story 1-3 runtime 90 度旋转、横屏缩放、居中相机，并已通过桌面浏览器与手机浏览器验收。
 
 当前版本没有完成：
 
@@ -25,6 +26,8 @@ TOTM H5 MVP 当前可以视为功能闭环完成，并已进入 freeze candidate
 - 最终商业化 UI 视觉 polish。当前 HUD/UI 是 MVP 功能实现，不是最终美术稿。
 
 一句话概括：**MVP 的玩法、关卡、状态流和文档收口已经完成；后续开发应以当前 freeze candidate 为基础，只在明确重开范围后新增功能。**
+
+补充说明：LAND-01 是 freeze candidate 之后显式重开的横屏适配实验，不改写原 portrait MVP freeze candidate 结论。
 
 ## 2. 当前版本范围
 
@@ -74,6 +77,15 @@ http://127.0.0.1:8094/?stage=story_001
 http://127.0.0.1:8094/?stage=story_002
 http://127.0.0.1:8094/?stage=story_003
 http://127.0.0.1:8094/?stage=eng04_death_validation
+```
+
+横屏适配入口：
+
+```text
+http://127.0.0.1:8094/?orientation=landscape
+http://127.0.0.1:8094/?orientation=landscape&stage=story_001
+http://127.0.0.1:8094/?orientation=landscape&stage=story_002
+http://127.0.0.1:8094/?orientation=landscape&stage=story_003
 ```
 
 线上历史验收入口：
@@ -200,6 +212,10 @@ Story 3：
   - QA-03：Story 1-3 本地浏览器自动化回归证据。
 - `docs/features/rel01_mvp_freeze_candidate_closeout.md`
   - REL-01：MVP freeze candidate 与 PERF-01 跳过决策。
+- `docs/features/land01_landscape_mvp_adaptation_card.md`
+  - LAND-01：横屏 MVP 适配实验的功能范围、旋转策略、相机策略与验收标准。
+- `docs/features/land01_landscape_mvp_adaptation_closeout.md`
+  - LAND-01 closeout：横屏适配桌面浏览器、手机浏览器与 Headless Chrome 截图验收记录。
 - `docs/features/lvl02_story2_card.md`
   - LVL-02：Story 2 接入与 2026-06-05 最终验收记录。
 - `docs/features/lvl03_story3_card.md`
@@ -222,6 +238,7 @@ Story 3：
 - `QA-03`：DONE
 - `PERF-01`：SKIPPED
 - `REL-01`：DONE
+- `LAND-01`：DONE
 - `v0.3.1`：DONE
 
 ## 8. 已知限制
@@ -249,6 +266,7 @@ Story 3：
 
 - 当前 UI/HUD 是 MVP 功能实现，不是最终视觉稿。
 - 没有音频、动画 polish、存档、关卡选择、设置、账号或商业化功能。
+- 横屏 HUD 已通过 LAND-01 验收，但仍可能在未来 UI polish 中继续改善安全区间距和视觉平衡。
 
 ## 9. 后续开发建议
 
@@ -287,6 +305,13 @@ Story 3：
 - 更新 `StageLoader.STAGE_ORDER`、`GameState` 顺序和 `src/main.js` 可加载关卡集合。
 - 新增对应功能卡和 QA closeout。
 
+如果是横屏适配后续：
+
+- 先确认是 bug fix、HUD polish、部署兼容性修复，还是重新扩大横屏产品范围。
+- 保持 `?orientation=landscape` 为显式入口，除非项目决定将横屏提升为默认发布形态。
+- 不要覆盖原 Story 1-3 JSON；当前横屏版本采用 runtime 旋转。
+- 性能相关结论仍不能借 LAND-01 改写，`PERF-01 = SKIPPED` 保持不变。
+
 ## 10. 接手者快速检查清单
 
 开始新工作前建议先执行：
@@ -301,6 +326,7 @@ git log -1 --oneline
 ```text
 handoff.local.md
 docs/current_handoff.md
+docs/features/land01_landscape_mvp_adaptation_closeout.md
 docs/features/rel01_mvp_freeze_candidate_closeout.md
 docs/mvp_execution_plan_zh.md
 docs/features/qa03_story1_3_regression_closeout.md
@@ -333,6 +359,7 @@ http://127.0.0.1:8094/
 - Story 1-3 可玩闭环成立。
 - 主要 QA 证据齐全。
 - 性能专项被明确跳过。
+- LAND-01 横屏适配作为 post-freeze 实验已完成，但不替代原 portrait MVP freeze candidate。
 - 后续新增范围必须重新走需求和文档流程。
 
 这份复盘文档用于帮助后续开发者快速理解项目现状、证据来源、冻结边界和继续开发的正确入口。
