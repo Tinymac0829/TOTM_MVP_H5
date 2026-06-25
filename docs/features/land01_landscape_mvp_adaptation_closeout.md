@@ -33,6 +33,7 @@ The original portrait MVP route remains the default when `?orientation=landscape
 - Landscape mode uses a dedicated viewport scale path in `Renderer`.
 - Landscape camera follows the existing portrait rule: keep the player centered on screen.
 - Input remains screen-relative.
+- Landscape touch input uses horizontal-priority axis tie-break when `absDx === absDy`; portrait keeps the original vertical-priority tie-break.
 - Story progression remains `story_001 -> story_002 -> story_003 -> story_001`.
 
 ## Validation Summary
@@ -87,6 +88,7 @@ centerY = 359.5
 - LAND-01 does not replace the portrait MVP freeze candidate route.
 - Landscape HUD spacing is acceptable for the completed validation pass, but future UI polish may still improve safe-area spacing and visual balance.
 - This closeout does not add new stages, new tile types, new mechanics, or a full DebugPanel.
+- LAND-01 still uses runtime rotation. A future support tool should provide a reproducible portrait-to-landscape stage JSON translator script when static landscape JSON review/export is needed.
 
 ## Final Status
 

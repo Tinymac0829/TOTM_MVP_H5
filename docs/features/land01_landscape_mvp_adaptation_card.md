@@ -135,6 +135,11 @@ Input should remain screen-relative:
 
 The implementation should avoid remapping player intent back to the original portrait coordinate frame after rotation. The stage itself should be transformed, and input should operate against the visible transformed world.
 
+Axis tie-break behavior should follow the stage orientation:
+
+- portrait mode keeps the existing vertical-priority tie-break when `absDx === absDy`;
+- landscape mode uses horizontal-priority tie-break when `absDx === absDy`, matching the clockwise 90-degree stage transform where many originally vertical routes become horizontal routes.
+
 HUD requirements for LAND-01 are intentionally minimal:
 
 - counters remain visible and do not cover critical playfield content;
@@ -259,6 +264,7 @@ Implemented behavior:
 - `Renderer` uses a landscape-specific scale based on viewport height.
 - The landscape camera keeps the player centered using the same focus rule as portrait mode.
 - Input remains screen-relative; no input direction remapping is applied.
+- Landscape touch input uses horizontal-priority axis tie-break for equal diagonal deltas, while portrait keeps the original vertical-priority tie-break.
 
 Transformed stage data validated during implementation:
 
@@ -283,3 +289,4 @@ Known limits after LAND-01:
 - LAND-01 does not claim a new performance pass.
 - LAND-01 does not change the MVP freeze candidate status of the original portrait route.
 - Landscape HUD is acceptable for this validation pass, but future polish may still improve landscape safe-area spacing.
+- Runtime rotation is accepted for LAND-01, but a future tool task should add a reproducible stage JSON translator script for producing landscape JSON derivatives from portrait source data when static review/export is needed.

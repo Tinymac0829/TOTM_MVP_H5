@@ -2,8 +2,8 @@ import KeyboardInput from "./KeyboardInput.js";
 import TouchInput from "./TouchInput.js";
 
 export default class InputManager {
-  constructor({ canvas, keyboardTarget = window } = {}) {
-    this.touchInput = new TouchInput({ canvas });
+  constructor({ canvas, keyboardTarget = window, orientation = "portrait" } = {}) {
+    this.touchInput = new TouchInput({ canvas, orientation });
     this.keyboardInput = new KeyboardInput({ target: keyboardTarget });
     this.currentDirection = null;
     this.enabled = true;

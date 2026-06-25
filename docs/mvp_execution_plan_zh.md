@@ -96,6 +96,7 @@
 | ID | Status | Requirement IDs | Item | Notes |
 |---|---|---|---|---|
 | FUT-01 | FROZEN | `R-022` | 当前 Story `1-3` 交付路径不实现 Lava | 只有当范围扩展到更后面的内容时才重新讨论。 |
+| TOOL-01 | TODO | `R-017,R-018,R-019` | 竖版关卡 JSON 到横版关卡 JSON 的转译器脚本 | LAND-01 当前使用 runtime 旋转；若后续需要静态横版 JSON review/export，应新增可复现转译脚本，而不是手工复制改写关卡数据。 |
 
 ## 版本计划
 
@@ -172,6 +173,7 @@
 | `2026-06-14` | `SCOPE` | 已按 H5 MVP 范围决策跳过 PERF-01。中端安卓 FPS 专项测试未执行，不能表述为性能验收 PASS。 | `PERF-01` 标记为 `SKIPPED`；`R-016` 保留文档记录，但在本次 MVP freeze 中豁免为非阻塞要求。 |
 | `2026-06-14` | `RELEASE` | 已通过 `docs/features/rel01_mvp_freeze_candidate_closeout.md` 收口 REL-01。Story 1-3、QA-02、QA-03 与 v0.3.0 收口后，MVP freeze candidate 已建立。 | `REL-01` 与 `v0.3.1` 标记为 `DONE`；后续仅允许修复、文档修正、部署/兼容性修复，或显式重开范围。 |
 | `2026-06-25` | `POST_FREEZE` | 已通过 `docs/features/land01_landscape_mvp_adaptation_closeout.md` 收口 LAND-01。`?orientation=landscape` 横屏适配模式使用 runtime 90 度旋转 Story 1-3，并保持原竖屏关卡 JSON 不变。 | `LAND-01` 标记为 `DONE`；桌面浏览器、手机浏览器与 Headless Chrome 截图检查均已完成，原 portrait MVP freeze candidate 状态不变。 |
+| `2026-06-25` | `INPUT` | LAND-01 横屏触屏输入补齐轴优先级规则：portrait 保持 `absDx === absDy` 时垂直优先，landscape 改为水平优先，以匹配关卡顺时针 90 度旋转后的路径取向。 | 该改动只影响完全相等的斜向平局判定，不改变阈值、速度、缓冲窗口或输入方向映射；同时记录 `TOOL-01` 横版 JSON 转译器脚本待办。 |
 
 
 

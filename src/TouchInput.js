@@ -5,6 +5,7 @@ const MIN_VALID_DPI = 100;
 const MAX_VALID_DPI = 1000;
 const DEBUG_INPUT_PARAM = "debugInput";
 const DEBUG_INPUT_LOG_LIMIT = 500;
+const ORIENTATION_LANDSCAPE = "landscape";
 
 function shouldEnableDebugInput() {
   try {
@@ -56,12 +57,13 @@ function resolveSwipeThreshold(canvas) {
 }
 
 export default class TouchInput {
-  constructor({ canvas, swipeThreshold = null } = {}) {
+  constructor({ canvas, swipeThreshold = null, orientation = "portrait" } = {}) {
     if (!(canvas instanceof HTMLCanvasElement)) {
       throw new Error("[TouchInput] canvas must be an HTMLCanvasElement.");
     }
 
     this.canvas = canvas;
+    this.orientation = orientation === ORIENTATION_LANDSCAPE ? ORIENTATION_LANDSCAPE : "portrait";
     this.swipeThreshold = swipeThreshold ?? resolveSwipeThreshold(canvas);
     this.swipeTime = SWIPE_TIME_SECONDS;
     this.swipeTimeout = this.swipeTime;
@@ -209,7 +211,7 @@ export default class TouchInput {
       return;
     }
 
-    if (absDx > absDy) {
+    if (this.shouldUseHorizontalAxis(absDx, absDy)) {
       this.detectedDirection = dx > 0 ? "right" : "left";
     } else {
       this.detectedDirection = dy > 0 ? "down" : "up";
@@ -229,6 +231,12 @@ export default class TouchInput {
     });
     this.startX = position.x;
     this.startY = position.y;
+  }
+
+  shouldUseHorizontalAxis(absDx, absDy) {
+    return this.orientation === ORIENTATION_LANDSCAPE
+      ? absDx >= absDy
+      : absDx > absDy;
   }
 
   update(deltaTime = 0) {

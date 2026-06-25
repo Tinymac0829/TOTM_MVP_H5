@@ -33,7 +33,10 @@ let currentViewport = {
 
 const gameState = new GameState();
 const hud = new HUD();
-const inputManager = new InputManager({ canvas });
+const inputManager = new InputManager({
+  canvas,
+  orientation: orientationMode,
+});
 const collisionSystem = new CollisionSystem();
 const playerController = new PlayerController({
   collisionSystem,

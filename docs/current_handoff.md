@@ -51,6 +51,7 @@ Implemented behavior:
 - `Renderer` uses a landscape-specific viewport scale path.
 - Landscape camera keeps the player centered using the same focus rule as portrait mode.
 - Input remains screen-relative; no direction remapping is applied.
+- Landscape touch input uses horizontal-priority axis tie-break when `absDx === absDy`; portrait keeps the original vertical-priority tie-break.
 - Story progression remains `story_001 -> story_002 -> story_003 -> story_001`.
 
 LAND-01 validation:
@@ -127,10 +128,12 @@ LAND-01 validation:
 - `tools/stage_tile_editor.html` and `tools/format_stage_json.mjs` remain tracked support tools for stage authoring and formatting.
 - `handoff.local.md`, `lessons.md`, and `tmp/` are local-only ignored files and should not be committed.
 - LAND-01 screenshot artifacts under `tmp/landscape_screens/` are local-only validation artifacts and should not be committed.
+- LAND-01 still uses runtime rotation; a future support tool should add a reproducible portrait-to-landscape stage JSON translator script if static landscape JSON review/export becomes needed.
 
 ## Next Major Action
 
 - Commit and push the documentation sync for LAND-01 closeout.
 - Keep the original portrait MVP freeze candidate status unchanged unless scope is explicitly reopened.
 - If further landscape work continues, treat it as a follow-up task focused on bug fixes, HUD safe-area polish, deployment compatibility, or explicitly approved new scope.
+- Track a follow-up support-tool task for portrait-to-landscape stage JSON translation before committing to static landscape stage files.
 - If GitHub Pages source is temporarily switched to `codex/landscape` for mobile validation, switch it back according to the intended release branch policy after testing.

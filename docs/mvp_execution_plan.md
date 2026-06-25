@@ -96,6 +96,7 @@
 | ID | Status | Requirement IDs | Item | Notes |
 |---|---|---|---|---|
 | FUT-01 | FROZEN | `R-022` | Keep Lava implementation out of the current Story `1-3` delivery path | Revisit only if scope expands beyond current MVP. |
+| TOOL-01 | TODO | `R-017,R-018,R-019` | Portrait-to-landscape stage JSON translator script | LAND-01 currently uses runtime rotation. If static landscape JSON review/export becomes needed, add a reproducible translator script instead of manually copying and editing stage data. |
 
 ## Version Plan
 
@@ -172,6 +173,7 @@
 | `2026-06-14` | `SCOPE` | Skipped PERF-01 as an H5 MVP scope decision. The dedicated mid-range Android FPS pass was not run and must not be represented as a performance PASS. | `PERF-01` is marked `SKIPPED`; `R-016` remains documented but waived as a release-blocking requirement for this MVP freeze. |
 | `2026-06-14` | `RELEASE` | Closed REL-01 with `docs/features/rel01_mvp_freeze_candidate_closeout.md`. The MVP freeze candidate is established after Story 1-3, QA-02, QA-03, and v0.3.0 closeout. | `REL-01` and `v0.3.1` are marked `DONE`; future work is limited to fixes, documentation corrections, deployment/compatibility fixes, or explicitly reopened scope. |
 | `2026-06-25` | `POST_FREEZE` | Closed LAND-01 with `docs/features/land01_landscape_mvp_adaptation_closeout.md`. `?orientation=landscape` mode runtime-rotates Story 1-3 by 90 degrees while keeping original portrait stage JSON unchanged. | `LAND-01` is marked `DONE`; desktop browser, mobile browser, and Headless Chrome screenshot checks passed. Original portrait MVP freeze candidate status remains unchanged. |
+| `2026-06-25` | `INPUT` | LAND-01 landscape touch input now mirrors the rotated-stage axis priority: portrait keeps vertical-priority tie-break when `absDx === absDy`, while landscape uses horizontal-priority tie-break. | This only affects exactly equal diagonal tie-breaks; thresholds, speed, buffer window, and screen-relative direction mapping are unchanged. `TOOL-01` records the future landscape JSON translator script follow-up. |
 
 
 
