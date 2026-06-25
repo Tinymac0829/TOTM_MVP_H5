@@ -19,6 +19,12 @@ if (!context) {
   throw new Error("[Main] Canvas2D context is not available.");
 }
 
+const ORIENTATION_LANDSCAPE = "landscape";
+const urlParams = new URLSearchParams(window.location.search);
+const orientationMode = urlParams.get("orientation") === ORIENTATION_LANDSCAPE
+  ? ORIENTATION_LANDSCAPE
+  : "portrait";
+
 let currentViewport = {
   width: canvas.clientWidth || window.innerWidth || 1,
   height: canvas.clientHeight || window.innerHeight || 1,
@@ -46,9 +52,11 @@ const playerController = new PlayerController({
 const renderer = new Renderer({
   canvas,
   context,
+  orientation: orientationMode,
 });
 const stageLoader = new StageLoader({
   gameState,
+  orientation: orientationMode,
   onStageReady: ({ gridMap, counts, stageData }) => {
     collisionSystem.setGridMap(gridMap);
     playerController.setGridMap(gridMap);
@@ -70,8 +78,7 @@ const availableStageIds = new Set([DEFAULT_STAGE_ID, STORY_2_STAGE_ID, STORY_3_S
 let pendingStageId = null;
 
 function getRequestedStageId({ announceFallback = true } = {}) {
-  const params = new URLSearchParams(window.location.search);
-  const requestedStageId = params.get("stage");
+  const requestedStageId = urlParams.get("stage");
 
   if (!requestedStageId) {
     return DEFAULT_STAGE_ID;
@@ -98,7 +105,9 @@ function getHudViewModel() {
     currentStageId: getDisplayedStageId(),
     loadingText: "加载中...",
     menuTitle: "TOTM MVP",
-    menuSubtitle: "滑动角色，直到撞墙停下。",
+    menuSubtitle: orientationMode === ORIENTATION_LANDSCAPE
+      ? "横屏适配实验：滑动角色，直到撞墙停下。"
+      : "滑动角色，直到撞墙停下。",
     menuActionLabel: "开始游戏",
     menuAction: "start_game",
     completeActionLabel: "下一关",

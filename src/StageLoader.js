@@ -55,6 +55,45 @@ function countStageTiles(stageData) {
   return counts;
 }
 
+function rotatePointClockwise(point, oldHeight) {
+  return {
+    x: oldHeight - 1 - point.z,
+    z: point.x,
+  };
+}
+
+export function rotateStageDataClockwise(stageData) {
+  const source = cloneStageData(stageData);
+  const rotatedWidth = source.height;
+  const rotatedHeight = source.width;
+  const rotatedTiles = Array.from(
+    { length: rotatedHeight },
+    () => Array.from({ length: rotatedWidth }, () => TileType.Empty),
+  );
+
+  for (let z = 0; z < source.height; z += 1) {
+    for (let x = 0; x < source.width; x += 1) {
+      const rotatedPoint = rotatePointClockwise({ x, z }, source.height);
+      rotatedTiles[rotatedPoint.z][rotatedPoint.x] = source.tiles[z][x];
+    }
+  }
+
+  return {
+    ...source,
+    width: rotatedWidth,
+    height: rotatedHeight,
+    enter: rotatePointClockwise(source.enter, source.height),
+    exit: rotatePointClockwise(source.exit, source.height),
+    tiles: rotatedTiles,
+    meta: {
+      ...(source.meta ?? {}),
+      orientation: "landscape",
+      transform: "rotate90_clockwise",
+      sourceStageId: source.id,
+    },
+  };
+}
+
 export function validateStageData(stageData) {
   const errors = [];
   const warnings = [];
@@ -166,11 +205,18 @@ export function validateStageData(stageData) {
 }
 
 export default class StageLoader {
-  constructor({ fetchImpl, stageBasePath = "stages", gameState = null, onStageReady = null } = {}) {
+  constructor({
+    fetchImpl,
+    stageBasePath = "stages",
+    gameState = null,
+    onStageReady = null,
+    orientation = "portrait",
+  } = {}) {
     this.fetchImpl = fetchImpl ?? globalThis.fetch?.bind(globalThis);
     this.stageBasePath = String(stageBasePath).replace(/\/+$/, "") || "stages";
     this.gameState = gameState;
     this.onStageReady = onStageReady;
+    this.orientation = orientation === "landscape" ? "landscape" : "portrait";
     this.cache = new Map();
 
     if (typeof this.fetchImpl !== "function") {
@@ -192,7 +238,7 @@ export default class StageLoader {
 
   async load(stageId) {
     if (this.cache.has(stageId)) {
-      return cloneStageData(this.cache.get(stageId));
+      return this.prepareStageData(this.cache.get(stageId));
     }
 
     const url = `${this.stageBasePath}/${stageId}.json`;
@@ -214,7 +260,26 @@ export default class StageLoader {
     }
 
     this.cache.set(stageId, cloneStageData(stageData));
-    return cloneStageData(stageData);
+    return this.prepareStageData(stageData);
+  }
+
+  prepareStageData(stageData) {
+    if (this.orientation !== "landscape") {
+      return cloneStageData(stageData);
+    }
+
+    const transformedStageData = rotateStageDataClockwise(stageData);
+    const result = validateStageData(transformedStageData);
+
+    if (!result.valid) {
+      throw new Error(`Landscape transform validation failed: ${result.errors.join("; ")}`);
+    }
+
+    for (const warning of result.warnings) {
+      console.warn(`[StageLoader] ${stageData.id}: landscape ${warning}`);
+    }
+
+    return transformedStageData;
   }
 
   initStage(stageData) {

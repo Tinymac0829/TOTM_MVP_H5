@@ -16,6 +16,9 @@ const TILE_COLORS = Object.freeze({
 
 const STORY_TARGET_VISIBLE_COLUMNS = 12.75;
 const STORY_TARGET_VISIBLE_ROWS = 25.5;
+const LANDSCAPE_TARGET_VISIBLE_ROWS = 17;
+const LANDSCAPE_MIN_TILE_SIZE = 24;
+const LANDSCAPE_MAX_TILE_SIZE = 56;
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -63,6 +66,17 @@ function resolveStoryTileSize(viewport, fallbackTileSize) {
     : fallbackTileSize;
 }
 
+function resolveLandscapeTileSize(viewport, fallbackTileSize) {
+  const heightBasedSize = Number.isFinite(viewport.height) && viewport.height > 0
+    ? viewport.height / LANDSCAPE_TARGET_VISIBLE_ROWS
+    : fallbackTileSize;
+  const tileSize = clamp(heightBasedSize, LANDSCAPE_MIN_TILE_SIZE, LANDSCAPE_MAX_TILE_SIZE);
+
+  return Number.isFinite(tileSize) && tileSize > 0
+    ? tileSize
+    : fallbackTileSize;
+}
+
 export default class Renderer {
   constructor({
     canvas,
@@ -70,6 +84,7 @@ export default class Renderer {
     tileSize = 60,
     visiblePaddingTiles = 1,
     backgroundColor = "#18232d",
+    orientation = "portrait",
   } = {}) {
     if (!(canvas instanceof HTMLCanvasElement)) {
       throw new Error("[Renderer] A valid canvas is required.");
@@ -85,6 +100,7 @@ export default class Renderer {
     this.tileSize = tileSize;
     this.visiblePaddingTiles = visiblePaddingTiles;
     this.backgroundColor = backgroundColor;
+    this.orientation = orientation === "landscape" ? "landscape" : "portrait";
 
     this.gridMap = null;
     this.player = null;
@@ -92,6 +108,8 @@ export default class Renderer {
     this.focusPoint = null;
     this.cameraOffsetX = 0;
     this.cameraOffsetZ = 0;
+    this.lastViewportWidth = 0;
+    this.lastViewportHeight = 0;
   }
 
   setGridMap(gridMap) {
@@ -160,7 +178,11 @@ export default class Renderer {
   }
 
   updateTileSize(viewport) {
-    this.tileSize = resolveStoryTileSize(viewport, this.baseTileSize);
+    this.lastViewportWidth = viewport.width;
+    this.lastViewportHeight = viewport.height;
+    this.tileSize = this.orientation === "landscape"
+      ? resolveLandscapeTileSize(viewport, this.baseTileSize)
+      : resolveStoryTileSize(viewport, this.baseTileSize);
   }
 
   renderMap(viewportWidth, viewportHeight) {
