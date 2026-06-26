@@ -1,4 +1,4 @@
-﻿# MVP 开发任务计划
+# MVP 开发任务计划
 
 ## 使用规则
 
@@ -96,7 +96,7 @@
 | ID | Status | Requirement IDs | Item | Notes |
 |---|---|---|---|---|
 | FUT-01 | FROZEN | `R-022` | 当前 Story `1-3` 交付路径不实现 Lava | 只有当范围扩展到更后面的内容时才重新讨论。 |
-| TOOL-01 | TODO | `R-017,R-018,R-019` | 竖版关卡 JSON 到横版关卡 JSON 的转译器脚本 | LAND-01 当前使用 runtime 旋转；若后续需要静态横版 JSON review/export，应新增可复现转译脚本，而不是手工复制改写关卡数据。 |
+| TOOL-01 | DONE | `R-017,R-018,R-019` | 竖版关卡 JSON 到横版关卡 JSON 的转译器工具链 | 已由 `tools/convert_stage_json_landscape.mjs`、`tools/landscape_stage_builder.html`、`docs/tech/convert_stage_json_landscape_tech.md` 和 `docs/tech/landscape_stage_builder_tech.md` 收口：CLI 可把 portrait authoring stage JSON 可复现转成 landscape derivative JSON，GUI 可通过浏览器选择/粘贴 raw JSON、确认 `stage id`、生成并下载最终 landscape JSON 与 normalized portrait JSON；GUI 默认保留正式 id，例如 `story_004`，不默认生成 `_landscape`。Story 1-3 CLI 转译与 Story 2 GUI 产物校验均确认尺寸、Enter/Exit 和 Enter/Exit/Dot/Coin/Star/Spikes 计数一致。第一版不直接写入仓库目录，不修改 StageLoader，不覆盖 portrait Story JSON，不提供 File System Access API 写目录能力。 |
 
 ## 版本计划
 
@@ -108,7 +108,7 @@
 | `v0.2.0` | DONE | `LVL-02, QA-02` | `Story 2` | Story 1-2 已通过 GitHub Pages 公网入口在 Android 真机上完成可玩性与回归检查 |
 | `v0.3.0` | DONE | `LVL-03, QA-03` | `Story 3` | LVL-03 与 QA-03 均已完成；Story 1-3 本地浏览器回归通过 |
 | `v0.3.1` | DONE | `PERF-01, REL-01` | 稳定收口 | PERF-01 已按范围决策跳过；REL-01 已建立 MVP freeze candidate |
-| `post-freeze-landscape` | DONE | `LAND-01` | 横屏适配实验 | `?orientation=landscape` 横屏模式已通过桌面浏览器、Headless Chrome 截图检查和手机浏览器验收；不改变原 portrait MVP freeze candidate 结论 |
+| `post-freeze-landscape` | DONE | `LAND-01, TOOL-01` | 横屏适配实验与支持工具链 | `?orientation=landscape` 横屏模式已通过桌面浏览器、Headless Chrome 截图检查和手机浏览器验收；TOOL-01 CLI 与 GUI 下载模式已完成，用于生成/校验 landscape stage JSON；不改变原 portrait MVP freeze candidate 结论 |
 
 ## 排期
 
@@ -124,6 +124,7 @@
 | `2026-05-07` 到 `2026-05-09` | `v0.3.1` | 历史计划窗口：性能检查（PERF-01）、冻结候选版（REL-01） |
 | `2026-06-14` | `v0.3.1` | PERF-01 按 H5 MVP 范围决策跳过；REL-01 MVP freeze candidate 收口 |
 | `2026-06-25` | `post-freeze-landscape` | LAND-01 横屏 MVP 适配实验：runtime 旋转 Story 1-3、横屏缩放、居中相机、桌面与手机浏览器验收 |
+| `2026-06-26` | `post-freeze-landscape` | TOOL-01 支持工具链收口：CLI 转译器与浏览器 GUI 下载模式均已完成，GUI 通过 Story 2 产物校验 |
 
 ## 未决项
 
@@ -174,11 +175,6 @@
 | `2026-06-14` | `RELEASE` | 已通过 `docs/features/rel01_mvp_freeze_candidate_closeout.md` 收口 REL-01。Story 1-3、QA-02、QA-03 与 v0.3.0 收口后，MVP freeze candidate 已建立。 | `REL-01` 与 `v0.3.1` 标记为 `DONE`；后续仅允许修复、文档修正、部署/兼容性修复，或显式重开范围。 |
 | `2026-06-25` | `POST_FREEZE` | 已通过 `docs/features/land01_landscape_mvp_adaptation_closeout.md` 收口 LAND-01。`?orientation=landscape` 横屏适配模式使用 runtime 90 度旋转 Story 1-3，并保持原竖屏关卡 JSON 不变。 | `LAND-01` 标记为 `DONE`；桌面浏览器、手机浏览器与 Headless Chrome 截图检查均已完成，原 portrait MVP freeze candidate 状态不变。 |
 | `2026-06-25` | `INPUT` | LAND-01 横屏触屏输入补齐轴优先级规则：portrait 保持 `absDx === absDy` 时垂直优先，landscape 改为水平优先，以匹配关卡顺时针 90 度旋转后的路径取向。 | 该改动只影响完全相等的斜向平局判定，不改变阈值、速度、缓冲窗口或输入方向映射；同时记录 `TOOL-01` 横版 JSON 转译器脚本待办。 |
-
-
-
-
-
-
-
-
+| `2026-06-25` | `DOC` | 新增 TOOL-01 功能卡，明确横版 stage JSON 转译器的生产流水线位置、review/export derivative 命名、未来正式横屏 runtime 目录命名策略和 StageLoader 迁移边界。 | TOOL-01 进入实现前文档基线；本次只规划工具与数据命名，不改变 LAND-01 runtime 旋转实现，不覆盖原 portrait Story JSON，不改写 MVP freeze candidate 或 `PERF-01 = SKIPPED`。 |
+| `2026-06-25` | `TOOL` | 完成 TOOL-01 横版 stage JSON CLI 转译器：新增 `tools/convert_stage_json_landscape.mjs` 和 `docs/tech/convert_stage_json_landscape_tech.md`，验证 Story 1-3 转译、`--id` 正式命名模式、缺参 usage 和同路径防覆盖。 | `TOOL-01` CLI 基线完成；本次只新增支持工具与技术说明，不修改 StageLoader，不切换 runtime 加载路径，不覆盖原 portrait Story JSON。 |
+| `2026-06-26` | `TOOL` | 完成 TOOL-01 浏览器 GUI 下载模式：新增 `tools/landscape_stage_builder.html` 和 `docs/tech/landscape_stage_builder_tech.md`，支持选择/粘贴 raw JSON、确认 stage id、生成 landscape JSON、下载 landscape JSON、下载 normalized portrait JSON，并展示尺寸、Enter/Exit、row widths 与关键 tile 计数摘要；Story 2 GUI 产物校验为 PASS。 | `TOOL-01` 工具链收口为 CLI + GUI 第一版；GUI 第一版只做下载，不直接写入仓库目录，不修改 StageLoader，不覆盖 portrait Story JSON，不包含 File System Access API 写目录能力，且不改变 `PERF-01 = SKIPPED` 或 MVP freeze candidate 结论。 |

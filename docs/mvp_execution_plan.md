@@ -1,4 +1,4 @@
-﻿# MVP Development Task Plan
+# MVP Development Task Plan
 
 ## Usage Rules
 
@@ -96,7 +96,7 @@
 | ID | Status | Requirement IDs | Item | Notes |
 |---|---|---|---|---|
 | FUT-01 | FROZEN | `R-022` | Keep Lava implementation out of the current Story `1-3` delivery path | Revisit only if scope expands beyond current MVP. |
-| TOOL-01 | TODO | `R-017,R-018,R-019` | Portrait-to-landscape stage JSON translator script | LAND-01 currently uses runtime rotation. If static landscape JSON review/export becomes needed, add a reproducible translator script instead of manually copying and editing stage data. |
+| TOOL-01 | DONE | `R-017,R-018,R-019` | Portrait-to-landscape stage JSON translator toolchain | Closed by `tools/convert_stage_json_landscape.mjs`, `tools/landscape_stage_builder.html`, `docs/tech/convert_stage_json_landscape_tech.md`, and `docs/tech/landscape_stage_builder_tech.md`: the CLI reproducibly converts portrait authoring stage JSON into landscape derivative JSON, while the browser GUI can select or paste raw JSON, confirm the `stage id`, generate final landscape JSON, and download both landscape JSON and normalized portrait JSON. The GUI keeps official ids such as `story_004` by default instead of adding `_landscape`. Story 1-3 CLI translation and the Story 2 GUI artifact check confirm matching dimensions, Enter/Exit, and Enter/Exit/Dot/Coin/Star/Spikes counts. First-version GUI scope is download-only: it does not write directly into repository directories, modify StageLoader, overwrite portrait Story JSON, or provide File System Access API directory writes. |
 
 ## Version Plan
 
@@ -108,7 +108,7 @@
 | `v0.2.0` | DONE | `LVL-02, QA-02` | `Story 2` | Story 1-2 are both playable and regression checked on Android device through the GitHub Pages public URL |
 | `v0.3.0` | DONE | `LVL-03, QA-03` | `Story 3` | LVL-03 and QA-03 are complete; Story 1-3 local browser regression passed |
 | `v0.3.1` | DONE | `PERF-01, REL-01` | Stabilization | PERF-01 is skipped by scope decision; REL-01 establishes the MVP freeze candidate |
-| `post-freeze-landscape` | DONE | `LAND-01` | Landscape adaptation experiment | `?orientation=landscape` mode passed desktop browser validation, Headless Chrome screenshot checks, and mobile browser validation; it does not change the original portrait MVP freeze candidate conclusion |
+| `post-freeze-landscape` | DONE | `LAND-01, TOOL-01` | Landscape adaptation experiment and support toolchain | `?orientation=landscape` mode passed desktop browser validation, Headless Chrome screenshot checks, and mobile browser validation; TOOL-01 CLI and GUI download mode are complete for producing and validating landscape stage JSON; this does not change the original portrait MVP freeze candidate conclusion |
 
 ## Schedule
 
@@ -124,6 +124,7 @@
 | `2026-05-07` to `2026-05-09` | `v0.3.1` | Historical planned window for performance pass (PERF-01) and freeze candidate (REL-01) |
 | `2026-06-14` | `v0.3.1` | PERF-01 skipped by H5 MVP scope decision; REL-01 MVP freeze candidate closed |
 | `2026-06-25` | `post-freeze-landscape` | LAND-01 landscape MVP adaptation experiment: runtime Story 1-3 rotation, landscape scale, centered camera, and desktop/mobile browser validation |
+| `2026-06-26` | `post-freeze-landscape` | TOOL-01 support toolchain closeout: the CLI translator and browser GUI download mode are complete, and the GUI passed the Story 2 artifact check |
 
 ## Open Items
 
@@ -174,11 +175,6 @@
 | `2026-06-14` | `RELEASE` | Closed REL-01 with `docs/features/rel01_mvp_freeze_candidate_closeout.md`. The MVP freeze candidate is established after Story 1-3, QA-02, QA-03, and v0.3.0 closeout. | `REL-01` and `v0.3.1` are marked `DONE`; future work is limited to fixes, documentation corrections, deployment/compatibility fixes, or explicitly reopened scope. |
 | `2026-06-25` | `POST_FREEZE` | Closed LAND-01 with `docs/features/land01_landscape_mvp_adaptation_closeout.md`. `?orientation=landscape` mode runtime-rotates Story 1-3 by 90 degrees while keeping original portrait stage JSON unchanged. | `LAND-01` is marked `DONE`; desktop browser, mobile browser, and Headless Chrome screenshot checks passed. Original portrait MVP freeze candidate status remains unchanged. |
 | `2026-06-25` | `INPUT` | LAND-01 landscape touch input now mirrors the rotated-stage axis priority: portrait keeps vertical-priority tie-break when `absDx === absDy`, while landscape uses horizontal-priority tie-break. | This only affects exactly equal diagonal tie-breaks; thresholds, speed, buffer window, and screen-relative direction mapping are unchanged. `TOOL-01` records the future landscape JSON translator script follow-up. |
-
-
-
-
-
-
-
-
+| `2026-06-25` | `DOC` | Added the TOOL-01 feature card, defining the landscape stage JSON translator's production-pipeline position, review/export derivative naming, future official landscape runtime directory strategy, and StageLoader migration boundary. | TOOL-01 now has a pre-implementation documentation baseline. This only plans tool and data naming; it does not change LAND-01 runtime rotation, overwrite portrait Story JSON, revise the MVP freeze candidate, or change `PERF-01 = SKIPPED`. |
+| `2026-06-25` | `TOOL` | Completed the TOOL-01 landscape stage JSON CLI translator: added `tools/convert_stage_json_landscape.mjs` and `docs/tech/convert_stage_json_landscape_tech.md`, then validated Story 1-3 translation, `--id` official naming mode, missing-argument usage, and same-path overwrite protection. | The TOOL-01 CLI baseline is complete. This only adds support tooling and a technical note; it does not modify StageLoader, switch the runtime loading path, or overwrite portrait Story JSON. |
+| `2026-06-26` | `TOOL` | Completed the TOOL-01 browser GUI download mode: added `tools/landscape_stage_builder.html` and `docs/tech/landscape_stage_builder_tech.md`, supporting raw JSON file/paste input, stage id confirmation, landscape JSON generation, landscape JSON download, normalized portrait JSON download, and summaries for dimensions, Enter/Exit, row widths, and required tile counts. The Story 2 GUI artifact check passed. | The TOOL-01 toolchain is closed as CLI + first-version GUI. The GUI is download-only: it does not write directly into repository directories, modify StageLoader, overwrite portrait Story JSON, include File System Access API directory writes, change `PERF-01 = SKIPPED`, or change the MVP freeze candidate conclusion. |

@@ -1,22 +1,22 @@
-# LAND-01 Closeout: Landscape MVP Adaptation
+﻿# LAND-01 收口记录：横屏 MVP 适配
 
-**Created**: 2026-06-25
-**Status**: DONE
-**Branch**: `codex/landscape`
-**Baseline Commit Before Documentation Update**: `497d758 feat: add landscape MVP adaptation mode`
-**Related Feature Card**: `docs/features/land01_landscape_mvp_adaptation_card.md`
+**创建日期**：2026-06-25
+**状态**：DONE
+**分支**：`codex/landscape`
+**文档更新前基线提交**：`497d758 feat: add landscape MVP adaptation mode`
+**关联功能卡**：`docs/features/land01_landscape_mvp_adaptation_card.md`
 
-## Closeout Conclusion
+## 收口结论
 
-LAND-01 is closed as `DONE`.
+LAND-01 已按 `DONE` 收口。
 
-The Story 1-3 MVP loop now has an explicit landscape adaptation mode behind:
+Story 1-3 MVP 闭环现在已有显式 landscape adaptation mode，入口为：
 
 ```text
 ?orientation=landscape
 ```
 
-Direct landscape stage entries are available:
+可直接进入横屏关卡：
 
 ```text
 ?orientation=landscape&stage=story_001
@@ -24,35 +24,35 @@ Direct landscape stage entries are available:
 ?orientation=landscape&stage=story_003
 ```
 
-The original portrait MVP route remains the default when `?orientation=landscape` is not present.
+当 URL 不包含 `?orientation=landscape` 时，原 portrait MVP 路径仍是默认路径。
 
-## Implemented Scope
+## 已实现范围
 
-- `StageLoader` applies a clockwise 90-degree runtime transform in landscape mode.
-- Original Story 1-3 JSON files are not overwritten.
-- Landscape mode uses a dedicated viewport scale path in `Renderer`.
-- Landscape camera follows the existing portrait rule: keep the player centered on screen.
-- Input remains screen-relative.
-- Landscape touch input uses horizontal-priority axis tie-break when `absDx === absDy`; portrait keeps the original vertical-priority tie-break.
-- Story progression remains `story_001 -> story_002 -> story_003 -> story_001`.
+- `StageLoader` 在 landscape mode 下应用顺时针 90 度 runtime transform。
+- 原 Story 1-3 JSON 文件没有被覆盖。
+- Landscape mode 在 `Renderer` 中使用专门的 viewport scale 路径。
+- Landscape camera 沿用 portrait 规则：让玩家保持屏幕居中。
+- 输入保持 screen-relative。
+- Landscape touch input 在 `absDx === absDy` 时采用水平优先；portrait 保持原有垂直优先。
+- Story progression 保持 `story_001 -> story_002 -> story_003 -> story_001`。
 
-## Validation Summary
+## 验证摘要
 
-Automated and local validation:
+自动化和本地验证：
 
-- Changed runtime modules passed `node --check`.
-- `git diff --check` passed.
-- Stage transform validation confirmed valid transformed metadata and unchanged tile counts.
-- Headless Chrome screenshot checks at `1280x720` confirmed centered player position for all three direct landscape entries.
-- Additional Story 1 post-movement screenshot confirmed the player remains centered after movement.
+- 变更 runtime modules 通过 `node --check`。
+- `git diff --check` 通过。
+- Stage transform validation 确认转换后 metadata 合法，tile counts 不变。
+- Headless Chrome 截图检查在 `1280x720` 下确认三个 direct landscape entries 的玩家位置居中。
+- 额外 Story 1 post-movement screenshot 确认移动后玩家仍保持居中。
 
-Manual validation:
+手动验证：
 
-- Desktop browser acceptance was completed by the user.
-- GitHub Pages deployment was switched to the published landscape branch for mobile testing.
-- Mobile browser acceptance was completed by the user.
+- 用户已完成桌面浏览器验收。
+- GitHub Pages 部署已切换到发布后的 landscape branch 用于移动端测试。
+- 用户已完成移动端浏览器验收。
 
-## Transform Evidence
+## 转换证据
 
 | Stage | Portrait Size | Landscape Size | Landscape Enter | Landscape Exit |
 | --- | --- | --- | --- | --- |
@@ -60,9 +60,9 @@ Manual validation:
 | `story_002` | `21x22` | `22x21` | `(17, 11)` | `(1, 1)` |
 | `story_003` | `24x17` | `17x24` | `(11, 4)` | `(15, 19)` |
 
-## Screenshot Evidence
+## 截图证据
 
-Temporary local screenshot evidence was generated under ignored workspace artifacts:
+临时本地截图证据生成在 ignored workspace artifacts 下：
 
 ```text
 tmp/landscape_screens/story_001.png
@@ -73,25 +73,26 @@ tmp/landscape_screens/metrics.json
 tmp/landscape_screens/story_001_after_moves_metrics.json
 ```
 
-These files are local-only validation artifacts and should not be committed.
+这些文件是本地验证产物，不应提交。
 
-Observed player center in the `1280x720` headless screenshot checks:
+`1280x720` headless screenshot checks 中观察到的玩家中心：
 
 ```text
 centerX = 639.5
 centerY = 359.5
 ```
 
-## Known Limits
+## 已知限制
 
-- LAND-01 does not change PERF-01. Performance remains `SKIPPED`, not PASS.
-- LAND-01 does not replace the portrait MVP freeze candidate route.
-- Landscape HUD spacing is acceptable for the completed validation pass, but future UI polish may still improve safe-area spacing and visual balance.
-- This closeout does not add new stages, new tile types, new mechanics, or a full DebugPanel.
-- LAND-01 still uses runtime rotation. A future support tool should provide a reproducible portrait-to-landscape stage JSON translator script when static landscape JSON review/export is needed.
+- LAND-01 不改变 PERF-01。性能状态仍是 `SKIPPED`，不是 PASS。
+- LAND-01 不替代 portrait MVP freeze candidate 路径。
+- Landscape HUD spacing 对本轮验证可接受，但未来 UI polish 仍可继续优化 safe-area spacing 和视觉平衡。
+- 本 closeout 不新增关卡、新 tile 类型、新机制或完整 DebugPanel。
+- LAND-01 仍使用 runtime rotation。后续当需要静态 landscape JSON review/export 时，TOOL-01 应提供可复现的 portrait-to-landscape stage JSON translator script。
+- TOOL-01 应让 review/export derivative 名称保持明显派生特征，例如 `story_001_landscape`；如果后续正式推广 landscape runtime，则保留目录式命名，例如 `stages_landscape/story_001.json` 搭配 id `story_001`。
 
-## Final Status
+## 最终状态
 
-- `LAND-01`: DONE
-- Landscape adaptation mode: accepted for the current branch validation pass
-- Original Story 1-3 portrait MVP baseline: preserved
+- `LAND-01`：DONE
+- Landscape adaptation mode：已通过当前分支验证并接受
+- 原 Story 1-3 portrait MVP baseline：已保留

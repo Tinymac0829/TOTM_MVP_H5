@@ -1,4 +1,4 @@
-﻿# Worktree Registry
+# Worktree Registry
 
 ## Usage Rules
 
@@ -41,7 +41,7 @@
 | `ENG-03` | `codex/eng-03` | `WORKTREE_ROOT/ENG-03` | `TBD` | `DONE` | `2026-04-23` | Input foundation completed: `TouchInput`, `KeyboardInput`, and `InputManager` are wired into `main.js`, emitting unified direction commands in the `playing` state; stable session ID remains `TBD`. |
 | `ENG-04` | `codex/eng-04` | `WORKTREE_ROOT/ENG-04` | `TBD` | `DONE` | `2026-05-01` | `R-009` three-coordinate-domain implementation and `R-008` `0.1s/100ms` input buffer are formally closed by the `2026-05-01` ENG-04 × ENG-05 real-browser regression. `CoordinateSystem`, `PlayerController`, `Renderer`, module cache queries, rapid chained sliding, death/clear behavior, click/resize alignment, and cache-version confirmation all passed with `eng04_input_buffer_v1`. |
 | `ENG-05` | `codex/eng-05` | `WORKTREE_ROOT/ENG-05` | `TBD` | `DONE` | `2026-05-01` | The minimal gameplay UI and ENG-04 integration path are formally closed by the `2026-05-01` real-browser regression after world-units movement, Renderer coordinate adaptation, short-move overrun handling, and the corrected `100ms` input buffer. Fail/clear popups, input lockout, button availability timing, HUD sync, click/resize behavior, and replay fallback were all rechecked as `PASS`. |
-| `LAND-01` | `codex/landscape` | `REPO_ROOT` | `TBD` | `DONE` | `2026-06-25` | Landscape MVP adaptation experiment completed on the current branch: `?orientation=landscape` runtime-rotates Story 1-3, landscape scale and centered camera are wired, desktop browser validation, mobile browser validation, and Headless Chrome screenshot checks passed; the original portrait MVP freeze candidate baseline remains unchanged. |
+| `LAND-01 / TOOL-01` | `codex/landscape` | `REPO_ROOT` | `TBD` | `DONE` | `2026-06-26` | Landscape MVP adaptation and support toolchain are complete on the current branch: LAND-01 provides `?orientation=landscape` runtime rotation for Story 1-3, landscape scale, and centered camera; TOOL-01 provides the CLI translator and browser GUI download mode. Desktop browser validation, mobile browser validation, Headless Chrome screenshot checks, Story 1-3 CLI translation, and the Story 2 GUI artifact check all passed; the original portrait MVP freeze candidate baseline remains unchanged. |
 
 ## Update Log
 
@@ -81,6 +81,4 @@
 | `2026-06-14` | `SCOPE` | Skipped PERF-01 as an H5 MVP scope decision; the dedicated mid-range Android FPS pass was not run and is not claimed as passed. | `PERF-01` is marked `SKIPPED`; `R-016` is waived as a release-blocking requirement for this MVP freeze. No dedicated PERF-01 worktree was created. |
 | `2026-06-14` | `RELEASE` | Closed REL-01 on the master branch with `docs/features/rel01_mvp_freeze_candidate_closeout.md`. The MVP freeze candidate is established after Story 1-3, QA-02, QA-03, and v0.3.0 closeout. | `REL-01` and `v0.3.1` are marked `DONE`; future MVP work is limited to fixes, documentation corrections, deployment/compatibility fixes, or explicitly reopened scope. No dedicated REL-01 worktree was created. |
 | `2026-06-25` | `POST_FREEZE` | LAND-01 landscape MVP adaptation closed on branch `codex/landscape` and is recorded by `docs/features/land01_landscape_mvp_adaptation_closeout.md`. | This task ran in the current `REPO_ROOT` branch instead of a sibling worktree; the original Story 1-3 portrait MVP freeze candidate remains preserved. |
-
-
-
+| `2026-06-26` | `TOOL` | TOOL-01 support toolchain closed on branch `codex/landscape`: the CLI translator, browser GUI Builder, and technical notes were added; first-version GUI supports downloading landscape JSON and normalized portrait JSON, and the Story 2 GUI artifact check passed. | This still ran in the current `REPO_ROOT` branch instead of a sibling worktree. The GUI is download-only and does not write directly into repository directories, modify StageLoader, overwrite portrait Story JSON, or include File System Access API directory writes. |

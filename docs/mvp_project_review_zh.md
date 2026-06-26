@@ -142,7 +142,8 @@ https://tinymac0829.github.io/TOTM_MVP_H5/?stage=story_002
 辅助工具：
 
 - `tools/stage_tile_editor.html`：关卡 tile 编辑与 review HTML 导出工具。
-- `tools/format_stage_json.mjs`：关卡 JSON 格式化与轻量统计工具。
+- `tools/format_stage_json.mjs`：关卡 JSON 格式化与轻量统计工具；未来可按需要重命名为更明确的规范化脚本，但应与横版转译职责分离。
+- `tools/convert_stage_json_landscape.mjs`：TOOL-01 横版转译器，把 portrait authoring stage JSON 可复现地转成 landscape derivative JSON；默认用于 review/export，未来可作为正式横屏 stage JSON 生产流水线的一环。技术说明见 `docs/tech/convert_stage_json_landscape_tech.md`。
 
 ## 5. 关卡与状态流
 
@@ -309,6 +310,8 @@ Story 3：
 
 - 先确认是 bug fix、HUD polish、部署兼容性修复，还是重新扩大横屏产品范围。
 - 保持 `?orientation=landscape` 为显式入口，除非项目决定将横屏提升为默认发布形态。
+- 如果需要静态横版 JSON，先按 TOOL-01 文档走“编辑器导出 -> 规范化 -> 横版转译 -> 正式 runtime stage JSON -> StageLoader 加载”的流水线，不要手工复制改写关卡数据。
+- review/export derivative 可以使用 `story_001_landscape` 这类 id；若未来正式改成横屏 runtime，优先使用 `stages_landscape/story_001.json` 这类目录命名并保持 runtime id 为 `story_001`。
 - 不要覆盖原 Story 1-3 JSON；当前横屏版本采用 runtime 旋转。
 - 性能相关结论仍不能借 LAND-01 改写，`PERF-01 = SKIPPED` 保持不变。
 

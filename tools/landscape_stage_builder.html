@@ -1,0 +1,692 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOTM Landscape Stage Builder</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #1a1a2e; color: #eee; font-family: 'Segoe UI', 'Microsoft YaHei', monospace; }
+button, input, textarea { font: inherit; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #16213e; border-bottom: 1px solid #333; flex-wrap: wrap; }
+.topbar h1 { margin: 0 10px 0 0; font-size: 16px; color: #fff; font-weight: 600; }
+.topbar label { font-size: 13px; color: #aaa; display: flex; align-items: center; gap: 6px; }
+.topbar input[type=text] { width: 150px; background: #222; color: #fff; border: 1px solid #555; padding: 4px 8px; border-radius: 3px; }
+.topbar input[type=file] { max-width: 250px; color: #ddd; font-size: 12px; }
+button { background: #0f3460; color: #fff; border: 1px solid #555; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 13px; min-height: 30px; }
+button:hover:not(:disabled) { background: #1a5276; }
+button.primary { background: #1b6b3a; }
+button.primary:hover:not(:disabled) { background: #2a8b4a; }
+button.secondary { background: #4a3b12; }
+button.secondary:hover:not(:disabled) { background: #6b551a; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.statusbar { padding: 8px 16px; background: #111; border-bottom: 1px solid #333; font-size: 12px; color: #bbb; display: flex; gap: 14px; flex-wrap: wrap; }
+.statusbar .ok { color: #00cc66; }
+.statusbar .err { color: #ff5577; }
+.statusbar .warn { color: #ffcc55; }
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 16px; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.panel { min-width: 0; }
+.panel h2, .side h2 { margin: 0 0 8px; color: #aaa; font-size: 14px; font-weight: 600; }
+textarea { width: 100%; min-height: 320px; background: #0a0a0a; color: #19f06a; border: 1px solid #333; border-radius: 4px; padding: 10px; resize: vertical; font-family: Consolas, 'Courier New', monospace; font-size: 12px; line-height: 1.45; }
+textarea[readonly] { color: #7dffa5; }
+.side { min-width: 0; }
+.info-box { background: #111; border: 1px solid #333; border-radius: 4px; padding: 10px; margin-bottom: 12px; font-size: 12px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.info-box .ok { color: #00cc66; }
+.info-box .err { color: #ff5577; }
+.info-box .warn { color: #ffcc55; }
+.summary-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.summary-table th, .summary-table td { border-bottom: 1px solid #2d2d44; padding: 5px 4px; text-align: left; vertical-align: top; }
+.summary-table th { color: #aaa; font-weight: 600; }
+.summary-table .ok { color: #00cc66; }
+.summary-table .err { color: #ff5577; }
+@media (max-width: 1100px) {
+  .main { grid-template-columns: 1fr; }
+  .workspace { grid-template-columns: 1fr; }
+  textarea { min-height: 240px; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>Landscape Stage Builder</h1>
+  <label>Raw JSON <input type="file" id="fileInput" accept="application/json,.json"></label>
+  <label>Stage ID <input type="text" id="stageIdInput" value="story_004" autocomplete="off" spellcheck="false"></label>
+  <button class="primary" id="buildBtn">生成 landscape JSON</button>
+  <button id="copyBtn" disabled>复制 landscape JSON</button>
+  <button class="primary" id="downloadLandscapeBtn" disabled>下载 landscape JSON</button>
+  <button class="secondary" id="downloadPortraitBtn" disabled>下载 normalized portrait JSON</button>
+  <button id="clearBtn">清空</button>
+</div>
+<div class="statusbar" id="statusBar">
+  <span>等待输入</span>
+</div>
+<div class="main">
+  <div class="workspace">
+    <section class="panel">
+      <h2>Raw Stage JSON</h2>
+      <textarea id="inputArea" spellcheck="false"></textarea>
+    </section>
+    <section class="panel">
+      <h2>Landscape Stage JSON</h2>
+      <textarea id="outputArea" readonly spellcheck="false"></textarea>
+    </section>
+  </div>
+  <aside class="side">
+    <h2>校验状态</h2>
+    <div class="info-box" id="messageBox">等待输入。</div>
+    <h2>摘要</h2>
+    <div class="info-box" id="summaryBox">尚未生成。</div>
+    <h2>计数</h2>
+    <div class="info-box" id="countsBox">尚未生成。</div>
+  </aside>
+</div>
+<script>
+const TILE_TYPES = Object.freeze({
+  Empty: 0,
+  Wall: 1,
+  Enter: 2,
+  Exit: 3,
+  Dot: 4,
+  Coin: 5,
+  Star: 6,
+  Spikes: 7,
+});
+
+const TILE_NAMES = new Map([
+  [TILE_TYPES.Empty, 'Empty'],
+  [TILE_TYPES.Wall, 'Wall'],
+  [TILE_TYPES.Enter, 'Enter'],
+  [TILE_TYPES.Exit, 'Exit'],
+  [TILE_TYPES.Dot, 'Dot'],
+  [TILE_TYPES.Coin, 'Coin'],
+  [TILE_TYPES.Star, 'Star'],
+  [TILE_TYPES.Spikes, 'Spikes'],
+]);
+
+const REQUIRED_COUNT_TILE_VALUES = Object.freeze([
+  TILE_TYPES.Enter,
+  TILE_TYPES.Exit,
+  TILE_TYPES.Dot,
+  TILE_TYPES.Coin,
+  TILE_TYPES.Star,
+  TILE_TYPES.Spikes,
+]);
+
+const state = {
+  sourceStageData: null,
+  landscapeStageData: null,
+  normalizedPortraitText: '',
+  landscapeText: '',
+  sourceCounts: null,
+  outputCounts: null,
+  summary: null,
+};
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function stringifyInlineObject(value) {
+  const entries = Object.entries(value).map(([key, item]) => `${JSON.stringify(key)}: ${JSON.stringify(item)}`);
+  return `{ ${entries.join(', ')} }`;
+}
+
+function shouldStringifyInlineObject(value) {
+  const keys = Object.keys(value);
+  return (
+    keys.length === 2 &&
+    keys.includes('x') &&
+    keys.includes('z') &&
+    Object.values(value).every((item) => Number.isInteger(item))
+  );
+}
+
+function stringifyValue(value, indentLevel = 0) {
+  const indent = '  '.repeat(indentLevel);
+  const nextIndent = '  '.repeat(indentLevel + 1);
+
+  if (Array.isArray(value)) {
+    if (value.every((item) => !Array.isArray(item) && !isPlainObject(item))) {
+      return `[${value.map((item) => JSON.stringify(item)).join(', ')}]`;
+    }
+
+    const lines = value.map((item) => `${nextIndent}${stringifyValue(item, indentLevel + 1)}`);
+    return `[
+${lines.join(',\n')}
+${indent}]`;
+  }
+
+  if (isPlainObject(value)) {
+    if (shouldStringifyInlineObject(value)) {
+      return stringifyInlineObject(value);
+    }
+
+    const lines = Object.entries(value).map(([key, item]) => {
+      return `${nextIndent}${JSON.stringify(key)}: ${stringifyValue(item, indentLevel + 1)}`;
+    });
+    return `{
+${lines.join(',\n')}
+${indent}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function stringifyStage(stageData) {
+  const lines = Object.entries(stageData).map(([key, value]) => {
+    return `  ${JSON.stringify(key)}: ${stringifyValue(value, 1)}`;
+  });
+  return `{
+${lines.join(',\n')}
+}
+`;
+}
+
+function normalizeStageId(rawId) {
+  const normalized = String(rawId ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return normalized || 'story';
+}
+
+function validateStageId(stageId) {
+  const errors = [];
+  const warnings = [];
+  const value = String(stageId ?? '').trim();
+
+  if (!value) {
+    errors.push('stage id 不能为空');
+    return { normalized: '', errors, warnings };
+  }
+
+  const normalized = normalizeStageId(value);
+  if (normalized !== value) {
+    warnings.push(`stage id 将按标准化结果使用：${normalized}`);
+  }
+
+  const storyMatch = normalized.match(/^story_(\d+)$/);
+  if (!normalized.startsWith('story')) {
+    warnings.push('建议 Story 关卡 id 以 story 开头');
+  } else if (!storyMatch || storyMatch[1].length !== 3) {
+    warnings.push('建议 Story 编号使用三位数字，例如 story_004');
+  }
+
+  return { normalized, errors, warnings };
+}
+
+function isValidPoint(point, width, height) {
+  return (
+    isPlainObject(point) &&
+    Number.isInteger(point.x) &&
+    Number.isInteger(point.z) &&
+    point.x >= 0 &&
+    point.x < width &&
+    point.z >= 0 &&
+    point.z < height
+  );
+}
+
+function rotatePointClockwise(point, oldHeight) {
+  return {
+    x: oldHeight - 1 - point.z,
+    z: point.x,
+  };
+}
+
+function createEmptyCounts() {
+  const counts = new Map();
+  for (const tileValue of TILE_NAMES.keys()) {
+    counts.set(tileValue, 0);
+  }
+  return counts;
+}
+
+function countTiles(stageData) {
+  const counts = createEmptyCounts();
+  if (!Array.isArray(stageData?.tiles)) {
+    return counts;
+  }
+
+  for (const row of stageData.tiles) {
+    if (!Array.isArray(row)) {
+      continue;
+    }
+    for (const tileValue of row) {
+      counts.set(tileValue, (counts.get(tileValue) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
+function validateStageData(stageData, label) {
+  const errors = [];
+
+  if (!isPlainObject(stageData)) {
+    return [`${label}: stage data 必须是 object`];
+  }
+
+  if (!Number.isInteger(stageData.width) || stageData.width <= 0) {
+    errors.push(`${label}: width 必须是正整数`);
+  }
+
+  if (!Number.isInteger(stageData.height) || stageData.height <= 0) {
+    errors.push(`${label}: height 必须是正整数`);
+  }
+
+  if (!Array.isArray(stageData.tiles)) {
+    errors.push(`${label}: tiles 必须是数组`);
+    return errors;
+  }
+
+  if (Number.isInteger(stageData.height) && stageData.tiles.length !== stageData.height) {
+    errors.push(`${label}: tiles row count (${stageData.tiles.length}) != height (${stageData.height})`);
+  }
+
+  stageData.tiles.forEach((row, z) => {
+    if (!Array.isArray(row)) {
+      errors.push(`${label}: tiles[${z}] 必须是数组`);
+      return;
+    }
+
+    if (Number.isInteger(stageData.width) && row.length !== stageData.width) {
+      errors.push(`${label}: tiles[${z}] width (${row.length}) != width (${stageData.width})`);
+    }
+
+    row.forEach((tileValue, x) => {
+      if (!TILE_NAMES.has(tileValue)) {
+        errors.push(`${label}: tiles[${z}][${x}] = ${tileValue} 不是有效 tile 类型`);
+      }
+    });
+  });
+
+  if (
+    Number.isInteger(stageData.width) &&
+    Number.isInteger(stageData.height) &&
+    Array.isArray(stageData.tiles)
+  ) {
+    if (!isValidPoint(stageData.enter, stageData.width, stageData.height)) {
+      errors.push(`${label}: enter 必须是范围内整数坐标`);
+    } else if (stageData.tiles[stageData.enter.z]?.[stageData.enter.x] !== TILE_TYPES.Enter) {
+      errors.push(`${label}: enter 没有指向 Enter(2)`);
+    }
+
+    if (!isValidPoint(stageData.exit, stageData.width, stageData.height)) {
+      errors.push(`${label}: exit 必须是范围内整数坐标`);
+    } else if (stageData.tiles[stageData.exit.z]?.[stageData.exit.x] !== TILE_TYPES.Exit) {
+      errors.push(`${label}: exit 没有指向 Exit(3)`);
+    }
+  }
+
+  return errors;
+}
+
+function rotateStageDataClockwise(stageData, outputStageId) {
+  const source = cloneJson(stageData);
+  const oldWidth = source.width;
+  const oldHeight = source.height;
+  const rotatedWidth = oldHeight;
+  const rotatedHeight = oldWidth;
+  const rotatedTiles = Array.from(
+    { length: rotatedHeight },
+    () => Array.from({ length: rotatedWidth }, () => TILE_TYPES.Empty),
+  );
+
+  for (let z = 0; z < oldHeight; z += 1) {
+    for (let x = 0; x < oldWidth; x += 1) {
+      const rotatedPoint = rotatePointClockwise({ x, z }, oldHeight);
+      rotatedTiles[rotatedPoint.z][rotatedPoint.x] = source.tiles[z][x];
+    }
+  }
+
+  return {
+    ...source,
+    id: outputStageId,
+    width: rotatedWidth,
+    height: rotatedHeight,
+    enter: rotatePointClockwise(source.enter, oldHeight),
+    exit: rotatePointClockwise(source.exit, oldHeight),
+    tiles: rotatedTiles,
+    meta: {
+      ...(source.meta ?? {}),
+      orientation: 'landscape',
+      transform: 'rotate90_clockwise',
+      sourceStageId: source.id ?? outputStageId,
+    },
+  };
+}
+
+function normalizePortraitStage(stageData, outputStageId) {
+  const source = cloneJson(stageData);
+  return {
+    ...source,
+    id: outputStageId,
+  };
+}
+
+function getRowWidths(stageData) {
+  if (!Array.isArray(stageData.tiles)) {
+    return [];
+  }
+  return [...new Set(stageData.tiles.filter(Array.isArray).map((row) => row.length))];
+}
+
+function compareRequiredCounts(sourceCounts, outputCounts) {
+  const mismatches = [];
+  for (const tileValue of REQUIRED_COUNT_TILE_VALUES) {
+    const sourceCount = sourceCounts.get(tileValue) ?? 0;
+    const outputCount = outputCounts.get(tileValue) ?? 0;
+    if (sourceCount !== outputCount) {
+      mismatches.push(`${TILE_NAMES.get(tileValue)}(${tileValue}) source=${sourceCount} output=${outputCount}`);
+    }
+  }
+  return mismatches;
+}
+
+function createSummary(sourceStageData, outputStageData) {
+  const sourceCounts = countTiles(sourceStageData);
+  const outputCounts = countTiles(outputStageData);
+  const countMismatches = compareRequiredCounts(sourceCounts, outputCounts);
+
+  return {
+    sourceCounts,
+    outputCounts,
+    countMismatches,
+    lines: [
+      `source id: ${sourceStageData.id ?? '(missing)'}`,
+      `output id: ${outputStageData.id ?? '(missing)'}`,
+      `source size: ${sourceStageData.width}x${sourceStageData.height}`,
+      `output size: ${outputStageData.width}x${outputStageData.height}`,
+      `expected output size: ${sourceStageData.height}x${sourceStageData.width}`,
+      `output rows: ${Array.isArray(outputStageData.tiles) ? outputStageData.tiles.length : '(missing)'}`,
+      `output row widths: ${getRowWidths(outputStageData).join(', ') || '(missing)'}`,
+      `source enter: ${stringifyValue(sourceStageData.enter ?? null)}`,
+      `output enter: ${stringifyValue(outputStageData.enter ?? null)}`,
+      `source exit: ${stringifyValue(sourceStageData.exit ?? null)}`,
+      `output exit: ${stringifyValue(outputStageData.exit ?? null)}`,
+      `count check: ${countMismatches.length === 0 ? 'PASS' : 'FAIL'}`,
+    ],
+  };
+}
+
+function parseStageJson(text) {
+  try {
+    return { stageData: JSON.parse(text), errors: [] };
+  } catch (error) {
+    return { stageData: null, errors: [`JSON 解析失败：${error.message}`] };
+  }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"]/g, (char) => {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char];
+  });
+}
+const elements = {
+  fileInput: document.getElementById('fileInput'),
+  stageIdInput: document.getElementById('stageIdInput'),
+  buildBtn: document.getElementById('buildBtn'),
+  copyBtn: document.getElementById('copyBtn'),
+  downloadLandscapeBtn: document.getElementById('downloadLandscapeBtn'),
+  downloadPortraitBtn: document.getElementById('downloadPortraitBtn'),
+  clearBtn: document.getElementById('clearBtn'),
+  inputArea: document.getElementById('inputArea'),
+  outputArea: document.getElementById('outputArea'),
+  statusBar: document.getElementById('statusBar'),
+  messageBox: document.getElementById('messageBox'),
+  summaryBox: document.getElementById('summaryBox'),
+  countsBox: document.getElementById('countsBox'),
+};
+
+function setStatus(message, kind = '') {
+  const className = kind ? ` class="${kind}"` : '';
+  elements.statusBar.innerHTML = `<span${className}>${escapeHtml(message)}</span>`;
+}
+
+function setMessages(errors = [], warnings = [], notes = []) {
+  const parts = [];
+
+  if (errors.length > 0) {
+    parts.push('<b class="err">Error</b>');
+    parts.push(...errors.map((item) => `<span class="err">- ${escapeHtml(item)}</span>`));
+  }
+
+  if (warnings.length > 0) {
+    parts.push('<b class="warn">Warning</b>');
+    parts.push(...warnings.map((item) => `<span class="warn">- ${escapeHtml(item)}</span>`));
+  }
+
+  if (notes.length > 0) {
+    parts.push('<b class="ok">Info</b>');
+    parts.push(...notes.map((item) => `<span class="ok">- ${escapeHtml(item)}</span>`));
+  }
+
+  elements.messageBox.innerHTML = parts.length > 0 ? parts.join('<br>') : '等待输入。';
+}
+
+function setDownloadEnabled(enabled) {
+  elements.copyBtn.disabled = !enabled;
+  elements.downloadLandscapeBtn.disabled = !enabled;
+  elements.downloadPortraitBtn.disabled = !enabled;
+}
+
+function renderSummary(summary) {
+  if (!summary) {
+    elements.summaryBox.textContent = '尚未生成。';
+    elements.countsBox.textContent = '尚未生成。';
+    return;
+  }
+
+  elements.summaryBox.textContent = summary.lines.join('\n');
+
+  const rows = REQUIRED_COUNT_TILE_VALUES.map((tileValue) => {
+    const tileName = TILE_NAMES.get(tileValue);
+    const sourceCount = summary.sourceCounts.get(tileValue) ?? 0;
+    const outputCount = summary.outputCounts.get(tileValue) ?? 0;
+    const ok = sourceCount === outputCount;
+    return `<tr><td>${escapeHtml(`${tileName}(${tileValue})`)}</td><td>${sourceCount}</td><td>${outputCount}</td><td class="${ok ? 'ok' : 'err'}">${ok ? 'PASS' : 'FAIL'}</td></tr>`;
+  });
+
+  elements.countsBox.innerHTML = `<table class="summary-table"><thead><tr><th>Tile</th><th>Source</th><th>Output</th><th>Check</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+function resetOutput() {
+  state.sourceStageData = null;
+  state.landscapeStageData = null;
+  state.normalizedPortraitText = '';
+  state.landscapeText = '';
+  state.sourceCounts = null;
+  state.outputCounts = null;
+  state.summary = null;
+  elements.outputArea.value = '';
+  setDownloadEnabled(false);
+  renderSummary(null);
+}
+
+function updateStageIdFromInput() {
+  const text = elements.inputArea.value.trim();
+  if (!text) {
+    return;
+  }
+
+  const parsed = parseStageJson(text);
+  if (parsed.stageData && isPlainObject(parsed.stageData) && parsed.stageData.id) {
+    elements.stageIdInput.value = normalizeStageId(parsed.stageData.id);
+  }
+}
+
+function buildLandscapeStage() {
+  resetOutput();
+
+  const text = elements.inputArea.value.trim();
+  const allErrors = [];
+  const allWarnings = [];
+
+  if (!text) {
+    allErrors.push('请先选择或粘贴 Stage Tile Editor 导出的 raw JSON。');
+    setMessages(allErrors);
+    setStatus('输入为空', 'err');
+    return;
+  }
+
+  const parsed = parseStageJson(text);
+  allErrors.push(...parsed.errors);
+
+  const idValidation = validateStageId(elements.stageIdInput.value);
+  allErrors.push(...idValidation.errors);
+  allWarnings.push(...idValidation.warnings);
+
+  if (parsed.stageData) {
+    allErrors.push(...validateStageData(parsed.stageData, 'input'));
+  }
+
+  if (allErrors.length > 0) {
+    setMessages(allErrors, allWarnings);
+    setStatus('校验失败，未生成输出', 'err');
+    return;
+  }
+
+  const outputStageId = idValidation.normalized;
+  elements.stageIdInput.value = outputStageId;
+
+  const sourceStageData = parsed.stageData;
+  const normalizedPortraitStage = normalizePortraitStage(sourceStageData, outputStageId);
+  const landscapeStageData = rotateStageDataClockwise(sourceStageData, outputStageId);
+  const outputErrors = validateStageData(landscapeStageData, 'output');
+  const summary = createSummary(sourceStageData, landscapeStageData);
+
+  if (landscapeStageData.width !== sourceStageData.height) {
+    outputErrors.push(`output: width (${landscapeStageData.width}) != input.height (${sourceStageData.height})`);
+  }
+
+  if (landscapeStageData.height !== sourceStageData.width) {
+    outputErrors.push(`output: height (${landscapeStageData.height}) != input.width (${sourceStageData.width})`);
+  }
+
+  for (const mismatch of summary.countMismatches) {
+    outputErrors.push(`output count mismatch: ${mismatch}`);
+  }
+
+  if (outputErrors.length > 0) {
+    setMessages(outputErrors, allWarnings);
+    setStatus('输出校验失败，未允许下载', 'err');
+    renderSummary(summary);
+    return;
+  }
+
+  state.sourceStageData = sourceStageData;
+  state.landscapeStageData = landscapeStageData;
+  state.normalizedPortraitText = stringifyStage(normalizedPortraitStage);
+  state.landscapeText = stringifyStage(landscapeStageData);
+  state.summary = summary;
+
+  elements.outputArea.value = state.landscapeText;
+  renderSummary(summary);
+  setDownloadEnabled(true);
+  setMessages([], allWarnings, [
+    'landscape JSON 已生成。',
+    `输出 id：${outputStageId}`,
+    `下载文件名：${outputStageId}.json`,
+  ]);
+  setStatus('生成成功，count check: PASS', 'ok');
+}
+
+function downloadTextFile(filename, text, mimeType = 'application/json') {
+  const blob = new Blob([text], { type: `${mimeType};charset=utf-8` });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function copyLandscapeJson() {
+  if (!state.landscapeText) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(state.landscapeText);
+    setStatus('已复制 landscape JSON', 'ok');
+  } catch (error) {
+    elements.outputArea.select();
+    document.execCommand('copy');
+    setStatus('已尝试使用 fallback 复制 landscape JSON', 'warn');
+  }
+}
+
+function downloadLandscapeJson() {
+  if (!state.landscapeText) {
+    return;
+  }
+  const stageId = normalizeStageId(elements.stageIdInput.value);
+  downloadTextFile(`${stageId}.json`, state.landscapeText);
+  setStatus(`已触发下载：${stageId}.json`, 'ok');
+}
+
+function downloadPortraitJson() {
+  if (!state.normalizedPortraitText) {
+    return;
+  }
+  const stageId = normalizeStageId(elements.stageIdInput.value);
+  downloadTextFile(`${stageId}_portrait_normalized.json`, state.normalizedPortraitText);
+  setStatus(`已触发下载：${stageId}_portrait_normalized.json`, 'ok');
+}
+
+function clearAll() {
+  elements.fileInput.value = '';
+  elements.stageIdInput.value = 'story_004';
+  elements.inputArea.value = '';
+  resetOutput();
+  setMessages([], [], ['已清空输入与输出。']);
+  setStatus('等待输入');
+}
+
+function handleInputChanged() {
+  resetOutput();
+  updateStageIdFromInput();
+  setMessages([], [], ['输入已更新，请生成 landscape JSON。']);
+  setStatus('输入已更新');
+}
+
+elements.fileInput.addEventListener('change', () => {
+  const file = elements.fileInput.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    elements.inputArea.value = String(reader.result ?? '');
+    handleInputChanged();
+    setStatus(`已读取文件：${file.name}`, 'ok');
+  };
+  reader.onerror = () => {
+    setMessages([`读取文件失败：${file.name}`]);
+    setStatus('文件读取失败', 'err');
+  };
+  reader.readAsText(file, 'utf-8');
+});
+
+elements.inputArea.addEventListener('input', handleInputChanged);
+elements.stageIdInput.addEventListener('input', resetOutput);
+elements.buildBtn.addEventListener('click', buildLandscapeStage);
+elements.copyBtn.addEventListener('click', copyLandscapeJson);
+elements.downloadLandscapeBtn.addEventListener('click', downloadLandscapeJson);
+elements.downloadPortraitBtn.addEventListener('click', downloadPortraitJson);
+elements.clearBtn.addEventListener('click', clearAll);
+
+setDownloadEnabled(false);
+renderSummary(null);
+</script>
+</body>
+</html>
