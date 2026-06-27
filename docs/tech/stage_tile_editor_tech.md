@@ -191,6 +191,8 @@ Info box 当前提供两个身份校验：
 - `enter`、`exit` 从 tile `2` 和 tile `3` 的当前位置扫描得到。
 - `stars_total`、`dots_total`、`coins_total` 从 tiles 直接统计。
 - `tiles` 保持二维数组结构，外层为 `z` 行，内层为 `x` 列。
+- 点击“导出 JSON”时，编辑器继续把 JSON 写入 `#exportArea`，并同时触发 raw stage JSON 下载。
+- raw stage JSON 默认文件名为 `${id}_raw_stage.json`，例如 `story_004_raw_stage.json`。
 
 如果当前关卡缺少 Enter 或 Exit，导出函数本身不会阻断导出，因此提交正式数据前必须查看 info box 或运行 StageLoader 校验。
 
@@ -250,6 +252,7 @@ localStorage 不应被视为可提交成果。需要留存或评审的内容必�
 - [ ] 兼容旧 JSON：没有顶层 `id`、但有 `meta.name` 时，导入后应能从 `meta.name` 推导出可编辑的 `id/tag`。
 - [ ] 导出一致性：导出的 JSON 顶层 `id` 必须等于编辑器当前解析出的关卡 `id`。
 - [ ] 导出 JSON 时，`meta.name` 为从 `id` 派生的展示名。
+- [ ] 导出 JSON 默认下载文件名使用 `${id}_raw_stage.json`。
 - [ ] Review HTML 默认保存文件名使用 `${id}_tilemap_review.html`。
 - [ ] Review HTML 页面标题或主标题同时显示 `id(name)`。
 - [ ] Info box 同时显示 Story 前缀校验和三位编号校验。
@@ -273,6 +276,7 @@ node -e "const fs=require('fs'); const html=fs.readFileSync('tools/stage_tile_ed
 - [x] 兼容旧 JSON：没有顶层 `id`、但有 `meta.name` 时，导入后应能从 `meta.name` 推导出可编辑的 `id/tag`。PASS
 - [x] 导出一致性：导出的 JSON 顶层 `id` 必须等于编辑器当前解析出的关卡 `id`。PASS
 - [x] 导出 JSON 时，`meta.name` 为从 `id` 派生的展示名。PASS
+- [x] 导出 JSON 默认下载文件名使用 `${id}_raw_stage.json`。PASS
 - [x] Review HTML 默认保存文件名使用 `${id}_tilemap_review.html`。PASS
 - [x] Review HTML 页面标题或主标题同时显示 `id(name)`。PASS
 - [x] Info box 同时显示 Story 前缀校验和三位编号校验。PASS
@@ -285,6 +289,7 @@ node -e "const fs=require('fs'); const html=fs.readFileSync('tools/stage_tile_ed
 - `tools/stage_tile_editor.html` 当前存在 `normalizeStageId`、`makeStageIdFromTag`、`makeStageNameFromId`、`resolveStageIdentity`、`exportJSON`、`importJSON` 和 `saveReviewHTML`。
 - 当前导入流程先读取顶层 `id`，再兼容 `meta.name`。
 - 当前导出 JSON 顶层包含 `id`，`meta.name` 从身份派生。
+- 当前导出 JSON 默认下载 raw stage JSON，文件名使用 `${id}_raw_stage.json`。
 - 当前 Review HTML 默认文件名使用 `id`。
 - 当前仓库没有 `docs/tools/` 目录；按现有文档规则，本文档放入 `docs/tech/`。
 - 2026-06-10 已实现“打开 editor 或新增关卡 tag/tab 时清空导出数据”行为，并通过 Node DOM stub 行为校验。
@@ -337,3 +342,4 @@ node -e "const fs=require('fs'); const html=fs.readFileSync('tools/stage_tile_ed
 | 2026-06-10 | 新增 | 建立 Stage Tile Editor 技术说明，记录 id/tag/name、导入导出、Review HTML 和验收口径。 | `tools/stage_tile_editor.html` 后续维护与关卡制作流程 |
 | 2026-06-10 | 更新 | 记录 11 项用户手动验收 PASS，并追加“打开 editor 或新增关卡 tag/tab 时清空导出数据”的待实现需求。 | 编辑器文档验收记录与后续功能实现范围 |
 | 2026-06-10 | 实现 | 实现打开 editor 和新增关卡 tag/tab 后清空 `#exportArea`，并记录 Node DOM stub 行为校验结果。 | `tools/stage_tile_editor.html` 导出数据显示区 |
+| 2026-06-27 | 更新 | 记录“导出 JSON”同时下载 raw stage JSON，默认文件名为 `${id}_raw_stage.json`，避免导出后手动改名。 | `tools/stage_tile_editor.html` JSON 导出命名 |

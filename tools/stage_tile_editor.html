@@ -305,6 +305,15 @@ function clearExportArea() {
   document.getElementById('exportArea').value = '';
 }
 
+function downloadTextFile(fileName, text, mimeType) {
+  const blob = new Blob([text], { type: mimeType });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 function addStage() {
   const idx = stages.length + 1;
   const id = `story_${String(idx).padStart(3,'0')}`;
@@ -622,7 +631,7 @@ function updateInfo() {
 }
 
 // Export
-function exportJSON() {
+function exportJSON({ download = true } = {}) {
   const s = stages[currentStage];
   let enterPos = {x:0,z:0}, exitPos = {x:0,z:0};
   let dotCount=0, coinCount=0, starCount=0;
@@ -657,11 +666,14 @@ function exportJSON() {
 
   const json = JSON.stringify(data, null, 2);
   document.getElementById('exportArea').value = json;
+  if (download) {
+    downloadTextFile(`${identity.id}_raw_stage.json`, json, 'application/json;charset=utf-8');
+  }
   return json;
 }
 
 function copyJSON() {
-  const json = exportJSON();
+  const json = exportJSON({ download: false });
   navigator.clipboard.writeText(json).then(() => {
     alert('已复制到剪贴板');
   });
@@ -836,12 +848,7 @@ document.body.appendChild(section);
 </body>
 </html>`;
 
-  const blob = new Blob([html], {type: 'text/html'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = fileName;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  downloadTextFile(fileName, html, 'text/html;charset=utf-8');
 }
 
 // LocalStorage persistence
