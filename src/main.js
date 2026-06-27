@@ -24,6 +24,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const orientationMode = urlParams.get("orientation") === ORIENTATION_LANDSCAPE
   ? ORIENTATION_LANDSCAPE
   : "portrait";
+const stageBasePath = orientationMode === ORIENTATION_LANDSCAPE ? "stages_landscape" : "stages";
 
 let currentViewport = {
   width: canvas.clientWidth || window.innerWidth || 1,
@@ -59,6 +60,7 @@ const renderer = new Renderer({
 });
 const stageLoader = new StageLoader({
   gameState,
+  stageBasePath,
   orientation: orientationMode,
   onStageReady: ({ gridMap, counts, stageData }) => {
     collisionSystem.setGridMap(gridMap);

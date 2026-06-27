@@ -264,22 +264,7 @@ export default class StageLoader {
   }
 
   prepareStageData(stageData) {
-    if (this.orientation !== "landscape") {
-      return cloneStageData(stageData);
-    }
-
-    const transformedStageData = rotateStageDataClockwise(stageData);
-    const result = validateStageData(transformedStageData);
-
-    if (!result.valid) {
-      throw new Error(`Landscape transform validation failed: ${result.errors.join("; ")}`);
-    }
-
-    for (const warning of result.warnings) {
-      console.warn(`[StageLoader] ${stageData.id}: landscape ${warning}`);
-    }
-
-    return transformedStageData;
+    return cloneStageData(stageData);
   }
 
   initStage(stageData) {
