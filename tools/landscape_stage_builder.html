@@ -8,9 +8,11 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: #1a1a2e; color: #eee; font-family: 'Segoe UI', 'Microsoft YaHei', monospace; }
 button, input, textarea { font: inherit; }
-.topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #16213e; border-bottom: 1px solid #333; flex-wrap: wrap; }
+.topbar, .transformbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #16213e; border-bottom: 1px solid #333; flex-wrap: wrap; }
+.transformbar { background: #18233a; gap: 8px; }
 .topbar h1 { margin: 0 10px 0 0; font-size: 16px; color: #fff; font-weight: 600; }
-.topbar label { font-size: 13px; color: #aaa; display: flex; align-items: center; gap: 6px; }
+.topbar label, .transformbar label { font-size: 13px; color: #aaa; display: flex; align-items: center; gap: 6px; }
+.transform-label { color: #cfd7ff; font-size: 13px; font-weight: 600; margin-right: 4px; }
 .topbar input[type=text] { width: 150px; background: #222; color: #fff; border: 1px solid #555; padding: 4px 8px; border-radius: 3px; }
 .topbar input[type=file] { max-width: 250px; color: #ddd; font-size: 12px; }
 button { background: #0f3460; color: #fff; border: 1px solid #555; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 13px; min-height: 30px; }
@@ -19,8 +21,13 @@ button.primary { background: #1b6b3a; }
 button.primary:hover:not(:disabled) { background: #2a8b4a; }
 button.secondary { background: #4a3b12; }
 button.secondary:hover:not(:disabled) { background: #6b551a; }
+button.danger { background: #5a2330; }
+button.danger:hover:not(:disabled) { background: #7a3142; }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 .statusbar { padding: 8px 16px; background: #111; border-bottom: 1px solid #333; font-size: 12px; color: #bbb; display: flex; gap: 14px; flex-wrap: wrap; }
+.pipelinebar { padding: 8px 16px; background: #101625; border-bottom: 1px solid #333; font-size: 12px; color: #cfd7ff; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pipelinebar .empty { color: #888; }
+.pipeline-step { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border: 1px solid #3f4a6a; border-radius: 3px; background: #202947; color: #eef2ff; }
 .statusbar .ok { color: #00cc66; }
 .statusbar .err { color: #ff5577; }
 .statusbar .warn { color: #ffcc55; }
@@ -51,12 +58,28 @@ textarea[readonly] { color: #7dffa5; }
 <div class="topbar">
   <h1>Landscape Stage Builder</h1>
   <label>Raw JSON <input type="file" id="fileInput" accept="application/json,.json"></label>
-  <label>Stage ID <input type="text" id="stageIdInput" value="story_004" autocomplete="off" spellcheck="false"></label>
+  <label>Stage ID <input type="text" id="stageIdInput" value="" autocomplete="off" spellcheck="false"></label>
   <button class="primary" id="buildBtn">生成 landscape JSON</button>
-  <button id="copyBtn" disabled>复制 landscape JSON</button>
+  <button id="copyBtn" disabled>复制输出 JSON</button>
   <button class="primary" id="downloadLandscapeBtn" disabled>下载 landscape JSON</button>
   <button class="secondary" id="downloadPortraitBtn" disabled>下载 normalized portrait JSON</button>
   <button id="clearBtn">清空</button>
+</div>
+<div class="transformbar">
+  <span class="transform-label">Variant pipeline</span>
+  <button data-transform-id="rotate90">rotate +90°</button>
+  <button data-transform-id="rotateMinus90">rotate -90°</button>
+  <button data-transform-id="rotate180">rotate 180°</button>
+  <button data-transform-id="mirrorLeftRight">左右翻转</button>
+  <button data-transform-id="mirrorUpDown">上下翻转</button>
+  <button data-transform-id="centerSymmetry">中心对称</button>
+  <button id="undoTransformBtn">撤销上一步</button>
+  <button class="danger" id="clearTransformsBtn">清空步骤</button>
+  <button class="secondary" id="buildVariantBtn">生成 variant JSON</button>
+  <button class="secondary" id="downloadVariantBtn" disabled>下载 variant JSON</button>
+</div>
+<div class="pipelinebar" id="pipelineBox">
+  <span class="empty">当前 pipeline：空。添加步骤后可生成 variant JSON。</span>
 </div>
 <div class="statusbar" id="statusBar">
   <span>等待输入</span>
@@ -68,7 +91,7 @@ textarea[readonly] { color: #7dffa5; }
       <textarea id="inputArea" spellcheck="false"></textarea>
     </section>
     <section class="panel">
-      <h2>Landscape Stage JSON</h2>
+      <h2>Output Stage JSON</h2>
       <textarea id="outputArea" readonly spellcheck="false"></textarea>
     </section>
   </div>
@@ -113,14 +136,30 @@ const REQUIRED_COUNT_TILE_VALUES = Object.freeze([
   TILE_TYPES.Spikes,
 ]);
 
+const DEFAULT_LANDSCAPE_TRANSFORMS = Object.freeze([
+  Object.freeze({ type: 'rotate', degrees: 90 }),
+]);
+
+const TRANSFORM_OPTIONS = Object.freeze([
+  Object.freeze({ id: 'rotate90', label: 'rotate +90°', step: Object.freeze({ type: 'rotate', degrees: 90 }) }),
+  Object.freeze({ id: 'rotateMinus90', label: 'rotate -90°', step: Object.freeze({ type: 'rotate', degrees: -90 }) }),
+  Object.freeze({ id: 'rotate180', label: 'rotate 180°', step: Object.freeze({ type: 'rotate', degrees: 180 }) }),
+  Object.freeze({ id: 'mirrorLeftRight', label: '左右翻转', step: Object.freeze({ type: 'mirror', direction: 'left_right' }) }),
+  Object.freeze({ id: 'mirrorUpDown', label: '上下翻转', step: Object.freeze({ type: 'mirror', direction: 'up_down' }) }),
+  Object.freeze({ id: 'centerSymmetry', label: '中心对称', step: Object.freeze({ type: 'center_symmetry' }) }),
+]);
+
 const state = {
   sourceStageData: null,
-  landscapeStageData: null,
+  outputStageData: null,
   normalizedPortraitText: '',
-  landscapeText: '',
+  outputText: '',
+  outputMode: null,
+  outputFilename: '',
   sourceCounts: null,
   outputCounts: null,
   summary: null,
+  customTransforms: [],
 };
 
 function isPlainObject(value) {
@@ -233,11 +272,113 @@ function isValidPoint(point, width, height) {
   );
 }
 
+function cloneTransformStep(step) {
+  return cloneJson(step);
+}
+
+function getTransformOptionById(transformId) {
+  return TRANSFORM_OPTIONS.find((option) => option.id === transformId) ?? null;
+}
+
+function isSameTransformStep(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function getTransformStepLabel(step) {
+  const option = TRANSFORM_OPTIONS.find((item) => isSameTransformStep(item.step, step));
+  return option?.label ?? JSON.stringify(step);
+}
+
+function validateTransformStep(step) {
+  return TRANSFORM_OPTIONS.some((option) => isSameTransformStep(option.step, step));
+}
+
+function validateTransformSteps(steps) {
+  const errors = [];
+  if (!Array.isArray(steps) || steps.length === 0) {
+    errors.push('custom pipeline 至少需要一个 transform step');
+    return errors;
+  }
+
+  steps.forEach((step, index) => {
+    if (!validateTransformStep(step)) {
+      errors.push(`custom pipeline step ${index + 1} 不受支持：${JSON.stringify(step)}`);
+    }
+  });
+
+  return errors;
+}
+
+function getTransformStepDimensions(width, height, step) {
+  if (step.type === 'rotate' && (step.degrees === 90 || step.degrees === -90)) {
+    return { width: height, height: width };
+  }
+
+  if (
+    (step.type === 'rotate' && step.degrees === 180) ||
+    (step.type === 'mirror' && (step.direction === 'left_right' || step.direction === 'up_down')) ||
+    step.type === 'center_symmetry'
+  ) {
+    return { width, height };
+  }
+
+  throw new Error(`Unsupported transform step: ${JSON.stringify(step)}`);
+}
+
+function calculatePipelineDimensions(width, height, steps) {
+  return steps.reduce((dimensions, step) => {
+    return getTransformStepDimensions(dimensions.width, dimensions.height, step);
+  }, { width, height });
+}
+
+function applyTransformStepToPoint(point, width, height, step) {
+  if (step.type === 'rotate' && step.degrees === 90) {
+    return {
+      x: height - 1 - point.z,
+      z: point.x,
+    };
+  }
+
+  if (step.type === 'rotate' && step.degrees === -90) {
+    return {
+      x: point.z,
+      z: width - 1 - point.x,
+    };
+  }
+
+  if (step.type === 'rotate' && step.degrees === 180) {
+    return {
+      x: width - 1 - point.x,
+      z: height - 1 - point.z,
+    };
+  }
+
+  if (step.type === 'mirror' && step.direction === 'left_right') {
+    return {
+      x: width - 1 - point.x,
+      z: point.z,
+    };
+  }
+
+  if (step.type === 'mirror' && step.direction === 'up_down') {
+    return {
+      x: point.x,
+      z: height - 1 - point.z,
+    };
+  }
+
+  if (step.type === 'center_symmetry') {
+    return {
+      x: width - 1 - point.x,
+      z: height - 1 - point.z,
+    };
+  }
+
+  throw new Error(`Unsupported transform step: ${JSON.stringify(step)}`);
+}
+
 function rotatePointClockwise(point, oldHeight) {
-  return {
-    x: oldHeight - 1 - point.z,
-    z: point.x,
-  };
+  return applyTransformStepToPoint(point, 0, oldHeight, DEFAULT_LANDSCAPE_TRANSFORMS[0]);
 }
 
 function createEmptyCounts() {
@@ -327,41 +468,67 @@ function validateStageData(stageData, label) {
   return errors;
 }
 
-function rotateStageDataClockwise(stageData, outputStageId) {
-  const source = cloneJson(stageData);
-  const oldWidth = source.width;
-  const oldHeight = source.height;
-  const rotatedWidth = oldHeight;
-  const rotatedHeight = oldWidth;
-  const rotatedTiles = Array.from(
-    { length: rotatedHeight },
-    () => Array.from({ length: rotatedWidth }, () => TILE_TYPES.Empty),
+function applyTransformStepToStage(stageData, step) {
+  const width = stageData.width;
+  const height = stageData.height;
+  const nextDimensions = getTransformStepDimensions(width, height, step);
+  const transformedTiles = Array.from(
+    { length: nextDimensions.height },
+    () => Array.from({ length: nextDimensions.width }, () => TILE_TYPES.Empty),
   );
 
-  for (let z = 0; z < oldHeight; z += 1) {
-    for (let x = 0; x < oldWidth; x += 1) {
-      const rotatedPoint = rotatePointClockwise({ x, z }, oldHeight);
-      rotatedTiles[rotatedPoint.z][rotatedPoint.x] = source.tiles[z][x];
+  for (let z = 0; z < height; z += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const transformedPoint = applyTransformStepToPoint({ x, z }, width, height, step);
+      transformedTiles[transformedPoint.z][transformedPoint.x] = stageData.tiles[z][x];
     }
   }
 
   return {
-    ...source,
-    id: outputStageId,
-    width: rotatedWidth,
-    height: rotatedHeight,
-    enter: rotatePointClockwise(source.enter, oldHeight),
-    exit: rotatePointClockwise(source.exit, oldHeight),
-    tiles: rotatedTiles,
-    meta: {
-      ...(source.meta ?? {}),
-      orientation: 'landscape',
-      transform: 'rotate90_clockwise',
-      sourceStageId: source.id ?? outputStageId,
-    },
+    ...stageData,
+    width: nextDimensions.width,
+    height: nextDimensions.height,
+    enter: applyTransformStepToPoint(stageData.enter, width, height, step),
+    exit: applyTransformStepToPoint(stageData.exit, width, height, step),
+    tiles: transformedTiles,
   };
 }
 
+function transformStageData(stageData, outputStageId, steps, options) {
+  const source = cloneJson(stageData);
+  let current = {
+    ...source,
+    id: outputStageId,
+  };
+
+  for (const step of steps) {
+    current = applyTransformStepToStage(current, step);
+  }
+
+  const meta = {
+    ...(source.meta ?? {}),
+    orientation: 'landscape',
+    transform: options.transformName,
+    sourceStageId: source.id ?? outputStageId,
+  };
+
+  if (options.includeTransforms) {
+    meta.transforms = steps.map(cloneTransformStep);
+  }
+
+  return {
+    ...current,
+    id: outputStageId,
+    meta,
+  };
+}
+
+function rotateStageDataClockwise(stageData, outputStageId) {
+  return transformStageData(stageData, outputStageId, DEFAULT_LANDSCAPE_TRANSFORMS, {
+    transformName: 'rotate90_clockwise',
+    includeTransforms: false,
+  });
+}
 function normalizePortraitStage(stageData, outputStageId) {
   const source = cloneJson(stageData);
   return {
@@ -389,21 +556,30 @@ function compareRequiredCounts(sourceCounts, outputCounts) {
   return mismatches;
 }
 
-function createSummary(sourceStageData, outputStageData) {
+function createSummary(sourceStageData, outputStageData, options) {
   const sourceCounts = countTiles(sourceStageData);
   const outputCounts = countTiles(outputStageData);
   const countMismatches = compareRequiredCounts(sourceCounts, outputCounts);
+  const transformLines = [
+    `transform mode: ${options.mode === 'variant' ? 'custom_pipeline' : 'official rotate90_clockwise'}`,
+  ];
+
+  if (options.mode === 'variant') {
+    transformLines.push(`pipeline steps: ${options.steps.map(getTransformStepLabel).join(' -> ')}`);
+  }
 
   return {
     sourceCounts,
     outputCounts,
     countMismatches,
+    expectedDimensions: options.expectedDimensions,
     lines: [
       `source id: ${sourceStageData.id ?? '(missing)'}`,
       `output id: ${outputStageData.id ?? '(missing)'}`,
+      ...transformLines,
       `source size: ${sourceStageData.width}x${sourceStageData.height}`,
       `output size: ${outputStageData.width}x${outputStageData.height}`,
-      `expected output size: ${sourceStageData.height}x${sourceStageData.width}`,
+      `expected output size: ${options.expectedDimensions.width}x${options.expectedDimensions.height}`,
       `output rows: ${Array.isArray(outputStageData.tiles) ? outputStageData.tiles.length : '(missing)'}`,
       `output row widths: ${getRowWidths(outputStageData).join(', ') || '(missing)'}`,
       `source enter: ${stringifyValue(sourceStageData.enter ?? null)}`,
@@ -414,7 +590,6 @@ function createSummary(sourceStageData, outputStageData) {
     ],
   };
 }
-
 function parseStageJson(text) {
   try {
     return { stageData: JSON.parse(text), errors: [] };
@@ -432,16 +607,22 @@ const elements = {
   fileInput: document.getElementById('fileInput'),
   stageIdInput: document.getElementById('stageIdInput'),
   buildBtn: document.getElementById('buildBtn'),
+  buildVariantBtn: document.getElementById('buildVariantBtn'),
   copyBtn: document.getElementById('copyBtn'),
   downloadLandscapeBtn: document.getElementById('downloadLandscapeBtn'),
+  downloadVariantBtn: document.getElementById('downloadVariantBtn'),
   downloadPortraitBtn: document.getElementById('downloadPortraitBtn'),
   clearBtn: document.getElementById('clearBtn'),
+  undoTransformBtn: document.getElementById('undoTransformBtn'),
+  clearTransformsBtn: document.getElementById('clearTransformsBtn'),
   inputArea: document.getElementById('inputArea'),
   outputArea: document.getElementById('outputArea'),
   statusBar: document.getElementById('statusBar'),
+  pipelineBox: document.getElementById('pipelineBox'),
   messageBox: document.getElementById('messageBox'),
   summaryBox: document.getElementById('summaryBox'),
   countsBox: document.getElementById('countsBox'),
+  transformButtons: [...document.querySelectorAll('[data-transform-id]')],
 };
 
 function setStatus(message, kind = '') {
@@ -472,8 +653,21 @@ function setMessages(errors = [], warnings = [], notes = []) {
 
 function setDownloadEnabled(enabled) {
   elements.copyBtn.disabled = !enabled;
-  elements.downloadLandscapeBtn.disabled = !enabled;
+  elements.downloadLandscapeBtn.disabled = !(enabled && state.outputMode === 'official');
+  elements.downloadVariantBtn.disabled = !(enabled && state.outputMode === 'variant');
   elements.downloadPortraitBtn.disabled = !enabled;
+}
+
+function renderPipeline() {
+  if (state.customTransforms.length === 0) {
+    elements.pipelineBox.innerHTML = '<span class="empty">当前 pipeline：空。添加步骤后可生成 variant JSON。</span>';
+    return;
+  }
+
+  const steps = state.customTransforms.map((step, index) => {
+    return `<span class="pipeline-step">${index + 1}. ${escapeHtml(getTransformStepLabel(step))}</span>`;
+  });
+  elements.pipelineBox.innerHTML = `<span>当前 pipeline：</span>${steps.join('')}`;
 }
 
 function renderSummary(summary) {
@@ -498,9 +692,11 @@ function renderSummary(summary) {
 
 function resetOutput() {
   state.sourceStageData = null;
-  state.landscapeStageData = null;
+  state.outputStageData = null;
   state.normalizedPortraitText = '';
-  state.landscapeText = '';
+  state.outputText = '';
+  state.outputMode = null;
+  state.outputFilename = '';
   state.sourceCounts = null;
   state.outputCounts = null;
   state.summary = null;
@@ -521,7 +717,7 @@ function updateStageIdFromInput() {
   }
 }
 
-function buildLandscapeStage() {
+function buildOutputStage(options) {
   resetOutput();
 
   const text = elements.inputArea.value.trim();
@@ -533,6 +729,10 @@ function buildLandscapeStage() {
     setMessages(allErrors);
     setStatus('输入为空', 'err');
     return;
+  }
+
+  if (options.mode === 'variant') {
+    allErrors.push(...validateTransformSteps(options.steps));
   }
 
   const parsed = parseStageJson(text);
@@ -557,16 +757,24 @@ function buildLandscapeStage() {
 
   const sourceStageData = parsed.stageData;
   const normalizedPortraitStage = normalizePortraitStage(sourceStageData, outputStageId);
-  const landscapeStageData = rotateStageDataClockwise(sourceStageData, outputStageId);
-  const outputErrors = validateStageData(landscapeStageData, 'output');
-  const summary = createSummary(sourceStageData, landscapeStageData);
+  const outputStageData = transformStageData(sourceStageData, outputStageId, options.steps, {
+    transformName: options.transformName,
+    includeTransforms: options.includeTransforms,
+  });
+  const outputErrors = validateStageData(outputStageData, 'output');
+  const expectedDimensions = calculatePipelineDimensions(sourceStageData.width, sourceStageData.height, options.steps);
+  const summary = createSummary(sourceStageData, outputStageData, {
+    mode: options.mode,
+    steps: options.steps,
+    expectedDimensions,
+  });
 
-  if (landscapeStageData.width !== sourceStageData.height) {
-    outputErrors.push(`output: width (${landscapeStageData.width}) != input.height (${sourceStageData.height})`);
+  if (outputStageData.width !== expectedDimensions.width) {
+    outputErrors.push(`output: width (${outputStageData.width}) != expected width (${expectedDimensions.width})`);
   }
 
-  if (landscapeStageData.height !== sourceStageData.width) {
-    outputErrors.push(`output: height (${landscapeStageData.height}) != input.width (${sourceStageData.width})`);
+  if (outputStageData.height !== expectedDimensions.height) {
+    outputErrors.push(`output: height (${outputStageData.height}) != expected height (${expectedDimensions.height})`);
   }
 
   for (const mismatch of summary.countMismatches) {
@@ -581,22 +789,47 @@ function buildLandscapeStage() {
   }
 
   state.sourceStageData = sourceStageData;
-  state.landscapeStageData = landscapeStageData;
+  state.outputStageData = outputStageData;
   state.normalizedPortraitText = stringifyStage(normalizedPortraitStage);
-  state.landscapeText = stringifyStage(landscapeStageData);
+  state.outputText = stringifyStage(outputStageData);
+  state.outputMode = options.mode;
+  state.outputFilename = options.filename;
   state.summary = summary;
 
-  elements.outputArea.value = state.landscapeText;
+  elements.outputArea.value = state.outputText;
   renderSummary(summary);
   setDownloadEnabled(true);
   setMessages([], allWarnings, [
-    'landscape JSON 已生成。',
+    `${options.outputLabel} 已生成。`,
     `输出 id：${outputStageId}`,
-    `下载文件名：${outputStageId}.json`,
+    `下载文件名：${options.filename}`,
   ]);
-  setStatus('生成成功，count check: PASS', 'ok');
+  setStatus(`生成成功，count check: PASS，mode: ${options.mode === 'variant' ? 'custom_pipeline' : 'official rotate90_clockwise'}`, 'ok');
 }
 
+function buildLandscapeStage() {
+  const stageId = normalizeStageId(elements.stageIdInput.value);
+  buildOutputStage({
+    mode: 'official',
+    steps: DEFAULT_LANDSCAPE_TRANSFORMS.map(cloneTransformStep),
+    transformName: 'rotate90_clockwise',
+    includeTransforms: false,
+    filename: `${stageId}.json`,
+    outputLabel: 'landscape JSON',
+  });
+}
+
+function buildVariantStage() {
+  const stageId = normalizeStageId(elements.stageIdInput.value);
+  buildOutputStage({
+    mode: 'variant',
+    steps: state.customTransforms.map(cloneTransformStep),
+    transformName: 'custom_pipeline',
+    includeTransforms: true,
+    filename: `${stageId}_custom_transform.json`,
+    outputLabel: 'variant JSON',
+  });
+}
 function downloadTextFile(filename, text, mimeType = 'application/json') {
   const blob = new Blob([text], { type: `${mimeType};charset=utf-8` });
   const url = URL.createObjectURL(blob);
@@ -609,28 +842,35 @@ function downloadTextFile(filename, text, mimeType = 'application/json') {
   URL.revokeObjectURL(url);
 }
 
-async function copyLandscapeJson() {
-  if (!state.landscapeText) {
+async function copyOutputJson() {
+  if (!state.outputText) {
     return;
   }
 
   try {
-    await navigator.clipboard.writeText(state.landscapeText);
-    setStatus('已复制 landscape JSON', 'ok');
+    await navigator.clipboard.writeText(state.outputText);
+    setStatus('已复制输出 JSON', 'ok');
   } catch (error) {
     elements.outputArea.select();
     document.execCommand('copy');
-    setStatus('已尝试使用 fallback 复制 landscape JSON', 'warn');
+    setStatus('已尝试使用 fallback 复制输出 JSON', 'warn');
   }
 }
 
 function downloadLandscapeJson() {
-  if (!state.landscapeText) {
+  if (!state.outputText || state.outputMode !== 'official') {
     return;
   }
-  const stageId = normalizeStageId(elements.stageIdInput.value);
-  downloadTextFile(`${stageId}.json`, state.landscapeText);
-  setStatus(`已触发下载：${stageId}.json`, 'ok');
+  downloadTextFile(state.outputFilename, state.outputText);
+  setStatus(`已触发下载：${state.outputFilename}`, 'ok');
+}
+
+function downloadVariantJson() {
+  if (!state.outputText || state.outputMode !== 'variant') {
+    return;
+  }
+  downloadTextFile(state.outputFilename, state.outputText);
+  setStatus(`已触发下载：${state.outputFilename}`, 'ok');
 }
 
 function downloadPortraitJson() {
@@ -644,18 +884,62 @@ function downloadPortraitJson() {
 
 function clearAll() {
   elements.fileInput.value = '';
-  elements.stageIdInput.value = 'story_004';
+  elements.stageIdInput.value = '';
   elements.inputArea.value = '';
+  state.customTransforms = [];
+  renderPipeline();
   resetOutput();
-  setMessages([], [], ['已清空输入与输出。']);
+  setMessages([], [], ['已清空输入、输出与 variant pipeline。']);
   setStatus('等待输入');
 }
 
 function handleInputChanged() {
   resetOutput();
   updateStageIdFromInput();
-  setMessages([], [], ['输入已更新，请生成 landscape JSON。']);
+  setMessages([], [], ['输入已更新，请生成 landscape JSON 或 variant JSON。']);
   setStatus('输入已更新');
+}
+function addTransformStep(transformId) {
+  const option = getTransformOptionById(transformId);
+  if (!option) {
+    setMessages([`未知 transform：${transformId}`]);
+    setStatus('transform 添加失败', 'err');
+    return;
+  }
+
+  state.customTransforms.push(cloneTransformStep(option.step));
+  resetOutput();
+  renderPipeline();
+  setMessages([], [], [`已添加 transform step：${option.label}`]);
+  setStatus(`已添加 transform step：${option.label}`, 'ok');
+}
+
+function undoTransformStep() {
+  if (state.customTransforms.length === 0) {
+    setMessages([], [], ['当前 pipeline 已为空。']);
+    setStatus('pipeline 为空', 'warn');
+    return;
+  }
+
+  const removed = state.customTransforms.pop();
+  resetOutput();
+  renderPipeline();
+  setMessages([], [], [`已撤销 transform step：${getTransformStepLabel(removed)}`]);
+  setStatus('已撤销上一步', 'ok');
+}
+
+function clearTransformSteps() {
+  if (state.customTransforms.length === 0) {
+    setMessages([], [], ['当前 pipeline 已为空。']);
+    setStatus('pipeline 为空', 'warn');
+    return;
+  }
+
+  state.customTransforms = [];
+  resetOutput();
+  renderPipeline();
+  setMessages([], [], ['已清空 custom transform pipeline。']);
+  setStatus('已清空 custom pipeline', 'ok');
 }
 
 elements.fileInput.addEventListener('change', () => {
@@ -680,13 +964,21 @@ elements.fileInput.addEventListener('change', () => {
 elements.inputArea.addEventListener('input', handleInputChanged);
 elements.stageIdInput.addEventListener('input', resetOutput);
 elements.buildBtn.addEventListener('click', buildLandscapeStage);
-elements.copyBtn.addEventListener('click', copyLandscapeJson);
+elements.buildVariantBtn.addEventListener('click', buildVariantStage);
+elements.copyBtn.addEventListener('click', copyOutputJson);
 elements.downloadLandscapeBtn.addEventListener('click', downloadLandscapeJson);
+elements.downloadVariantBtn.addEventListener('click', downloadVariantJson);
 elements.downloadPortraitBtn.addEventListener('click', downloadPortraitJson);
 elements.clearBtn.addEventListener('click', clearAll);
+elements.undoTransformBtn.addEventListener('click', undoTransformStep);
+elements.clearTransformsBtn.addEventListener('click', clearTransformSteps);
+elements.transformButtons.forEach((button) => {
+  button.addEventListener('click', () => addTransformStep(button.dataset.transformId));
+});
 
 setDownloadEnabled(false);
 renderSummary(null);
+renderPipeline();
 </script>
 </body>
 </html>

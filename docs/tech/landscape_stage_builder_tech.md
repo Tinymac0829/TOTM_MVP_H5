@@ -1,7 +1,7 @@
 # Landscape Stage Builder 技术说明
 
-**状态**：设计中，当前仅作为 GUI 工具实现前技术说明
-**最后更新**：2026-06-25
+**状态**：第一版已实现，custom pipeline 扩展设计已确认
+**最后更新**：2026-06-28
 **文档层级**：L2 轻量技术说明
 **计划覆盖文件**：`tools/landscape_stage_builder.html`
 **关联文档**：`docs/features/tool01_landscape_stage_json_translator_card.md`、`docs/tech/convert_stage_json_landscape_tech.md`、`docs/tech/stage_tile_editor_tech.md`、`docs/tech/format_stage_json_tech.md`
@@ -474,8 +474,114 @@ node -e "const fs=require('fs'); const html=fs.readFileSync('tools/landscape_sta
 5. 不得把 GUI 下载结果自动视为已接入 runtime；runtime 接入仍需要 StageLoader migration 设计和验收。
 6. 不得把 `PERF-01 = SKIPPED` 改写成性能通过。
 
-## 16. 变更记录
+## 16. Custom Pipeline 扩展设计
+
+在保留默认正式 landscape 输出流程的基础上，工具支持额外的 custom/variant transform 下载流程，用于少量需要人工调整变换方案的关卡。
+
+### 16.1 默认正式流程不变
+
+“生成 landscape JSON”仍然是正式生产路径：
+
+- 固定执行顺时针 90 度转换。
+- 输出文件名仍为 `${stageId}.json`。
+- metadata 仍为 `orientation: "landscape"`、`transform: "rotate90_clockwise"`、`sourceStageId`。
+- 默认正式输出不写入 `transforms` 数组，避免污染第一版正式格式。
+
+默认正式流程可视为内部固定 pipeline：
+
+```json
+[
+  { "type": "rotate", "degrees": 90 }
+]
+```
+
+### 16.2 custom/variant 输出
+
+custom 输出由用户在界面中添加一个或多个 transform step 后生成。它默认是人工实验下载，不自动写入仓库，也不自动覆盖正式 `stages_landscape/story_###.json`。
+
+custom 输出规则：
+
+- 点击“生成 variant JSON”后，工具按当前 step 队列顺序执行 transform pipeline。
+- 输出顶层 `id` 仍使用用户确认的 stage id，例如 `story_004`。
+- 下载文件名默认为 `${stageId}_custom_transform.json`，例如 `story_004_custom_transform.json`，避免误覆盖正式 JSON。
+- 输出 metadata 必须记录实际 pipeline：
+
+```json
+{
+  "orientation": "landscape",
+  "transform": "custom_pipeline",
+  "sourceStageId": "story_004",
+  "transforms": [
+    { "type": "rotate", "degrees": 90 },
+    { "type": "mirror", "direction": "left_right" },
+    { "type": "rotate", "degrees": -90 }
+  ]
+}
+```
+
+若后续人工确认 custom 结果可作为正式 landscape 配置使用，可以把同一份 JSON 另存为 `stages_landscape/story_###.json`。正式使用时可以保留 `transform: "custom_pipeline"` 和 `transforms`，不应伪装成 `rotate90_clockwise`。
+
+### 16.3 支持的 transform step
+
+UI 标签必须优先使用“左右翻转 / 上下翻转”等中文，避免把内部坐标轴暴露为容易误解的 X/Y 轴选项。
+
+| UI 标签 | Metadata | 尺寸变化 | 坐标规则 |
+| --- | --- | --- | --- |
+| rotate +90° | `{ "type": "rotate", "degrees": 90 }` | `newWidth = oldHeight`, `newHeight = oldWidth` | `newX = oldHeight - 1 - oldZ`, `newZ = oldX` |
+| rotate -90° | `{ "type": "rotate", "degrees": -90 }` | `newWidth = oldHeight`, `newHeight = oldWidth` | `newX = oldZ`, `newZ = oldWidth - 1 - oldX` |
+| rotate 180° | `{ "type": "rotate", "degrees": 180 }` | `newWidth = oldWidth`, `newHeight = oldHeight` | `newX = oldWidth - 1 - oldX`, `newZ = oldHeight - 1 - oldZ` |
+| 左右翻转 | `{ "type": "mirror", "direction": "left_right" }` | 尺寸不变 | `newX = oldWidth - 1 - oldX`, `newZ = oldZ` |
+| 上下翻转 | `{ "type": "mirror", "direction": "up_down" }` | 尺寸不变 | `newX = oldX`, `newZ = oldHeight - 1 - oldZ` |
+| 中心对称 | `{ "type": "center_symmetry" }` | 尺寸不变 | `newX = oldWidth - 1 - oldX`, `newZ = oldHeight - 1 - oldZ` |
+
+`rotate 180°` 与“中心对称”当前坐标效果相同，但 metadata 保留用户选择的语义，便于回溯关卡作者意图。
+
+### 16.4 UI 行为
+
+custom UI 采用“添加步骤队列”方式：
+
+- 每个 transform 按钮向当前 pipeline 追加一个 step。
+- 页面显示当前 pipeline 的中文 step 列表。
+- “撤销上一步”只删除最后一个 custom step。
+- “清空步骤”只清空 custom pipeline。
+- “生成 variant JSON”必须要求至少存在一个 step。
+- custom pipeline 的编辑不影响默认“生成 landscape JSON”正式流程。
+
+### 16.5 custom 校验与摘要
+
+custom 输出必须复用输入校验、输出 shape 校验、Enter/Exit 指向校验和关键 tile 计数校验。
+
+custom 输出额外校验：
+
+- 每个 step 必须属于本节定义的操作。
+- 输出尺寸必须等于 pipeline 逐步计算后的尺寸。
+- `meta.transforms` 必须与 UI 队列顺序一致。
+- 摘要必须显示 transform mode、pipeline step、source/output size、expected output size、enter/exit 和关键 tile 计数。
+
+### 16.6 实现建议
+
+为避免重复逻辑，默认正式流程和 custom 流程应复用同一套 pipeline 函数：
+
+- `applyTransformStepToPoint(point, width, height, step)`：按单个 step 转换坐标。
+- `getTransformStepDimensions(width, height, step)`：计算单个 step 后的尺寸。
+- `transformStageData(stageData, outputStageId, steps, options)`：执行默认或 custom pipeline。
+
+`rotateStageDataClockwise()` 可以作为默认正式流程的薄封装继续存在，内部调用统一 pipeline。
+
+### 16.7 扩展验收项
+
+除第一版验收清单外，custom pipeline 扩展还应检查：
+
+- [ ] 添加 custom transform step 后，当前 pipeline 列表显示中文步骤。
+- [ ] “撤销上一步”和“清空步骤”只影响 custom pipeline，不影响默认正式输出。
+- [ ] 点击“生成 variant JSON”后，输出 metadata 为 `orientation: "landscape"`、`transform: "custom_pipeline"`，并包含 `transforms` 数组。
+- [ ] custom 输出文件名为 `${stageId}_custom_transform.json`。
+- [ ] rotate -90°、rotate 180°、左右翻转、上下翻转、中心对称均能保持 Enter、Exit、Dot、Coin、Star、Spikes 计数一致。
+- [ ] custom pipeline 输出摘要显示 transform mode、pipeline step、实际尺寸和期望尺寸。
+
+## 17. 变更记录
 
 | 日期 | 变更类型 | 内容 | 影响范围 |
 | --- | --- | --- | --- |
+| 2026-06-28 | 扩展 | 确认 Landscape Stage Builder custom transform pipeline 设计，补充多步变换、metadata、UI 队列、下载命名、正式化规则和验收项。 | `docs/tech/landscape_stage_builder_tech.md`、后续 `tools/landscape_stage_builder.html` |
 | 2026-06-25 | 新增 | 建立 Landscape Stage Builder GUI 工具实现前技术说明，明确下载模式、正式 id 默认策略、转换校验规则、UI 流程和与现有工具边界。 | 后续 `tools/landscape_stage_builder.html` 实现基线 |
