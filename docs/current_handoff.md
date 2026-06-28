@@ -1,9 +1,9 @@
 # TOTM MVP Current Handoff
 
-**Date**: 2026-06-25
-**Workspace**: `D:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev`
+**Date**: 2026-06-28
+**Workspace**: `E:\GameDev\H5\Project\TOTM_MVP\TOTM_MVP_Dev`
 **Branch**: `codex/landscape`
-**Latest stable baseline before this handoff update**: `497d758 feat: add landscape MVP adaptation mode`
+**Latest stable baseline before this handoff update**: `4ebd468 tools: add raw stage export filename`
 
 ## Current State
 
@@ -13,30 +13,14 @@
 - `PERF-01` is `SKIPPED`; this is not a performance PASS.
 - `REL-01` is `DONE`.
 - `v0.3.1` is `DONE`.
-- `LAND-01` is `DONE` as a post-freeze landscape adaptation experiment on branch `codex/landscape`.
+- `LAND-01`, `TOOL-01`, and `LAND-02` are `DONE` on branch `codex/landscape`.
 - Full DebugPanel remains not implemented; only the OPS-01 `?debugInput=1` input log exists in `src/TouchInput.js`.
 
 ## Current Runtime Flow
 
 - Default startup without URL parameters enters the portrait menu for Story 1.
-- `src/main.js` allows these stage ids:
-  - `story_001`
-  - `story_002`
-  - `story_003`
-  - `eng04_death_validation`
-- `StageLoader.STAGE_ORDER` is `story_001 -> story_002 -> story_003`.
-- `GameState.getNextStageId()` cycles `story_001 -> story_002 -> story_003 -> story_001`.
 - Direct portrait stage startup is available with `?stage=story_001`, `?stage=story_002`, and `?stage=story_003`.
-
-## LAND-01 Landscape Mode
-
-Landscape mode is enabled with:
-
-```text
-?orientation=landscape
-```
-
-Direct landscape stage entries:
+- Direct landscape stage startup is available with:
 
 ```text
 ?orientation=landscape&stage=story_001
@@ -44,96 +28,111 @@ Direct landscape stage entries:
 ?orientation=landscape&stage=story_003
 ```
 
-Implemented behavior:
+- `src/main.js` allows these stage ids:
+  - `story_001`
+  - `story_002`
+  - `story_003`
+  - `eng04_death_validation`
+- `StageLoader.STAGE_ORDER` is `story_001 -> story_002 -> story_003`.
+- `GameState.getNextStageId()` cycles `story_001 -> story_002 -> story_003 -> story_001`.
 
-- `StageLoader` applies a clockwise 90-degree runtime transform in landscape mode.
-- Original `stages/story_001.json`, `stages/story_002.json`, and `stages/story_003.json` remain unchanged.
-- `Renderer` uses a landscape-specific viewport scale path.
-- Landscape camera keeps the player centered using the same focus rule as portrait mode.
-- Input remains screen-relative; no direction remapping is applied.
-- Landscape touch input uses horizontal-priority axis tie-break when `absDx === absDy`; portrait keeps the original vertical-priority tie-break.
-- Story progression remains `story_001 -> story_002 -> story_003 -> story_001`.
+## LAND-02 Static Landscape Runtime
 
-LAND-01 validation:
+Runtime stage data is now split by orientation:
 
-- Changed runtime modules passed `node --check`.
+- Portrait loads `stages/story_*.json`.
+- Landscape loads `stages_landscape/story_*.json`.
+- Runtime stage ids remain formal ids such as `story_001`, `story_002`, `story_003`.
+- `StageLoader` no longer applies runtime rotation to formal static landscape JSON.
+- Static landscape data currently exists for Story 1-3:
+  - `stages_landscape/story_001.json`
+  - `stages_landscape/story_002.json`
+  - `stages_landscape/story_003.json`
+
+## Landscape Stage JSON Toolchain
+
+TOOL-01 is documented through one consolidated technical entry:
+
+```text
+docs/tech/landscape_stage_json_toolchain_tech.md
+```
+
+Compatibility redirect notes remain at:
+
+```text
+docs/tech/convert_stage_json_landscape_tech.md
+docs/tech/landscape_stage_builder_tech.md
+```
+
+Toolchain files:
+
+- `tools/convert_stage_json_landscape.mjs`: CLI translator and automation/regression entry.
+- `tools/landscape_stage_builder.html`: Browser Builder for manual single-stage generation and downloads.
+
+Important naming rules:
+
+- CLI default remains review/export derivative id: `<sourceId>_landscape`.
+- CLI formal runtime mode uses `--id story_###`.
+- Browser Builder default uses the user-confirmed formal id, for example `story_004`.
+- Browser Builder custom/variant output uses `transform: "custom_pipeline"` with a `transforms` array and downloads `${stageId}_custom_transform.json` by default.
+
+## Touch Input Baseline
+
+- Touch input remains screen-relative; no direction remapping is applied.
+- Portrait keeps vertical-priority tie-break when `absDx === absDy`.
+- Landscape keeps horizontal-priority tie-break when `absDx === absDy`.
+- Valid-DPI swipe threshold remains `dpi * 0.16`.
+- Invalid-DPI fallback threshold now uses Canvas short side `0.03`, not Canvas width `0.03`.
+- `SWIPE_TIME_SECONDS = 1.0` and active touch identity binding remain unchanged.
+- Landscape diagonal axis-intent risk is documented but not implemented:
+
+```text
+docs/tech/landscape_touch_axis_intent_note.md
+```
+
+The axis-intent note records the 30°-60° diagonal thumb-swipe risk and possible future approaches such as dominance ratio or a short intent window. Current behavior is unchanged.
+
+## Validation Baseline
+
+LAND-02 validation already recorded:
+
+- `node --check src/StageLoader.js` passed.
+- `node --check src/main.js` passed.
+- `node --check tools/convert_stage_json_landscape.mjs` passed.
 - `git diff --check` passed.
-- Stage transform validation confirmed valid transformed metadata and unchanged tile counts.
-- Headless Chrome screenshot checks at `1280x720` confirmed centered player position for all three landscape direct entries.
-- Additional Story 1 post-movement screenshot confirmed the player remains centered after movement.
-- Desktop browser manual acceptance was completed by the user.
-- Mobile browser manual acceptance was completed by the user after GitHub Pages deployment from the published landscape branch.
+- Story 1-3 `stages_landscape/story_*.json` id, dimensions, Enter/Exit, meta, and required tile counts passed.
+- Node fake-fetch runtime checks confirmed portrait loads `stages/` and landscape loads `stages_landscape/` without double rotation.
 
-## Landscape Transform Baseline
+Recent local validation for input/toolchain documentation updates:
 
-| Stage | Portrait Size | Landscape Size | Landscape Enter | Landscape Exit |
-| --- | --- | --- | --- | --- |
-| `story_001` | `17x30` | `30x17` | `(1, 12)` | `(28, 10)` |
-| `story_002` | `21x22` | `22x21` | `(17, 11)` | `(1, 1)` |
-| `story_003` | `24x17` | `17x24` | `(11, 4)` | `(15, 19)` |
+- `node --check src/TouchInput.js` passed.
+- `git diff --check` passed.
+- Targeted Node threshold check confirmed invalid-DPI fallback uses the short side and valid-DPI path remains `dpi * 0.16`.
+- Browser Builder script syntax and transform logic checks passed during custom pipeline implementation.
 
-## Story Data Baseline
+Browser/mobile validation still recommended before final human closeout:
 
-`stages/story_001.json`:
+- phone browser portrait smoke.
+- phone browser landscape direct entries for Story 1-3.
+- Stage Tile Editor export naming in a real browser download flow.
+- Browser Builder custom pipeline download flow in a real browser.
 
-- size: `17x30`
-- Enter: `(12, 28)`
-- Exit: `(10, 1)`
-- Dot: `71`
-- Coin: `4`
-- Star: `3`
-- Spikes: `0`
+## Stable References
 
-`stages/story_002.json`:
-
-- size: `21x22`
-- Enter: `(11, 4)`
-- Exit: `(1, 20)`
-- Dot: `64`
-- Coin: `3`
-- Star: `3`
-- Spikes: `10`
-
-`stages/story_003.json`:
-
-- size: `24x17`
-- Enter: `(4, 5)`
-- Exit: `(19, 1)`
-- Dot: `77`
-- Coin: `3`
-- Star: `3`
-- Spikes: `5`
-
-## Closeout Documents
-
-- `docs/features/land01_landscape_mvp_adaptation_card.md`
-- `docs/features/land01_landscape_mvp_adaptation_closeout.md`
-- `docs/features/rel01_mvp_freeze_candidate_closeout.md`
-- `docs/features/qa03_story1_3_regression_closeout.md`
-- `docs/features/qa02_story1_2_regression_closeout.md`
-- `docs/features/qa01_story1_feel_validation_closeout.md`
-- `docs/features/lvl03_story3_card.md`
+- `docs/features/land02_static_landscape_stage_runtime_card.md`
+- `docs/features/tool01_landscape_stage_json_translator_card.md`
+- `docs/tech/landscape_stage_json_toolchain_tech.md`
+- `docs/tech/eng03_input_foundation_tech.md`
+- `docs/tech/landscape_touch_axis_intent_note.md`
 - `docs/mvp_execution_plan.md`
 - `docs/mvp_execution_plan_zh.md`
 - `docs/worktree_registry.md`
 - `docs/worktree_registry_zh.md`
 
-## Known Limits
+## Do Not Change Without Explicit Approval
 
-- LAND-01 does not change PERF-01. The dedicated mid-range Android FPS pass was not run and must not be represented as passed.
-- LAND-01 does not replace the original portrait MVP freeze candidate route.
-- Landscape HUD spacing is acceptable for the completed validation pass, but future polish may still improve safe-area spacing and visual balance.
-- QA-03 was a local browser automation closeout, not a fresh Android-device or GitHub Pages manual replay.
-- Story 2 and Story 3 full-collection completion was not required for QA-03; the pass targeted stage load/start/fail/clear/progression stability across Story 1-3.
-- `tools/stage_tile_editor.html` and `tools/format_stage_json.mjs` remain tracked support tools for stage authoring and formatting.
-- `handoff.local.md`, `lessons.md`, and `tmp/` are local-only ignored files and should not be committed.
-- LAND-01 screenshot artifacts under `tmp/landscape_screens/` are local-only validation artifacts and should not be committed.
-- LAND-01 still uses runtime rotation; a future support tool should add a reproducible portrait-to-landscape stage JSON translator script if static landscape JSON review/export becomes needed.
-
-## Next Major Action
-
-- Commit and push the documentation sync for LAND-01 closeout.
-- Keep the original portrait MVP freeze candidate status unchanged unless scope is explicitly reopened.
-- If further landscape work continues, treat it as a follow-up task focused on bug fixes, HUD safe-area polish, deployment compatibility, or explicitly approved new scope.
-- Track a follow-up support-tool task for portrait-to-landscape stage JSON translation before committing to static landscape stage files.
-- If GitHub Pages source is temporarily switched to `codex/landscape` for mobile validation, switch it back according to the intended release branch policy after testing.
+- Do not alter `PERF-01 = SKIPPED`.
+- Do not rewrite the original portrait MVP freeze candidate conclusion.
+- Do not overwrite `stages/story_*.json`.
+- Do not introduce `_landscape` as a formal runtime stage id.
+- Do not apply custom axis-intent or touch dominance changes without separate real-device validation and approval.

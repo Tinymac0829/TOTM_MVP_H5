@@ -43,6 +43,10 @@
 | R-022 | FROZEN | Scope Decision | Lava 不属于当前 `Story 1-3` MVP 验收必需项。 | 原版早期 Story 内容不依赖 Lava。相关数值仅作为后续范围参考。 |
 | R-023 | FROZEN | Camera | Story 相机与移动端 viewport 处理必须在 Android 竖屏设备上保持可玩区域清晰可读。 | Story/Lava 相机使用逆向确认的 `clamp(dt * 10, 0, 1)` 跟随玩家，Story MVP 不做地图边界 clamp；canvas backing size、CSS viewport、Renderer viewport 与 HUD 命中测试必须使用同一有效 viewport。 |
 | R-024 | FROZEN | Input | 移动端触摸输入必须保留已验证的滑动手感与单主触点生命周期。 | 包含最短滑动距离、`swipeTime = 1.0s`、手指不离屏连续滑动，以及 active touch 身份绑定，避免无关触点取消或劫持当前滑动；本地 `debugInput` 日志可用于设备验收，但不得影响默认玩家体验。 |
+| R-025 | POST_FREEZE | Landscape | Story 1-3 必须支持横屏游玩。 | 覆盖 post-freeze landscape 分支基线；不改变原 portrait MVP freeze candidate 结论。 |
+| R-026 | POST_FREEZE | Landscape Data | 横屏 runtime 必须加载静态 `stages_landscape/story_*.json` 数据。 | portrait 继续加载 `stages/story_*.json`；正式 landscape JSON 不得在 runtime 再二次旋转，并必须保持 `story_001` 等正式 id。 |
+| R-027 | POST_FREEZE | Tooling | Landscape stage JSON 必须通过已记录的工具链生成。 | 覆盖 CLI 转译器、Browser Builder、共享转换/校验规则、正式 id 模式和 custom pipeline metadata，具体以 `docs/tech/landscape_stage_json_toolchain_tech.md` 为准。 |
+| R-028 | POST_FREEZE | Input | 横屏触摸输入必须保留既有移动端滑动手感基线。 | 有效 DPI 阈值保持 `dpi * 0.16`；无效 DPI fallback 使用 Canvas 短边 `0.03`；`swipeTime = 1.0s`、active touch 绑定和当前轴平局规则保持不变，除非后续单独验证。 |
 
 ## 来源说明
 
@@ -61,3 +65,4 @@
 | `2026-04-30` | `BASELINE` | 修正 `R-008` 输入缓冲窗口：逆向复核确认 `_nextSwipeTimeout = 0.1f`，即 100ms；此前 `0.02s/20ms` 记录为错误沿用。 | ENG-04、ENG-03、PM-02 与联合验收口径已同步为 100ms；快速连续滑动、缓冲过期和单缓冲覆盖已在 `2026-05-01` 回归中复验。 |
 | `2026-05-01` | `CODE` | 已在 ENG-04 实现当前 `R-008` 与 `R-009` 基线：`CoordinateSystem` 新增 half-tile/center API 且保留 origin 语义；`PlayerController` 使用 100ms 缓冲并在 `update(deltaTime)` 中倒计时；模块缓存 query 使用 `eng04_input_buffer_v1`。 | 移动、收集、死亡、通关、快速连击、缓冲过期、单缓冲覆盖、弹窗输入屏蔽、点击/缩放和缓存版本确认的自动检查与真实浏览器回归均已通过。 |
 | `2026-05-06` | `OPS` | OPS-01 逆向复核与 Android 真机验证暴露出 Story 相机/viewport 与移动端触摸输入手感的 MVP 需求缺口，因此新增 `R-023` 和 `R-024`。 | 需求覆盖补齐 Story 相机 viewport 一致性、逆向确认的相机跟随语义、最短滑动距离、`swipeTime = 1.0s`、不离屏连续滑动、active touch 身份绑定，以及用于验收的可选本地输入 debug 日志。 |
+| `2026-06-28` | `POST_FREEZE` | 新增 `R-025` 到 `R-028`，记录 landscape 分支基线，同时不改变原 portrait MVP frozen requirements。 | 需求覆盖补齐横屏 Story 1-3 可玩、静态 `stages_landscape/` runtime 数据加载、已记录 landscape stage JSON 工具链使用，以及横屏触摸输入手感保留。 |
