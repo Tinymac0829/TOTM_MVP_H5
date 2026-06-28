@@ -87,14 +87,16 @@ InputManager.update() 在主循环的 update(dt) 阶段被调用（非 fixedUpda
 
 **核心思路**：在 touchmove 阶段实时检测滑动距离，超过阈值时立即识别方向并消费触摸。不等 touchend，保证最低延迟。
 
-**坐标与阈值口径**：当前实现使用浏览器触摸事件的 `clientX/clientY` 像素坐标，不再使用 `clientX / canvas.width` 的归一化坐标。滑动阈值在初始化时由设备 DPI 或 Canvas 客户区宽度派生：
+**坐标与阈值口径**：当前实现使用浏览器触摸事件的 `clientX/clientY` 像素坐标，不再使用 `clientX / canvas.width` 的归一化坐标。滑动阈值在初始化时由设备 DPI 或 Canvas 客户区短边派生：
 
 ```
 if (dpi <= 100 || dpi >= 1000):
-  swipeThreshold = canvasClientWidth * 0.03
+  swipeThreshold = min(canvasClientWidth, canvasClientHeight) * 0.03
 else:
   swipeThreshold = dpi * 0.16
 ```
+
+短边 fallback 只影响 DPI 不可信路径；DPI 正常时仍保持逆向复核后的 `dpi * 0.16` 口径。横屏和竖屏都使用短边计算，可以让相同设备方向切换后保持更接近的滑动触发距离。
 
 触摸手势还带有 `SWIPE_TIME_SECONDS = 1.0` 的时间窗口：手指按下后超过 1 秒仍未形成有效滑动时，下一次 `touchmove` 会重置起点并重新开启时间窗口。
 
@@ -139,7 +141,7 @@ touchend / touchcancel:
 |------|------|------|
 | 识别时机 | touchmove 阶段（不等 touchend） | 减少输入延迟，原版也是滑动过程中即触发 |
 | 坐标口径 | clientX / clientY 像素坐标 | 与浏览器 TouchEvent 和当前实现一致 |
-| 阈值口径 | DPI 有效时 `dpi * 0.16`，否则 `canvasClientWidth * 0.03` | 对 Android 真机和桌面浏览器更稳定 |
+| 阈值口径 | DPI 有效时 `dpi * 0.16`，否则 `min(canvasClientWidth, canvasClientHeight) * 0.03` | 对 Android 真机、桌面浏览器和横竖屏 fallback 更稳定 |
 | 方向判定 | 比较 \|dx\| vs \|dy\|，取绝对值大的轴 | 简单可靠，原版使用相同策略 |
 | 主触点绑定 | 使用 `activeTouchId = touch.identifier` | 非主触点结束不应打断当前手势 |
 | 连续滑动 | 识别方向后更新起点，保持 tracking | 支持手指不离屏的连续方向输入 |
@@ -513,7 +515,7 @@ PlayerController.fixedUpdate():
 
 | 参数 | 值 | 来源 | 说明 |
 |------|-----|------|------|
-| `swipeThreshold` | DPI 有效时 `dpi * 0.16`；DPI 无效时 `canvasClientWidth * 0.03` | OPS-01 / 逆向报告 8.5 系列回归 | 滑动识别最小像素距离，低于此值视为点击或慢拖 |
+| `swipeThreshold` | DPI 有效时 `dpi * 0.16`；DPI 无效时 `min(canvasClientWidth, canvasClientHeight) * 0.03` | OPS-01 / 逆向报告 8.5 系列回归 | 滑动识别最小像素距离，低于此值视为点击或慢拖 |
 | `swipeTime` | 1.0s | OPS-01 / 逆向报告 8.5a | 单次滑动判定时间窗口，超时后重置起点 |
 | `activeTouchId` | 当前主触点 `touch.identifier` | OPS-01 Android 真机回归 | 多指触摸时保护主触点生命周期 |
 | `bufferDuration` | 0.1s (100ms) | R-008 / 逆向报告 | 输入缓冲窗口，约 5 个 fixedUpdate 步长，按 update(dt) 递减 |
@@ -522,7 +524,7 @@ PlayerController.fixedUpdate():
 | Canvas 逻辑尺寸 | 1080×1920 | PM-02 Renderer | 归一化坐标的基准 |
 
 **参数调优说明**：
-- 当前 `swipeThreshold` 已从归一化比例改为像素阈值，优先使用 DPI；当浏览器 DPI 明显不可信时，退回到 Canvas 客户区宽度的 3%。
+- 当前 `swipeThreshold` 已从归一化比例改为像素阈值，优先使用 DPI；当浏览器 DPI 明显不可信时，退回到 Canvas 客户区短边的 3%，避免横屏长边导致 fallback 阈值偏大、滑动体感变钝。
 - 这些参数在 MVP 阶段硬编码，后续可提取为配置。
 
 ## 10. 边界条件
@@ -542,7 +544,7 @@ PlayerController.fixedUpdate():
 | 弹窗显示瞬间正在滑动 | 滑动被忽略 | setEnabled(false) 清空所有状态 |
 | 弹窗关闭后立即滑动 | 正常响应 | setEnabled(true) 恢复采集 |
 | 死亡瞬间有缓冲方向 | 缓冲被清空 | PlayerController.reset() |
-| Canvas 尺寸动态变化 | 后续新建 TouchInput 或阈值重算时适应 | 阈值初始化时读取 Canvas 客户区宽度 |
+| Canvas 尺寸动态变化 | 后续新建 TouchInput 或阈值重算时适应 | 阈值初始化时读取 Canvas 客户区短边 |
 | touchcancel 事件 | 只在取消主触点时清理触摸状态 | 与 touchend 共用主触点检查 |
 | 浏览器默认滚动/缩放 | 被阻止 | touchstart/touchmove 调用 preventDefault |
 
@@ -609,8 +611,8 @@ PlayerController.fixedUpdate():
 
 | 风险 | 影响 | 替代方案 |
 |------|------|---------|
-| swipeThreshold 在特定设备上过大或过小 | 误触或需要滑动很远才触发 | 调整 DPI 因子或宽度 fallback 因子 |
-| 浏览器报告的 DPI 不可信 | 阈值明显偏离体感 | 使用 `canvasClientWidth * 0.03` fallback |
+| swipeThreshold 在特定设备上过大或过小 | 误触或需要滑动很远才触发 | 调整 DPI 因子或短边 fallback 因子 |
+| 浏览器报告的 DPI 不可信 | 阈值明显偏离体感 | 使用 `min(canvasClientWidth, canvasClientHeight) * 0.03` fallback |
 | touchmove 事件频率在低端安卓设备上较低 | 快速滑动可能漏检 | 降低 swipeThreshold 或在 touchend 补充检测 |
 | 主触点 ID 未正确维护 | 多指触摸后输入采集中断 | `activeTouchId` 与 `changedTouches` 单元/真机回归覆盖 |
 | 浏览器 passive event listener 警告 | 控制台警告（不影响功能） | 已在 addEventListener 中设置 `{ passive: false }` |

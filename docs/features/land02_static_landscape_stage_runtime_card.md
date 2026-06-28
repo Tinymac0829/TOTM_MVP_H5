@@ -11,7 +11,7 @@
 
 LAND-01 已证明 Story 1-3 可以通过 `?orientation=landscape` 在横屏模式下游玩。当前实现仍由 `StageLoader` 加载 portrait `stages/story_*.json`，再在 runtime 对 stage data 应用顺时针 90 度旋转。
 
-TOOL-01 已提供可复现的 portrait-to-landscape stage JSON 生产工具链。CLI 支持通过 `--id story_001` 生成正式 runtime id 不变的横版 JSON；GUI 第一版支持人工生成并下载保持正式 id 的 landscape JSON。
+TOOL-01 已提供可复现的 portrait-to-landscape stage JSON 生产工具链，技术入口统一记录在 `docs/tech/landscape_stage_json_toolchain_tech.md`。CLI 支持通过 `--id story_001` 生成正式 runtime id 不变的横版 JSON；GUI 第一版支持人工生成并下载保持正式 id 的 landscape JSON。
 
 LAND-02 的目标是把横屏 runtime 从“加载 portrait JSON 后 runtime rotate”推进为“按 orientation 选择静态 stage JSON 数据集加载”，避免正式横屏数据与 runtime rotation 同时生效导致双重旋转。
 
@@ -105,7 +105,7 @@ LAND-02 后，正式 landscape runtime 不应再依赖 `StageLoader.prepareStage
 
 ## 静态 JSON 生成要求
 
-新增的 `stages_landscape/story_*.json` 必须由 TOOL-01 CLI 或等价已记录转换逻辑生成，不允许手工复制、手工旋转或覆盖 portrait JSON。
+新增的 `stages_landscape/story_*.json` 必须由 TOOL-01 CLI 或 `docs/tech/landscape_stage_json_toolchain_tech.md` 记录的等价转换逻辑生成，不允许手工复制、手工旋转或覆盖 portrait JSON。
 
 推荐命令：
 
@@ -169,7 +169,7 @@ LAND-02 完成应满足：
 
 最小验证：
 
-1. 使用 TOOL-01 CLI 生成 Story 1-3 的 `stages_landscape/story_*.json`，并确认输出 id、尺寸、Enter/Exit、关键 tile 计数。
+1. 使用 TOOL-01 CLI 生成 Story 1-3 的 `stages_landscape/story_*.json`，转换规则以 `docs/tech/landscape_stage_json_toolchain_tech.md` 为准，并确认输出 id、尺寸、Enter/Exit、关键 tile 计数。
 2. 对 runtime modules 执行 `node --check`。
 3. 对新增 JSON 和改动代码执行轻量结构检查。
 4. 本地浏览器或 headless browser 验证：
@@ -206,7 +206,7 @@ LAND-02 已完成静态 landscape stage-data set 和 runtime 加载迁移。
 - `node --check src/main.js` PASS。
 - `node --check tools/convert_stage_json_landscape.mjs` PASS。
 - `git diff --check` PASS。
-- TOOL-01 CLI 生成 Story 1-3 landscape JSON，尺寸、Enter/Exit、Enter/Exit/Dot/Coin/Star/Spikes 计数均 PASS。
+- TOOL-01 CLI 按 `docs/tech/landscape_stage_json_toolchain_tech.md` 的共享转换与校验规则生成 Story 1-3 landscape JSON，尺寸、Enter/Exit、Enter/Exit/Dot/Coin/Star/Spikes 计数均 PASS。
 - 数据验证确认三份 `stages_landscape/story_*.json` id、尺寸、Enter/Exit、meta 和关键 tile 计数均符合预期。
 - Node fake-fetch runtime 验证确认 portrait 三关请求 `stages/story_*.json` 并保持 portrait 尺寸。
 - Node fake-fetch runtime 验证确认 landscape 三关请求 `stages_landscape/story_*.json` 并保持 landscape 尺寸，没有二次旋转。

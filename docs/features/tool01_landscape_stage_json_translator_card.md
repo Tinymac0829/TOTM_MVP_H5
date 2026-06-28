@@ -1,4 +1,4 @@
-﻿# TOOL-01 功能卡：横版 Stage JSON 转译器
+# TOOL-01 功能卡：横版 Stage JSON 转译器
 
 **文档类型**：L1 功能卡 / 支持工具规划卡
 **任务 ID**：TOOL-01
@@ -45,15 +45,15 @@ TOOL-01 不包含：
 
 本功能卡是 TOOL-01 的任务级决策与验收文档，负责记录“为什么做、做什么、不做什么、命名策略、验收口径和风险边界”。
 
-具体脚本行为以 `docs/tech/convert_stage_json_landscape_tech.md` 和 `tools/convert_stage_json_landscape.mjs` 为准，包括 CLI 参数、控制台输出、错误处理、字段写出细节和本地验收记录。
+具体 CLI 脚本行为以 `docs/tech/landscape_stage_json_toolchain_tech.md` 和 `tools/convert_stage_json_landscape.mjs` 为准，包括 CLI 参数、控制台输出、错误处理、字段写出细节和本地验收记录。
 
-GUI 工具设计以 `docs/tech/landscape_stage_builder_tech.md` 为准。GUI 第一版默认使用用户确认的正式 stage id，例如 `story_004`，并通过浏览器下载输出；这不改变 CLI review/export 默认 `_landscape` 派生 id 的语义。
+GUI 工具设计同样以 `docs/tech/landscape_stage_json_toolchain_tech.md` 为准。GUI 第一版默认使用用户确认的正式 stage id，例如 `story_004`，并通过浏览器下载输出；这不改变 CLI review/export 默认 `_landscape` 派生 id 的语义。旧 CLI / GUI 技术说明路径仅保留兼容跳转。
 
 维护规则：
 
 - 如果变更 TOOL-01 的任务范围、默认命名决策、StageLoader 边界或验收标准，应先更新本功能卡。
-- 如果仅变更 CLI 实现细节、参数、输出格式或本地验证记录，应更新 `convert_stage_json_landscape_tech.md`。
-- 如果仅变更浏览器 GUI 的输入输出、UI 流程或下载行为，应更新 `landscape_stage_builder_tech.md`。
+- 如果变更 CLI 实现细节、参数、输出格式或本地验证记录，应更新 `landscape_stage_json_toolchain_tech.md` 的 CLI 章节。
+- 如果变更浏览器 GUI 的输入输出、UI 流程、下载行为或 custom pipeline，应更新 `landscape_stage_json_toolchain_tech.md` 的 Browser Builder / Custom Pipeline 章节。
 
 ## 生产流水线位置
 

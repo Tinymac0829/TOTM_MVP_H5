@@ -49,8 +49,10 @@ function resolveSwipeThreshold(canvas) {
   const dpi = resolveScreenDpi();
 
   if (dpi <= MIN_VALID_DPI || dpi >= MAX_VALID_DPI) {
-    const width = canvas.clientWidth || canvas.getBoundingClientRect().width || window.innerWidth || 1;
-    return width * INVALID_DPI_WIDTH_FACTOR;
+    const rect = canvas.getBoundingClientRect();
+    const width = canvas.clientWidth || rect.width || window.innerWidth || 1;
+    const height = canvas.clientHeight || rect.height || window.innerHeight || width;
+    return Math.min(width, height) * INVALID_DPI_WIDTH_FACTOR;
   }
 
   return dpi * NORMAL_DPI_FACTOR;
